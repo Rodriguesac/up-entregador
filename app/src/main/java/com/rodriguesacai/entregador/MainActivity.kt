@@ -1,24 +1,36 @@
 package com.rodriguesacai.entregador
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.rodriguesacai.entregador.service.OnlineDriverService
 import com.rodriguesacai.entregador.ui.DriverHomeScreen
 
 class MainActivity : ComponentActivity() {
     private var pendingOnlineStart: Boolean = false
+    private var runningPermissionWizard: Boolean = false
+    private var permissionRefreshTick by mutableStateOf(0)
 
     private val notificationLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { }
+    ) {
+        refreshPermissions()
+        if (runningPermissionWizard) continuePermissionWizardAfterNotifications()
+    }
 
     private val locationLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -27,6 +39,14 @@ class MainActivity : ComponentActivity() {
         val coarse = result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (pendingOnlineStart && (fine || coarse)) startOnlineService()
         pendingOnlineStart = false
+        refreshPermissions()
+        if (runningPermissionWizard) continuePermissionWizardAfterLocation()
+    }
+
+    private val settingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        refreshPermissions()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,27 +54,76 @@ class MainActivity : ComponentActivity() {
         setContent {
             RodriguesNativeTheme(darkTheme = AppSettings.isDarkTheme(this)) {
                 DriverHomeScreen(
+                    permissionRefreshTick = permissionRefreshTick,
                     onGoOnline = { requestLocationAndStartOnline() },
                     onGoOffline = { stopService(Intent(this, OnlineDriverService::class.java)) },
                     onOpenNavigator = { pickup, dropoff -> openNavigator(pickup, dropoff) },
                     onOpenNotificationSettings = { openNotificationSettings() },
-                    onOpenLocationSettings = { openAppSettings() },
+                    onOpenLocationSettings = { openLocationSettings() },
                     onOpenFullScreenSettings = { openFullScreenSettings() },
-                    onOpenBatterySettings = { openBatterySettings() },
+                    onOpenBatterySettings = { requestBatteryOptimizationDialog() },
                     onRequestNotificationPermission = { askNotificationPermissionOnly() },
-                    onRequestLocationPermission = { requestLocationOnly() }
+                    onRequestLocationPermission = { requestLocationOnly() },
+                    onRequestEssentialPermissions = { startPermissionWizard() }
                 )
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshPermissions()
+    }
+
+    private fun refreshPermissions() {
+        permissionRefreshTick++
+    }
+
+    private fun startPermissionWizard() {
+        runningPermissionWizard = true
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            continuePermissionWizardAfterNotifications()
+        }
+    }
+
+    private fun continuePermissionWizardAfterNotifications() {
+        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!fine && !coarse) {
+            pendingOnlineStart = false
+            locationLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        } else {
+            continuePermissionWizardAfterLocation()
+        }
+    }
+
+    private fun continuePermissionWizardAfterLocation() {
+        runningPermissionWizard = false
+        val status = PermissionStatusReader.read(this)
+        when {
+            !status.batteryUnrestricted -> requestBatteryOptimizationDialog()
+            !status.fullScreenIntent -> openFullScreenSettings()
+            else -> refreshPermissions()
         }
     }
 
     private fun askNotificationPermissionOnly() {
         if (Build.VERSION.SDK_INT >= 33) {
             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            openNotificationSettings()
         }
     }
 
     private fun requestLocationAndStartOnline() {
+        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (fine || coarse) {
+            startOnlineService()
+            return
+        }
         pendingOnlineStart = true
         locationLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
@@ -104,7 +173,7 @@ class MainActivity : ComponentActivity() {
         } else {
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = Uri.fromParts("package", packageName, null) }
         }
-        runCatching { startActivity(intent) }.onFailure { openAppSettings() }
+        openWithFallback(intent)
     }
 
     private fun openFullScreenSettings() {
@@ -115,20 +184,49 @@ class MainActivity : ComponentActivity() {
         } else {
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = Uri.fromParts("package", packageName, null) }
         }
-        runCatching { startActivity(intent) }.onFailure { openAppSettings() }
+        openWithFallback(intent)
+    }
+
+    private fun requestBatteryOptimizationDialog() {
+        val ignored = runCatching {
+            val pm = getSystemService(POWER_SERVICE) as PowerManager
+            pm.isIgnoringBatteryOptimizations(packageName)
+        }.getOrDefault(true)
+        if (!ignored && Build.VERSION.SDK_INT >= 23) {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            openWithFallback(intent)
+        } else {
+            openBatterySettings()
+        }
     }
 
     private fun openBatterySettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.fromParts("package", packageName, null)
         }
-        runCatching { startActivity(intent) }.onFailure { openAppSettings() }
+        openWithFallback(intent)
+    }
+
+    private fun openLocationSettings() {
+        val status = PermissionStatusReader.read(this)
+        if (!status.location) {
+            requestLocationOnly()
+            return
+        }
+        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        openWithFallback(intent)
     }
 
     private fun openAppSettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.fromParts("package", packageName, null)
         }
-        startActivity(intent)
+        openWithFallback(intent)
+    }
+
+    private fun openWithFallback(intent: Intent) {
+        runCatching { settingsLauncher.launch(intent) }.onFailure { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = Uri.fromParts("package", packageName, null) }) }
     }
 }

@@ -33,3 +33,10 @@ Este app deve seguir as telas de referência aprovadas pelo usuário como contra
 - Cadastro recebeu campos de e-mail e cidade.
 - Cadastro salva e-mail/cidade no Firebase.
 - Corrida em andamento foi limpa: mapa, paradas, distância/tempo, pagamento, abrir navegação, próxima ação e ocorrência.
+
+## Etapa mega visual e permissões
+- Cards de permissão devem ser clicáveis.
+- Quando houver permissão Android que aceita prompt direto, o app deve chamar o questionário nativo: notificações e localização.
+- Bateria deve tentar abrir o pedido nativo de ignorar otimização antes de mandar para configurações.
+- Tela Home em restrição deve mostrar botão claro para liberar permissões, sem obrigar o entregador a procurar nas configurações.
+- Oferta urgente deve seguir o contrato visual: faixa vermelha, contador, valor forte, mapa e botões Aceitar/Recusar.

@@ -187,6 +187,7 @@ private data class RouteAction(
 
 @Composable
 fun DriverHomeScreen(
+    permissionRefreshTick: Int = 0,
     onGoOnline: () -> Unit,
     onGoOffline: () -> Unit,
     onOpenNavigator: (pickup: String, dropoff: String) -> Unit,
@@ -195,7 +196,8 @@ fun DriverHomeScreen(
     onOpenFullScreenSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
-    onRequestLocationPermission: () -> Unit
+    onRequestLocationPermission: () -> Unit,
+    onRequestEssentialPermissions: () -> Unit
 ) {
     val context = LocalContext.current
     var profile by remember { mutableStateOf(DriverRepository.currentSession(context)) }
@@ -285,8 +287,10 @@ fun DriverHomeScreen(
 
     if (!welcomeDone) {
         PermissionsOnboardingScreen(
+            permissionRefreshTick = permissionRefreshTick,
             onRequestNotificationPermission = onRequestNotificationPermission,
             onRequestLocationPermission = onRequestLocationPermission,
+            onRequestEssentialPermissions = onRequestEssentialPermissions,
             onOpenFullScreenSettings = onOpenFullScreenSettings,
             onOpenBatterySettings = onOpenBatterySettings,
             onContinue = {
@@ -378,7 +382,8 @@ fun DriverHomeScreen(
                         onOpenWallet = { tab = AppTab.Ganhos },
                         onOpenMap = { tab = AppTab.Mapa },
                         onOpenNotifications = { tab = AppTab.Notificacoes },
-                        onOpenSupport = { tab = AppTab.Conta }
+                        onOpenSupport = { tab = AppTab.Conta },
+                        onFixPermissions = onRequestEssentialPermissions
                     )
                     AppTab.Corridas -> RidesContent(
                         pendingRide = pendingRide,
@@ -421,6 +426,10 @@ fun DriverHomeScreen(
                         onOpenLocationSettings = onOpenLocationSettings,
                         onOpenFullScreenSettings = onOpenFullScreenSettings,
                         onOpenBatterySettings = onOpenBatterySettings,
+                        onRequestNotificationPermission = onRequestNotificationPermission,
+                        onRequestLocationPermission = onRequestLocationPermission,
+                        onRequestEssentialPermissions = onRequestEssentialPermissions,
+                        permissionRefreshTick = permissionRefreshTick,
                         onForceUnlock = {
                             DriverRepository.forceClearActiveMission(context, onDone = { notice = "Operação destravada."; activeRide = null; tab = AppTab.Inicio }, onError = { error = it })
                         },
@@ -579,32 +588,59 @@ private fun InlineAppMessage(text: String, color: Color, onClose: () -> Unit) {
 
 @Composable
 private fun PermissionsOnboardingScreen(
+    permissionRefreshTick: Int,
     onRequestNotificationPermission: () -> Unit,
     onRequestLocationPermission: () -> Unit,
+    onRequestEssentialPermissions: () -> Unit,
     onOpenFullScreenSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit,
     onContinue: () -> Unit
 ) {
     val context = LocalContext.current
     var permissionStatus by remember { mutableStateOf(PermissionStatusReader.read(context)) }
-    LaunchedEffect(Unit) { permissionStatus = PermissionStatusReader.read(context) }
+    LaunchedEffect(permissionRefreshTick) { permissionStatus = PermissionStatusReader.read(context) }
 
     ScreenScroll {
         Spacer(Modifier.height(8.dp))
-        BrandHeader(title = "Permissões essenciais", subtitle = "Ative uma vez para receber corridas com segurança.", icon = Icons.Filled.Shield)
-        PermissionSetupCard("Notificações", "Alerta de nova corrida e avisos do gestor.", permissionStatus.notifications, Icons.Filled.NotificationsActive, onClick = { onRequestNotificationPermission(); permissionStatus = PermissionStatusReader.read(context) })
-        PermissionSetupCard("Localização", "Usada para rota e acompanhamento da entrega.", permissionStatus.location, Icons.Filled.MyLocation, onClick = { onRequestLocationPermission(); permissionStatus = PermissionStatusReader.read(context) })
-        PermissionSetupCard("Alerta urgente", "Permite abrir a corrida mesmo com a tela bloqueada.", permissionStatus.fullScreenIntent, Icons.Filled.Bolt, onClick = { onOpenFullScreenSettings(); permissionStatus = PermissionStatusReader.read(context) })
-        PermissionSetupCard("Bateria sem restrição", "Evita que o Android mate o app em segundo plano.", permissionStatus.batteryUnrestricted, Icons.Filled.Shield, onClick = { onOpenBatterySettings(); permissionStatus = PermissionStatusReader.read(context) })
-        PermissionSetupCard("Internet e GPS", "O app precisa de conexão e GPS ativo para operar.", hasInternet(context) && isGpsEnabled(context), Icons.Filled.Map, onClick = { permissionStatus = PermissionStatusReader.read(context) })
+        BrandHeader(title = "Permissões do app", subtitle = "Toque em liberar agora e responda Permitir nas perguntas do Android.", icon = Icons.Filled.Shield)
+        PermissionProgressHero(permissionStatus, context, onRequestEssentialPermissions)
+        PermissionSetupCard("Notificações", "Receba alerta de nova corrida e avisos do gestor.", permissionStatus.notifications, Icons.Filled.NotificationsActive, onClick = onRequestNotificationPermission)
+        PermissionSetupCard("Localização", "Usada para rota, coleta e acompanhamento da entrega.", permissionStatus.location, Icons.Filled.MyLocation, onClick = onRequestLocationPermission)
+        PermissionSetupCard("Alerta urgente", "Permite abrir corrida importante mesmo com a tela bloqueada.", permissionStatus.fullScreenIntent, Icons.Filled.Bolt, onClick = onOpenFullScreenSettings)
+        PermissionSetupCard("Bateria sem restrição", "Evita que o Android encerre o app em segundo plano.", permissionStatus.batteryUnrestricted, Icons.Filled.Shield, onClick = onOpenBatterySettings)
+        PermissionSetupCard("Internet e GPS", "O app precisa de conexão e GPS ativo para operar.", hasInternet(context) && isGpsEnabled(context), Icons.Filled.Map, onClick = onRequestEssentialPermissions)
         PrimaryButton("Continuar", icon = Icons.Filled.CheckCircle, onClick = onContinue)
-        Text("Se algo faltar depois, o status ficará em Restrição.", color = Muted, fontFamily = AppFont, fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text("Se algo faltar depois, a Home mostra Restrição e o botão Liberar permissões.", color = Muted, fontFamily = AppFont, fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+@Composable
+private fun PermissionProgressHero(status: PermissionStatus, context: Context, onFix: () -> Unit) {
+    val missing = permissionMissingLabels(status, context)
+    val ready = missing.isEmpty()
+    Column(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(32.dp)).background(if (ready) GreenSoft else OrangeSoft).border(1.dp, if (ready) Green.copy(alpha = .22f) else Orange.copy(alpha = .25f), RoundedCornerShape(32.dp)).padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(58.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
+                Icon(if (ready) Icons.Filled.CheckCircle else Icons.Filled.Shield, null, tint = if (ready) Green else Orange, modifier = Modifier.size(30.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(if (ready) "Tudo liberado" else "Faltam permissões", color = Ink, fontFamily = AppFont, fontSize = 21.sp, fontWeight = FontWeight.Black)
+                Text(if (ready) "Você já pode operar com alerta e localização." else missing.joinToString(" • "), color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        if (!ready) PrimaryButton("Liberar agora", icon = Icons.Filled.CheckCircle, color = Orange, onClick = onFix)
     }
 }
 
 @Composable
 private fun PermissionSetupCard(title: String, message: String, ok: Boolean, icon: ImageVector, onClick: () -> Unit) {
-    PremiumCard {
+    Column(
+        modifier = Modifier.fillMaxWidth().shadow(5.dp, CardShape, clip = false, ambientColor = Color(0x1404A957), spotColor = Color(0x12000000)).clip(CardShape).background(Surface).border(1.dp, Border, CardShape).clickable { onClick() }.padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(48.dp).clip(CircleShape).background(if (ok) GreenSoft else OrangeSoft), contentAlignment = Alignment.Center) {
                 Icon(icon, null, tint = if (ok) Green else Orange, modifier = Modifier.size(23.dp))
@@ -850,14 +886,15 @@ private fun HomeContent(
     onOpenWallet: () -> Unit,
     onOpenMap: () -> Unit,
     onOpenNotifications: () -> Unit,
-    onOpenSupport: () -> Unit
+    onOpenSupport: () -> Unit,
+    onFixPermissions: () -> Unit
 ) {
     val context = LocalContext.current
     val permissions = PermissionStatusReader.read(context)
     val status = operationalStatus(online, activeRide, permissions, context)
     ScreenScroll {
         DriverTopHeader(profile, status, unread = appNotices.count { !it.read && it.isVisible() }, onOpenNotifications = onOpenNotifications)
-        StatusHeroCard(status = status, online = online, onToggleOnline = onToggleOnline)
+        StatusHeroCard(status = status, online = online, onToggleOnline = onToggleOnline, onFixPermissions = onFixPermissions)
         EarningsSummaryCard(stats = stats, hideValues = hideValues, onToggleValues = onToggleValues)
         if (activeRide != null) {
             ActiveRouteShortcut(activeRide, onOpenRides)
@@ -867,7 +904,7 @@ private fun HomeContent(
             OperationBanner(appBanners.firstOrNull { it.isVisible() }, status)
         }
         QuickActions(onOpenHistory, onOpenWallet, onOpenMap, onOpenSupport)
-        if (!permissions.ready) PermissionRestrictionMini(permissions, context)
+        if (!permissions.ready) PermissionRestrictionMini(permissions, context, onFixPermissions)
     }
 }
 
@@ -887,7 +924,7 @@ private fun DriverTopHeader(profile: DriverProfile, status: OperationalStatus, u
 }
 
 @Composable
-private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleOnline: (Boolean) -> Unit) {
+private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleOnline: (Boolean) -> Unit, onFixPermissions: () -> Unit) {
     val infinite = rememberInfiniteTransition(label = "heroPulse")
     val pulse by infinite.animateFloat(
         initialValue = .92f,
@@ -925,8 +962,8 @@ private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleO
             }
         }
         Button(
-            onClick = { onToggleOnline(!online) },
-            enabled = status.canGoOnline || online,
+            onClick = { if (!status.canGoOnline && !online) onFixPermissions() else onToggleOnline(!online) },
+            enabled = true,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = ButtonShape,
             colors = ButtonDefaults.buttonColors(
@@ -939,7 +976,7 @@ private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleO
         ) {
             Icon(if (online) Icons.Filled.Cancel else Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text(if (online) "Ficar indisponível" else "Ficar disponível", fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black)
+            Text(if (online) "Ficar indisponível" else if (!status.canGoOnline) "Liberar permissões" else "Ficar disponível", fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black)
         }
     }
 }
@@ -1039,56 +1076,108 @@ private fun QuickTile(title: String, icon: ImageVector, color: Color, modifier: 
     }
 }
 
+private fun permissionMissingLabels(status: PermissionStatus, context: Context): List<String> = buildList {
+    if (!status.notifications) add("notificações")
+    if (!status.location) add("localização")
+    if (!status.fullScreenIntent) add("alerta urgente")
+    if (!status.batteryUnrestricted) add("bateria")
+    if (!hasInternet(context)) add("internet")
+    if (!isGpsEnabled(context)) add("GPS")
+}
+
 @Composable
-private fun PermissionRestrictionMini(status: PermissionStatus, context: Context) {
-    val missing = buildList {
-        if (!status.notifications) add("notificações")
-        if (!status.location) add("localização")
-        if (!status.fullScreenIntent) add("alerta urgente")
-        if (!status.batteryUnrestricted) add("bateria")
-        if (!hasInternet(context)) add("internet")
-        if (!isGpsEnabled(context)) add("GPS")
+private fun PermissionRestrictionMini(status: PermissionStatus, context: Context, onFix: () -> Unit) {
+    val missing = permissionMissingLabels(status, context)
+    if (missing.isNotEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp)).background(OrangeSoft).border(1.dp, Orange.copy(alpha = .25f), RoundedCornerShape(26.dp)).padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.size(44.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.ErrorOutline, null, tint = Orange, modifier = Modifier.size(24.dp))
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Operação em restrição", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                    Text("Falta: ${missing.joinToString(", ")}", color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            PrimaryButton("Liberar permissões", icon = Icons.Filled.CheckCircle, color = Orange, onClick = onFix)
+        }
     }
-    if (missing.isNotEmpty()) InlineNoticeCard("Restrição: ajuste ${missing.joinToString(", ")} para receber corridas sem falha.", Orange)
 }
 
 @Composable
 private fun IncomingOfferPanel(ride: DriverRide, onAccept: (DriverRide) -> Unit, onReject: (DriverRide, String) -> Unit, onExpire: (DriverRide) -> Unit) {
     var rejectOpen by remember(ride.id) { mutableStateOf(false) }
+    var now by remember(ride.id) { mutableStateOf(System.currentTimeMillis()) }
     val payment = ride.paymentUi()
-    PremiumCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            StatusChip("Oferta urgente", Red, Icons.Filled.Bolt)
-            Spacer(Modifier.weight(1f))
-            Text(ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }, color = Green, fontFamily = AppFont, fontSize = 28.sp, lineHeight = 30.sp, fontWeight = FontWeight.Black)
+    LaunchedEffect(ride.id, ride.offerExpiresAtMillis) {
+        while (ride.offerExpiresAtMillis > 0L && System.currentTimeMillis() <= ride.offerExpiresAtMillis) {
+            now = System.currentTimeMillis()
+            delay(1000)
         }
-        AnimatedAlertStrip("Nova corrida na operação", Red)
-        Text("Decida rápido. Endereço completo só libera na etapa correta.", color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
-        RealDeliveryMap(
-            title = "Nova corrida",
-            subtitle = listOf(ride.distance, ride.duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { ride.neighborhood.ifBlank { "Área da entrega" } },
-            pickupAddress = ride.pickup,
-            dropoffAddress = ride.dropoff,
-            pickupLat = ride.pickupLat,
-            pickupLng = ride.pickupLng,
-            dropoffLat = ride.dropoffLat,
-            dropoffLng = ride.dropoffLng,
-            mode = DeliveryMapMode.PICKUP_TO_DROPOFF,
-            modifier = Modifier.height(236.dp)
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            OfferMetric("Distância", ride.distance.ifBlank { "—" }, Icons.Filled.Route, Modifier.weight(1f))
-            OfferMetric("Tempo", ride.duration.ifBlank { "—" }, Icons.Filled.Schedule, Modifier.weight(1f))
+        now = System.currentTimeMillis()
+        if (ride.offerExpiresAtMillis > 0L && now > ride.offerExpiresAtMillis) onExpire(ride)
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp)).background(Surface).border(1.dp, Border, RoundedCornerShape(30.dp)).shadow(5.dp, RoundedCornerShape(30.dp), clip = false),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Red).padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Filled.ErrorOutline, null, tint = Color.White, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("NOVA CORRIDA URGENTE", color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+            Box(Modifier.clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .18f)).border(1.dp, Color.White.copy(alpha = .3f), RoundedCornerShape(13.dp)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                Text(offerCountdownText(ride, now), color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Black)
+            }
         }
-        RoutePointLine(Icons.Filled.Storefront, "Coleta", ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, Green)
-        RoutePointLine(Icons.Filled.Place, "Área", ride.neighborhood.ifBlank { "Bairro/área da entrega" }, Orange)
-        PaymentChips(payment)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            SecondaryButton("Recusar", icon = Icons.Filled.Cancel, color = Red, modifier = Modifier.weight(1f)) { rejectOpen = true }
-            PrimaryButton("Aceitar corrida", icon = Icons.Filled.CheckCircle, modifier = Modifier.weight(1.35f)) { onAccept(ride) }
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Coleta", color = Green, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Black)
+                    Text(ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, color = Ink, fontFamily = AppFont, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    if (ride.neighborhood.isNotBlank()) Text(ride.neighborhood, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Text(ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }, color = Green, fontFamily = AppFont, fontSize = 28.sp, lineHeight = 30.sp, fontWeight = FontWeight.Black)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                OfferMetric("Distância", ride.distance.ifBlank { "—" }, Icons.Filled.Route, Modifier.weight(1f))
+                OfferMetric("Tempo", ride.duration.ifBlank { "—" }, Icons.Filled.Schedule, Modifier.weight(1f))
+            }
+            RealDeliveryMap(
+                title = "Nova corrida",
+                subtitle = listOf(ride.distance, ride.duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { ride.neighborhood.ifBlank { "Área da entrega" } },
+                pickupAddress = ride.pickup,
+                dropoffAddress = ride.dropoff,
+                pickupLat = ride.pickupLat,
+                pickupLng = ride.pickupLng,
+                dropoffLat = ride.dropoffLat,
+                dropoffLng = ride.dropoffLng,
+                mode = DeliveryMapMode.PICKUP_TO_DROPOFF,
+                modifier = Modifier.height(230.dp)
+            )
+            RoutePointLine(Icons.Filled.Storefront, "Coleta", ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, Green)
+            RoutePointLine(Icons.Filled.Place, "Entrega", if (ride.dropoff.isNotBlank()) ride.dropoff else ride.neighborhood.ifBlank { "Endereço liberado na etapa correta" }, Orange)
+            PaymentChips(payment)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                SecondaryButton("Recusar", icon = Icons.Filled.Cancel, color = Red, modifier = Modifier.weight(1f)) { rejectOpen = true }
+                PrimaryButton("Aceitar", icon = Icons.Filled.CheckCircle, modifier = Modifier.weight(1.35f)) { onAccept(ride) }
+            }
         }
     }
     if (rejectOpen) RejectDialog(onClose = { rejectOpen = false }, onConfirm = { reason -> rejectOpen = false; onReject(ride, reason) })
+}
+
+private fun offerCountdownText(ride: DriverRide, now: Long): String {
+    if (ride.offerExpiresAtMillis <= 0L) return "00:--"
+    val remaining = ((ride.offerExpiresAtMillis - now) / 1000L).coerceAtLeast(0L)
+    val min = remaining / 60
+    val sec = remaining % 60
+    return "%02d:%02d".format(Locale.ROOT, min, sec)
 }
 
 @Composable
@@ -1503,6 +1592,10 @@ private fun MoreContent(
     onOpenLocationSettings: () -> Unit,
     onOpenFullScreenSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit,
+    onRequestNotificationPermission: () -> Unit,
+    onRequestLocationPermission: () -> Unit,
+    onRequestEssentialPermissions: () -> Unit,
+    permissionRefreshTick: Int,
     onForceUnlock: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -1512,7 +1605,17 @@ private fun MoreContent(
         "perfil" -> ProfileScreen(profile, online, onBack = { screen = "menu" })
         "pix" -> PixBankScreen(profile, onBack = { screen = "menu" }, onSaved = onProfileChanged)
         "operacao" -> OperationPreferencesScreen(onBack = { screen = "menu" })
-        "permissoes" -> PermissionsSettingsScreen(onBack = { screen = "menu" }, onOpenNotificationSettings, onOpenLocationSettings, onOpenFullScreenSettings, onOpenBatterySettings)
+        "permissoes" -> PermissionsSettingsScreen(
+            permissionRefreshTick = permissionRefreshTick,
+            onBack = { screen = "menu" },
+            onRequestNotificationPermission = onRequestNotificationPermission,
+            onRequestLocationPermission = onRequestLocationPermission,
+            onRequestEssentialPermissions = onRequestEssentialPermissions,
+            onOpenNotificationSettings = onOpenNotificationSettings,
+            onOpenLocationSettings = onOpenLocationSettings,
+            onOpenFullScreenSettings = onOpenFullScreenSettings,
+            onOpenBatterySettings = onOpenBatterySettings
+        )
         "suporte" -> SupportScreen(onBack = { screen = "menu" }, onForceUnlock = onForceUnlock)
         else -> ScreenScroll {
             BrandHeader(title = "Mais", subtitle = "Conta, repasse, operação e suporte.", icon = Icons.Filled.MoreHoriz)
@@ -1655,16 +1758,29 @@ private fun PreferenceSwitch(title: String, subtitle: String, checked: Boolean, 
 }
 
 @Composable
-private fun PermissionsSettingsScreen(onBack: () -> Unit, onOpenNotificationSettings: () -> Unit, onOpenLocationSettings: () -> Unit, onOpenFullScreenSettings: () -> Unit, onOpenBatterySettings: () -> Unit) {
+private fun PermissionsSettingsScreen(
+    permissionRefreshTick: Int,
+    onBack: () -> Unit,
+    onRequestNotificationPermission: () -> Unit,
+    onRequestLocationPermission: () -> Unit,
+    onRequestEssentialPermissions: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
+    onOpenLocationSettings: () -> Unit,
+    onOpenFullScreenSettings: () -> Unit,
+    onOpenBatterySettings: () -> Unit
+) {
     val context = LocalContext.current
-    val status = PermissionStatusReader.read(context)
+    var status by remember { mutableStateOf(PermissionStatusReader.read(context)) }
+    LaunchedEffect(permissionRefreshTick) { status = PermissionStatusReader.read(context) }
     ScreenScroll {
-        ScreenHeader("Permissões", "O app precisa disso para tocar corrida fora da tela.", Icons.Filled.Shield, onBack)
-        PermissionSetupCard("Notificações", "Receber corrida e avisos do gestor.", status.notifications, Icons.Filled.NotificationsActive, onOpenNotificationSettings)
-        PermissionSetupCard("Localização", "Rota e acompanhamento.", status.location, Icons.Filled.MyLocation, onOpenLocationSettings)
+        ScreenHeader("Permissões do app", "Toque nos itens para abrir a pergunta do Android quando existir.", Icons.Filled.Shield, onBack)
+        PermissionProgressHero(status, context, onRequestEssentialPermissions)
+        PermissionSetupCard("Notificações", "Receber corrida e avisos do gestor.", status.notifications, Icons.Filled.NotificationsActive, onRequestNotificationPermission)
+        PermissionSetupCard("Localização", "Rota e acompanhamento.", status.location, Icons.Filled.MyLocation, onRequestLocationPermission)
         PermissionSetupCard("Alerta urgente", "Tela cheia para oferta importante.", status.fullScreenIntent, Icons.Filled.Bolt, onOpenFullScreenSettings)
         PermissionSetupCard("Bateria", "Evita o app morrer em segundo plano.", status.batteryUnrestricted, Icons.Filled.Shield, onOpenBatterySettings)
-        PermissionSetupCard("Internet/GPS", "Conexão e localização do aparelho.", hasInternet(context) && isGpsEnabled(context), Icons.Filled.Map) { }
+        PermissionSetupCard("Internet/GPS", "Conexão e localização do aparelho.", hasInternet(context) && isGpsEnabled(context), Icons.Filled.Map, onOpenLocationSettings)
+        SecondaryButton("Abrir configurações de notificações", icon = Icons.Filled.Notifications, color = Muted, onClick = onOpenNotificationSettings)
     }
 }
 
