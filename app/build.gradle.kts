@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 826
-        versionName = "6.26.0-taxa-separada-repasse"
+        versionCode = 828
+        versionName = "6.28.0-up-fiel-operacional"
     }
 
     buildFeatures { compose = true }

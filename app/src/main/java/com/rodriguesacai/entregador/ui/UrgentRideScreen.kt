@@ -118,7 +118,7 @@ fun UrgentRideScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     UrgentLogoMark()
                     Column(Modifier.weight(1f)) {
-                        Text("Rodrigues Entregador", color = Navy, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("UP Entregador", color = Navy, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         Text("Nova corrida", color = Ink, fontFamily = Font, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -200,7 +200,7 @@ private fun UrgentTop(seconds: Int) {
 @Composable
 private fun UrgentLogoMark() {
     Box(Modifier.size(56.dp).shadow(10.dp, RoundedCornerShape(19.dp), clip = false).clip(RoundedCornerShape(19.dp)).background(Color.White).border(1.dp, Navy.copy(alpha = .18f), RoundedCornerShape(19.dp)), contentAlignment = Alignment.Center) {
-        Image(painter = painterResource(R.drawable.ic_rodrigues_logo), contentDescription = "Logo", modifier = Modifier.size(46.dp), contentScale = ContentScale.Fit)
+        Image(painter = painterResource(R.drawable.up_app_icon), contentDescription = "UP Entregador", modifier = Modifier.size(46.dp), contentScale = ContentScale.Fit)
     }
 }
 

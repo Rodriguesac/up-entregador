@@ -682,11 +682,40 @@ private fun BrandHeader(title: String, subtitle: String, icon: ImageVector) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RodriguesLogoMark(size = 50, pulse = true)
             Column {
-                Text("Rodrigues Entregador", color = Navy, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("UP Entregador", color = Navy, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(title, color = Ink, fontFamily = AppFont, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.Bold)
             }
         }
         Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+private fun LoginHeroHeader(mode: String) {
+    if (mode == "login") {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(bottomStart = 34.dp, bottomEnd = 34.dp))
+                .background(Brush.linearGradient(listOf(Navy, Color(0xFFFF4B12))))
+                .padding(horizontal = 20.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Image(
+                painter = painterResource(R.drawable.up_app_icon),
+                contentDescription = "UP Entregador",
+                modifier = Modifier.size(118.dp),
+                contentScale = ContentScale.Fit
+            )
+            Text("UP Entregador", color = Color.White, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        }
+        Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Bem-vindo(a)!", color = Ink, fontFamily = AppFont, fontSize = 25.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text("Acesse sua conta para continuar fazendo entregas.", color = Muted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
+        }
+    } else {
+        BrandHeader(title = "Solicitar cadastro", subtitle = "Envie seus dados para análise da operação.", icon = Icons.Filled.TwoWheeler)
     }
 }
 
@@ -712,7 +741,7 @@ private fun LoginScreen(
     var bank by remember { mutableStateOf("") }
 
     ScreenScroll {
-        BrandHeader(title = if (mode == "login") "Bem-vindo(a)!" else "Solicitar cadastro", subtitle = if (mode == "login") "Acesse sua conta para continuar fazendo entregas." else "Envie seus dados para análise da operação.", icon = Icons.Filled.TwoWheeler)
+        LoginHeroHeader(mode = mode)
         if (notice.isNotBlank()) InlineNoticeCard(notice, Green)
         if (error.isNotBlank()) InlineNoticeCard(error, Red)
         PremiumCard {
@@ -761,8 +790,8 @@ private fun RodriguesLogoMark(size: Int = 56, pulse: Boolean = false) {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(R.drawable.ic_rodrigues_logo),
-            contentDescription = "Logo Rodrigues Entregador",
+            painter = painterResource(R.drawable.up_app_icon),
+            contentDescription = "Logo UP Entregador",
             modifier = Modifier.size((size * .82f).dp),
             contentScale = ContentScale.Fit
         )
@@ -2103,7 +2132,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 6.27.0 • Visual entregador vermelho", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 6.28.0 • UP Entregador fiel operacional", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2269,7 +2298,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("6.22.0 — Navy Premium operacional", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("6.28.0 — UP Entregador fiel operacional", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

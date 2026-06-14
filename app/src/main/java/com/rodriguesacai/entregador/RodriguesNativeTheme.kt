@@ -60,6 +60,6 @@ fun RodriguesNativeTheme(
 
     val density = LocalDensity.current
     CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1.10f)) {
-        MaterialTheme(colorScheme = light, typography = typography, content = content)
+        MaterialTheme(colorScheme = if (darkTheme) dark else light, typography = typography, content = content)
     }
 }

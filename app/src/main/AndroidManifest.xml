@@ -15,8 +15,8 @@
     <application
         android:name=".RodriguesApp"
         android:allowBackup="false"
-        android:icon="@drawable/ic_launcher_foreground"
-        android:label="Rodrigues Entregador"
+        android:icon="@mipmap/ic_launcher"
+        android:label="UP Entregador"
         android:theme="@style/AppTheme">
 
         <activity

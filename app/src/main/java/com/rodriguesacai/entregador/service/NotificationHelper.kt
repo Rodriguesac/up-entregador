@@ -72,7 +72,7 @@ object NotificationHelper {
         )
         return NotificationCompat.Builder(context, CHANNEL_ONLINE)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Rodrigues Entregador")
+            .setContentTitle("UP Entregador")
             .setContentText("Online e aguardando novas corridas.")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
