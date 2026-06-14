@@ -116,10 +116,10 @@ fun UrgentRideScreen(
                     UrgentLogoMark()
                     Column(Modifier.weight(1f)) {
                         Text("Rodrigues Entregador", color = Green, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        Text("Nova corrida", color = Ink, fontFamily = Font, fontSize = 25.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("Nova corrida", color = Ink, fontFamily = Font, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                Text(value.ifBlank { "Valor a definir" }, color = Green, fontFamily = Font, fontSize = 40.sp, fontWeight = FontWeight.Black)
+                Text(value.ifBlank { "Valor a definir" }, color = Green, fontFamily = Font, fontSize = 34.sp, fontWeight = FontWeight.Bold)
                 Text(listOf(distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Dados da rota aguardando sincronização" }, color = Muted, fontFamily = Font, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 UrgentMotionRail(seconds)
             }
@@ -147,7 +147,7 @@ fun UrgentRideScreen(
         Spacer(Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(22.dp)) {
-                Text("Recusar", color = Red, fontFamily = Font, fontWeight = FontWeight.Black)
+                Text("Recusar", color = Red, fontFamily = Font, fontWeight = FontWeight.Bold)
             }
             Button(
                 onClick = onAccept,
@@ -157,7 +157,7 @@ fun UrgentRideScreen(
             ) {
                 Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Aceitar", fontFamily = Font, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                Text("Aceitar", fontFamily = Font, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
         Text("Pedido #${rideId.takeLast(6).uppercase()}", color = Muted, fontFamily = Font, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
@@ -179,14 +179,14 @@ private fun UrgentTop(seconds: Int) {
             Spacer(Modifier.width(7.dp))
             Icon(Icons.Filled.Bolt, null, tint = Red, modifier = Modifier.size(17.dp))
             Spacer(Modifier.width(6.dp))
-            Text("URGENTE", color = Red, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Black)
+            Text("URGENTE", color = Red, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.weight(1f))
         Box(Modifier.size(68.dp), contentAlignment = Alignment.Center) {
             Box(Modifier.size(66.dp).scale(pulse).alpha(.22f).clip(CircleShape).background(if (seconds <= 10) Red else Green))
             Box(Modifier.size(62.dp).clip(CircleShape).background(if (seconds <= 10) Red else Green).border(4.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(seconds.toString(), color = Color.White, fontFamily = Font, fontSize = 21.sp, fontWeight = FontWeight.Black)
+                    Text(seconds.toString(), color = Color.White, fontFamily = Font, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("seg", color = Color.White.copy(alpha = .85f), fontFamily = Font, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
@@ -215,8 +215,8 @@ private fun RouteLine(icon: ImageVector, label: String, value: String, color: Co
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
         Box(Modifier.size(38.dp).clip(CircleShape).background(color.copy(alpha = .12f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(20.dp)) }
         Column(Modifier.weight(1f)) {
-            Text(label, color = Muted, fontFamily = Font, fontSize = 10.sp, fontWeight = FontWeight.Black)
-            Text(value.ifBlank { "Não informado" }, color = Ink, fontFamily = Font, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(label, color = Muted, fontFamily = Font, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(value.ifBlank { "Não informado" }, color = Ink, fontFamily = Font, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -230,10 +230,10 @@ private fun UrgentPaymentLine(method: String, status: String, amount: String, ch
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(if (machine) Icons.Filled.CreditCard else Icons.Filled.Payments, null, tint = if (machine) Orange else Green, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text(if (paid) "Pago online" else raw, color = Ink, fontFamily = Font, fontSize = 15.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(if (paid) "Pago online" else raw, color = Ink, fontFamily = Font, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Text(if (paid) "Nada a cobrar" else amount.ifBlank { "Confirmar pagamento com a operação" }, color = Muted, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        if (machine) Text("Maquininha necessária", color = Orange, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Black)
-        if (changeFor.isNotBlank()) Text("Troco para $changeFor", color = Red, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Black)
+        if (machine) Text("Maquininha necessária", color = Orange, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        if (changeFor.isNotBlank()) Text("Troco para $changeFor", color = Red, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }

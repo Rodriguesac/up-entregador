@@ -54,7 +54,7 @@ fun EntregadorCard(modifier: Modifier = Modifier, content: @Composable ColumnSco
 }
 
 @Composable
-fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit = { Text(text, fontWeight = FontWeight.Black, fontSize = 15.sp) }) {
+fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit = { Text(text, fontWeight = FontWeight.Bold, fontSize = 15.sp) }) {
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -73,6 +73,6 @@ fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled
 
 @Composable
 fun EntregadorTitle(title: String, subtitle: String = "") {
-    Text(title, color = EntregadorColors.Text, fontSize = 26.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black)
+    Text(title, color = EntregadorColors.Text, fontSize = 24.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
     if (subtitle.isNotBlank()) Text(subtitle, color = EntregadorColors.Muted, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
 }

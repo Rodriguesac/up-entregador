@@ -40,3 +40,9 @@ Este app deve seguir as telas de referência aprovadas pelo usuário como contra
 - Bateria deve tentar abrir o pedido nativo de ignorar otimização antes de mandar para configurações.
 - Tela Home em restrição deve mostrar botão claro para liberar permissões, sem obrigar o entregador a procurar nas configurações.
 - Oferta urgente deve seguir o contrato visual: faixa vermelha, contador, valor forte, mapa e botões Aceitar/Recusar.
+
+
+## V6.21.4 - Tipografia e escala visual
+- Fonte do app usa a família padrão do Android com escala visual travada em 1.0 dentro do app, evitando que a fonte grande do aparelho estoure cards, bottom navigation e títulos.
+- Hierarquia ajustada por tipo de uso: títulos, subtítulos, cards, chips, menu inferior, valores e botões.
+- Peso da fonte foi suavizado: Black/ExtraBold saiu das telas operacionais; Bold/SemiBold mantém leitura forte sem parecer gigante.

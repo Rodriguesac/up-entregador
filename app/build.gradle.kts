@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 812
-        versionName = "6.21.2-mega-visual-permissoes"
+        versionCode = 814
+        versionName = "6.21.4-tipografia-visual-ajustada"
     }
 
     buildFeatures { compose = true }

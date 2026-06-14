@@ -207,7 +207,7 @@ private fun FullscreenRouteMap(
                     .clickable { onClose() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("‹", color = Color(0xFF101216), fontSize = 36.sp, fontWeight = FontWeight.Black)
+                Text("‹", color = Color(0xFF101216), fontSize = 36.sp, fontWeight = FontWeight.Bold)
             }
 
         }

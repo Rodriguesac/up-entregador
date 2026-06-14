@@ -472,7 +472,7 @@ private fun RowScope.BottomItem(item: AppTab, selected: AppTab, label: String, i
                 if (isSelected) Box(Modifier.align(Alignment.BottomCenter).size(5.dp).clip(CircleShape).background(Green))
             }
         },
-        label = { Text(label, fontSize = 10.sp, fontFamily = AppFont, fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold) },
+        label = { Text(label, fontSize = 10.sp, fontFamily = AppFont, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold) },
         colors = NavigationBarItemDefaults.colors(
             selectedIconColor = Green,
             selectedTextColor = Green,
@@ -531,7 +531,7 @@ private fun PrimaryButton(text: String, icon: ImageVector? = null, enabled: Bool
         modifier = modifier.fillMaxWidth().height(50.dp)
     ) {
         if (icon != null) { Icon(icon, null, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)) }
-        Text(text, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black)
+        Text(text, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -539,7 +539,7 @@ private fun PrimaryButton(text: String, icon: ImageVector? = null, enabled: Bool
 private fun SecondaryButton(text: String, icon: ImageVector? = null, color: Color = Ink, modifier: Modifier = Modifier, onClick: () -> Unit) {
     OutlinedButton(onClick = onClick, modifier = modifier.fillMaxWidth().height(50.dp), shape = ButtonShape, colors = ButtonDefaults.outlinedButtonColors(contentColor = color)) {
         if (icon != null) { Icon(icon, null, modifier = Modifier.size(19.dp)); Spacer(Modifier.width(8.dp)) }
-        Text(text, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(text, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -550,7 +550,7 @@ private fun StatusChip(text: String, color: Color, icon: ImageVector? = null) {
         modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(color.copy(alpha = .12f)).border(1.dp, color.copy(alpha = .25f), RoundedCornerShape(999.dp)).padding(horizontal = 11.dp, vertical = 7.dp)
     ) {
         if (icon != null) { Icon(icon, null, tint = color, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(5.dp)) }
-        Text(text, color = color, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Black, maxLines = 1)
+        Text(text, color = color, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
 
@@ -582,7 +582,7 @@ private fun InlineAppMessage(text: String, color: Color, onClose: () -> Unit) {
         Icon(if (color == Red) Icons.Filled.ErrorOutline else Icons.Filled.CheckCircle, null, tint = color, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
         Text(text, color = Ink, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-        Text("OK", color = color, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Black, modifier = Modifier.clickable { onClose() })
+        Text("OK", color = color, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onClose() })
     }
 }
 
@@ -601,16 +601,18 @@ private fun PermissionsOnboardingScreen(
     LaunchedEffect(permissionRefreshTick) { permissionStatus = PermissionStatusReader.read(context) }
 
     ScreenScroll {
-        Spacer(Modifier.height(8.dp))
-        BrandHeader(title = "Permissões do app", subtitle = "Toque em liberar agora e responda Permitir nas perguntas do Android.", icon = Icons.Filled.Shield)
-        PermissionProgressHero(permissionStatus, context, onRequestEssentialPermissions)
-        PermissionSetupCard("Notificações", "Receba alerta de nova corrida e avisos do gestor.", permissionStatus.notifications, Icons.Filled.NotificationsActive, onClick = onRequestNotificationPermission)
-        PermissionSetupCard("Localização", "Usada para rota, coleta e acompanhamento da entrega.", permissionStatus.location, Icons.Filled.MyLocation, onClick = onRequestLocationPermission)
-        PermissionSetupCard("Alerta urgente", "Permite abrir corrida importante mesmo com a tela bloqueada.", permissionStatus.fullScreenIntent, Icons.Filled.Bolt, onClick = onOpenFullScreenSettings)
-        PermissionSetupCard("Bateria sem restrição", "Evita que o Android encerre o app em segundo plano.", permissionStatus.batteryUnrestricted, Icons.Filled.Shield, onClick = onOpenBatterySettings)
-        PermissionSetupCard("Internet e GPS", "O app precisa de conexão e GPS ativo para operar.", hasInternet(context) && isGpsEnabled(context), Icons.Filled.Map, onClick = onRequestEssentialPermissions)
-        PrimaryButton("Continuar", icon = Icons.Filled.CheckCircle, onClick = onContinue)
-        Text("Se algo faltar depois, a Home mostra Restrição e o botão Liberar permissões.", color = Muted, fontFamily = AppFont, fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(4.dp))
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            RodriguesLogoMark(size = 72, pulse = false)
+            Text("Permissões do app", color = Ink, fontFamily = AppFont, fontSize = 25.sp, lineHeight = 27.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text("Precisamos de algumas permissões para você receber corridas com segurança e eficiência.", color = Muted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 10.dp))
+        }
+        PermissionSetupCard("Notificações", "Receba alertas de novas corridas e atualizações.", permissionStatus.notifications, Icons.Filled.NotificationsActive, onClick = onRequestNotificationPermission)
+        PermissionSetupCard("Localização", "Permite encontrar corridas na sua região.", permissionStatus.location, Icons.Filled.MyLocation, onClick = onRequestLocationPermission)
+        PermissionSetupCard("Alerta em tela cheia", "Garante que você veja todas as notificações.", permissionStatus.fullScreenIntent, Icons.Filled.Bolt, onClick = onOpenFullScreenSettings)
+        PermissionSetupCard("Bateria sem restrição", "Evita que o app seja encerrado em segundo plano.", permissionStatus.batteryUnrestricted, Icons.Filled.Shield, onClick = onOpenBatterySettings)
+        PrimaryButton("Configurar permissões", icon = Icons.Filled.CheckCircle, onClick = onRequestEssentialPermissions)
+        SecondaryButton("Continuar", color = Green, onClick = onContinue)
     }
 }
 
@@ -627,7 +629,7 @@ private fun PermissionProgressHero(status: PermissionStatus, context: Context, o
                 Icon(if (ready) Icons.Filled.CheckCircle else Icons.Filled.Shield, null, tint = if (ready) Green else Orange, modifier = Modifier.size(30.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(if (ready) "Tudo liberado" else "Faltam permissões", color = Ink, fontFamily = AppFont, fontSize = 21.sp, fontWeight = FontWeight.Black)
+                Text(if (ready) "Tudo liberado" else "Faltam permissões", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(if (ready) "Você já pode operar com alerta e localização." else missing.joinToString(" • "), color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -637,19 +639,34 @@ private fun PermissionProgressHero(status: PermissionStatus, context: Context, o
 
 @Composable
 private fun PermissionSetupCard(title: String, message: String, ok: Boolean, icon: ImageVector, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().shadow(5.dp, CardShape, clip = false, ambientColor = Color(0x1404A957), spotColor = Color(0x12000000)).clip(CardShape).background(Surface).border(1.dp, Border, CardShape).clickable { onClick() }.padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, RoundedCornerShape(20.dp), clip = false, ambientColor = Color(0x10000000), spotColor = Color(0x0C000000))
+            .clip(RoundedCornerShape(20.dp))
+            .background(Surface)
+            .border(1.dp, Border, RoundedCornerShape(20.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 13.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(48.dp).clip(CircleShape).background(if (ok) GreenSoft else OrangeSoft), contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = if (ok) Green else Orange, modifier = Modifier.size(23.dp))
+        Box(Modifier.size(48.dp).clip(CircleShape).background(if (ok) GreenSoft else SurfaceSoft), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = Green, modifier = Modifier.size(23.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(message, color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        if (ok) {
+            Box(Modifier.size(34.dp).clip(CircleShape).background(Green), contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.CheckCircle, null, tint = Color.White, modifier = Modifier.size(19.dp))
             }
-            Column(Modifier.weight(1f)) {
-                Text(title, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black)
-                Text(message, color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp)
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text("Ativar", color = Green, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Green, modifier = Modifier.size(18.dp))
             }
-            StatusChip(if (ok) "OK" else "Ativar", if (ok) Green else Orange)
         }
     }
 }
@@ -661,7 +678,7 @@ private fun BrandHeader(title: String, subtitle: String, icon: ImageVector) {
             RodriguesLogoMark(size = 50, pulse = true)
             Column {
                 Text("Rodrigues Entregador", color = Green, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Text(title, color = Ink, fontFamily = AppFont, fontSize = 24.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
+                Text(title, color = Ink, fontFamily = AppFont, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.Bold)
             }
         }
         Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium)
@@ -782,7 +799,7 @@ private fun AnimatedAlertStrip(text: String, color: Color) {
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(color.copy(alpha = .10f)).border(1.dp, color.copy(alpha = .22f), RoundedCornerShape(20.dp)).padding(12.dp)
     ) {
         Box(Modifier.size(11.dp).clip(CircleShape).background(color.copy(alpha = pulse)))
-        Text(text, color = color, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Black)
+        Text(text, color = color, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -796,8 +813,8 @@ private fun RouteProgressRibbon(ride: DriverRide) {
                 Icon(Icons.Filled.Route, null, tint = color, modifier = Modifier.size(22.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text("Fluxo da rota", color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Black)
-                Text(stage, color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Black)
+                Text("Fluxo da rota", color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text(stage, color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             }
             StatusChip(ride.ordersReadyLabel(), color)
         }
@@ -825,7 +842,7 @@ private fun CreatePasswordScreen(profile: DriverProfile, onSaved: () -> Unit, on
         BrandHeader(title = "Crie sua senha", subtitle = "Esse acesso será usado nas próximas entradas no app.", icon = Icons.Filled.Shield)
         if (message.isNotBlank()) InlineNoticeCard(message, Red)
         PremiumCard {
-            Text("Olá, ${profile.firstName()}", color = Ink, fontFamily = AppFont, fontSize = 19.sp, fontWeight = FontWeight.Black)
+            Text("Olá, ${profile.firstName()}", color = Ink, fontFamily = AppFont, fontSize = 19.sp, fontWeight = FontWeight.Bold)
             Field("Nova senha", password, { password = it }, password = true)
             Field("Confirmar senha", confirm, { confirm = it }, password = true)
             PrimaryButton("Salvar senha", enabled = !loading, icon = Icons.Filled.CheckCircle) {
@@ -860,7 +877,7 @@ private fun SystemStateScreen(title: String, message: String, icon: ImageVector,
         Spacer(Modifier.height(80.dp))
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(Modifier.size(82.dp).clip(CircleShape).background(color.copy(alpha = .12f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(42.dp)) }
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 25.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 23.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(message, color = Muted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
         }
     }
@@ -893,18 +910,254 @@ private fun HomeContent(
     val permissions = PermissionStatusReader.read(context)
     val status = operationalStatus(online, activeRide, permissions, context)
     ScreenScroll {
-        DriverTopHeader(profile, status, unread = appNotices.count { !it.read && it.isVisible() }, onOpenNotifications = onOpenNotifications)
-        StatusHeroCard(status = status, online = online, onToggleOnline = onToggleOnline, onFixPermissions = onFixPermissions)
-        EarningsSummaryCard(stats = stats, hideValues = hideValues, onToggleValues = onToggleValues)
-        if (activeRide != null) {
-            ActiveRouteShortcut(activeRide, onOpenRides)
-        } else if (pendingRide != null) {
-            IncomingOfferPanel(pendingRide, onAccept = onAccept, onReject = onReject, onExpire = onExpire)
-        } else {
-            OperationBanner(appBanners.firstOrNull { it.isVisible() }, status)
+        ContractHomeHeader(
+            profile = profile,
+            status = status,
+            unread = appNotices.count { !it.read && it.isVisible() },
+            onOpenNotifications = onOpenNotifications,
+            onOpenSupport = onOpenSupport
+        )
+        ContractStatusPill(status = status, online = online, onToggleOnline = onToggleOnline, onFixPermissions = onFixPermissions)
+        ContractTodayCard(stats = stats, hideValues = hideValues, onToggleValues = onToggleValues)
+        when {
+            activeRide != null -> ContractActiveRideCard(activeRide, onOpenRides)
+            pendingRide != null -> IncomingOfferPanel(pendingRide, onAccept = onAccept, onReject = onReject, onExpire = onExpire)
+            else -> ContractNewsBanner(appBanners.firstOrNull { it.isVisible() })
         }
-        QuickActions(onOpenHistory, onOpenWallet, onOpenMap, onOpenSupport)
-        if (!permissions.ready) PermissionRestrictionMini(permissions, context, onFixPermissions)
+        ContractPagerDots()
+        ContractQuickActions(onOpenHistory, onOpenWallet, onOpenMap, onOpenSupport)
+        if (!permissions.ready) ContractPermissionMini(permissions, context, onFixPermissions)
+    }
+}
+
+@Composable
+private fun ContractHomeHeader(
+    profile: DriverProfile,
+    status: OperationalStatus,
+    unread: Int,
+    onOpenNotifications: () -> Unit,
+    onOpenSupport: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+    ) {
+        Avatar(profile.name, profile.photoUrl, 58)
+        Column(Modifier.weight(1f)) {
+            Text("Olá, ${profile.firstName()}", color = Ink, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                when (status.kind) {
+                    AvailabilityKind.Disponivel -> "Pronto para receber corridas"
+                    AvailabilityKind.EmEntrega -> "Corrida em andamento"
+                    AvailabilityKind.Restricao -> "Ajuste permissões para operar"
+                    AvailabilityKind.Indisponivel -> "Toque em disponível para rodar"
+                },
+                color = Muted,
+                fontFamily = AppFont,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        RoundIconButton(Icons.Filled.Notifications, onOpenNotifications, badge = unread > 0)
+        RoundIconButton(Icons.Filled.ChatBubbleOutline, onOpenSupport)
+    }
+}
+
+@Composable
+private fun RoundIconButton(icon: ImageVector, onClick: () -> Unit, badge: Boolean = false) {
+    Box(
+        Modifier
+            .size(46.dp)
+            .shadow(2.dp, CircleShape, clip = false)
+            .clip(CircleShape)
+            .background(Surface)
+            .border(1.dp, Border, CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, null, tint = Ink, modifier = Modifier.size(22.dp))
+        if (badge) Box(Modifier.align(Alignment.TopEnd).size(12.dp).clip(CircleShape).background(Green).border(2.dp, Color.White, CircleShape))
+    }
+}
+
+@Composable
+private fun ContractStatusPill(status: OperationalStatus, online: Boolean, onToggleOnline: (Boolean) -> Unit, onFixPermissions: () -> Unit) {
+    val color = when (status.kind) {
+        AvailabilityKind.Disponivel -> Green
+        AvailabilityKind.EmEntrega -> Blue
+        AvailabilityKind.Restricao -> Red
+        AvailabilityKind.Indisponivel -> Green
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(7.dp, RoundedCornerShape(28.dp), clip = false, ambientColor = color.copy(alpha = .22f), spotColor = color.copy(alpha = .14f))
+            .clip(RoundedCornerShape(28.dp))
+            .background(color)
+            .clickable { if (status.canGoOnline || online) onToggleOnline(!online) else onFixPermissions() }
+            .padding(horizontal = 18.dp, vertical = 15.dp)
+    ) {
+        Box(Modifier.size(42.dp).clip(CircleShape).background(Color.White.copy(alpha = .18f)), contentAlignment = Alignment.Center) {
+            Icon(
+                when (status.kind) {
+                    AvailabilityKind.Restricao -> Icons.Filled.ErrorOutline
+                    AvailabilityKind.EmEntrega -> Icons.Filled.Route
+                    else -> Icons.Filled.CheckCircle
+                },
+                null,
+                tint = Color.White,
+                modifier = Modifier.size(23.dp)
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                if (!status.canGoOnline && !online) "Liberar permissões" else status.label,
+                color = Color.White,
+                fontFamily = AppFont,
+                fontSize = 20.sp,
+                lineHeight = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+            if (status.kind == AvailabilityKind.Restricao) Text(status.message, color = Color.White.copy(alpha = .88f), fontFamily = AppFont, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        Icon(if (online) Icons.Filled.Cancel else Icons.Filled.KeyboardArrowRight, null, tint = Color.White, modifier = Modifier.size(24.dp))
+    }
+}
+
+@Composable
+private fun ContractTodayCard(stats: DriverStats, hideValues: Boolean, onToggleValues: () -> Unit) {
+    PremiumCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Ganhos de hoje", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), color = Ink, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
+            }
+            Box(Modifier.width(1.dp).height(48.dp).background(Border))
+            Spacer(Modifier.width(14.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.width(92.dp)) {
+                MetricLine(stats.ridesTodayCount.toString(), "Corridas")
+                MetricLine(stats.finishedTodayCount.toString(), "Finalizadas")
+            }
+            Box(Modifier.size(38.dp).clip(CircleShape).background(SurfaceSoft).clickable { onToggleValues() }, contentAlignment = Alignment.Center) {
+                Icon(if (hideValues) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, null, tint = Muted, modifier = Modifier.size(20.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetricLine(value: String, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(value, color = Green, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(23.dp))
+        Text(label, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun ContractNewsBanner(banner: AppCarouselBanner?) {
+    val title = banner?.title?.takeIf { it.isNotBlank() } ?: "Novidades da operação"
+    val desc = banner?.description?.takeIf { it.isNotBlank() } ?: "Fique por dentro das melhorias e comunicados importantes."
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(166.dp)
+            .shadow(7.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Green.copy(alpha = .20f), spotColor = Color(0x12000000))
+            .clip(RoundedCornerShape(24.dp))
+            .background(Brush.linearGradient(listOf(GreenDark, Green)))
+            .padding(18.dp)
+    ) {
+        Column(Modifier.align(Alignment.CenterStart).fillMaxWidth(.62f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusChip("NOVIDADES", Color.White)
+            Text(title, color = Color.White, fontFamily = AppFont, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+            Text(desc, color = Color.White.copy(alpha = .88f), fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Box(Modifier.clip(RoundedCornerShape(13.dp)).background(Color.White).padding(horizontal = 13.dp, vertical = 8.dp)) {
+                Text("Saiba mais", color = GreenDark, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Box(Modifier.align(Alignment.CenterEnd).size(105.dp).clip(RoundedCornerShape(26.dp)).background(Color.White.copy(alpha = .16f)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.Storefront, null, tint = Color.White, modifier = Modifier.size(58.dp))
+        }
+    }
+}
+
+@Composable
+private fun ContractPagerDots() {
+    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(Green))
+        Spacer(Modifier.width(8.dp))
+        Box(Modifier.size(8.dp).clip(CircleShape).background(Border))
+        Spacer(Modifier.width(8.dp))
+        Box(Modifier.size(8.dp).clip(CircleShape).background(Border))
+    }
+}
+
+@Composable
+private fun ContractQuickActions(onHistory: () -> Unit, onWallet: () -> Unit, onMap: () -> Unit, onSupport: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            ContractQuickTile("Histórico", "Ver corridas", Icons.Filled.History, Modifier.weight(1f), onHistory)
+            ContractQuickTile("Ganhos", "Resumo financeiro", Icons.Filled.AccountBalanceWallet, Modifier.weight(1f), onWallet)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            ContractQuickTile("Mapa", "Ver região", Icons.Filled.Map, Modifier.weight(1f), onMap)
+            ContractQuickTile("Suporte", "Fale conosco", Icons.Filled.SupportAgent, Modifier.weight(1f), onSupport)
+        }
+    }
+}
+
+@Composable
+private fun ContractQuickTile(title: String, subtitle: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = modifier
+            .height(72.dp)
+            .shadow(3.dp, RoundedCornerShape(18.dp), clip = false)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Surface)
+            .border(1.dp, Border, RoundedCornerShape(18.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp)
+    ) {
+        Icon(icon, null, tint = Green, modifier = Modifier.size(26.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+@Composable
+private fun ContractActiveRideCard(ride: DriverRide, onOpenRides: () -> Unit) {
+    PremiumCard(modifier = Modifier.clickable { onOpenRides() }) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(50.dp).clip(CircleShape).background(GreenSoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Route, null, tint = Green, modifier = Modifier.size(26.dp)) }
+            Column(Modifier.weight(1f)) {
+                Text("Corrida ativa", color = Green, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("#${ride.routeCode()} • ${ride.stageLabel()}", color = Ink, fontFamily = AppFont, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(ride.dropoff.ifBlank { ride.neighborhood.ifBlank { "Toque para continuar" } }, color = Muted, fontFamily = AppFont, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted)
+        }
+    }
+}
+
+@Composable
+private fun ContractPermissionMini(status: PermissionStatus, context: Context, onFix: () -> Unit) {
+    val missing = permissionMissingLabels(status, context)
+    if (missing.isEmpty()) return
+    Column(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(OrangeSoft).border(1.dp, Orange.copy(alpha = .22f), RoundedCornerShape(20.dp)).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text("Permissões pendentes", color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Text(missing.joinToString(" • "), color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold)
+        PrimaryButton("Liberar agora", icon = Icons.Filled.CheckCircle, color = Orange, onClick = onFix)
     }
 }
 
@@ -913,8 +1166,8 @@ private fun DriverTopHeader(profile: DriverProfile, status: OperationalStatus, u
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
         Avatar(profile.name, profile.photoUrl, 54)
         Column(Modifier.weight(1f)) {
-            Text("Olá, ${profile.firstName()}", color = Ink, fontFamily = AppFont, fontSize = 24.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(status.label, color = status.buttonColor, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Black)
+            Text("Olá, ${profile.firstName()}", color = Ink, fontFamily = AppFont, fontSize = 22.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(status.label, color = status.buttonColor, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Box(Modifier.size(48.dp).clip(CircleShape).background(SurfaceSoft).border(1.dp, Border, CircleShape).clickable { onOpenNotifications() }, contentAlignment = Alignment.Center) {
             Icon(Icons.Filled.Notifications, null, tint = Ink, modifier = Modifier.size(22.dp))
@@ -957,7 +1210,7 @@ private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleO
             }
             Spacer(Modifier.width(13.dp))
             Column(Modifier.weight(1f)) {
-                Text(status.label, color = Color.White, fontFamily = AppFont, fontSize = 25.sp, lineHeight = 27.sp, fontWeight = FontWeight.Black)
+                Text(status.label, color = Color.White, fontFamily = AppFont, fontSize = 23.sp, lineHeight = 25.sp, fontWeight = FontWeight.Bold)
                 Text(status.message, color = Color.White.copy(alpha = .86f), fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
             }
         }
@@ -976,7 +1229,7 @@ private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleO
         ) {
             Icon(if (online) Icons.Filled.Cancel else Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text(if (online) "Ficar indisponível" else if (!status.canGoOnline) "Liberar permissões" else "Ficar disponível", fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black)
+            Text(if (online) "Ficar indisponível" else if (!status.canGoOnline) "Liberar permissões" else "Ficar disponível", fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -986,8 +1239,8 @@ private fun EarningsSummaryCard(stats: DriverStats, hideValues: Boolean, onToggl
     PremiumCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1.25f)) {
-                Text("Ganhos de hoje", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Black)
-                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), color = Ink, fontFamily = AppFont, fontSize = 32.sp, lineHeight = 34.sp, fontWeight = FontWeight.Black)
+                Text("Ganhos de hoje", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), color = Ink, fontFamily = AppFont, fontSize = 28.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold)
                 Text("Próximo repasse e acertos ficam na Carteira", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, lineHeight = 15.sp, fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.width(10.dp))
@@ -1013,8 +1266,8 @@ private fun SmallMetric(label: String, value: String, modifier: Modifier = Modif
 
 @Composable
 private fun SmallMetricText(label: String, value: String) {
-    Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Black, maxLines = 1)
-    Text(value, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+    Text(value, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
 }
 
 @Composable
@@ -1027,7 +1280,7 @@ private fun ActiveRouteShortcut(ride: DriverRide, onOpenRides: () -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Rota #${ride.routeCode()}", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                Text("Rota #${ride.routeCode()}", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text("${ride.stageLabel()} • ${ride.ordersReadyLabel()}", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted)
@@ -1051,7 +1304,7 @@ private fun OperationBanner(banner: AppCarouselBanner?, status: OperationalStatu
                 Box(Modifier.size(72.dp).clip(RoundedCornerShape(22.dp)).background(status.buttonColor.copy(alpha = .12f)), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Bolt, null, tint = status.buttonColor, modifier = Modifier.size(35.dp)) }
             }
             Column(Modifier.weight(1f)) {
-                Text(title, color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                Text(title, color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text(desc, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 17.sp)
             }
         }
@@ -1072,7 +1325,7 @@ private fun QuickActions(onHistory: () -> Unit, onWallet: () -> Unit, onMap: () 
 private fun QuickTile(title: String, icon: ImageVector, color: Color, modifier: Modifier, onClick: () -> Unit) {
     Column(modifier.shadow(7.dp, RoundedCornerShape(24.dp), clip = false).clip(RoundedCornerShape(24.dp)).background(Surface).border(1.dp, Border, RoundedCornerShape(24.dp)).clickable { onClick() }.padding(vertical = 15.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
         Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
-        Text(title, color = Ink, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Black)
+        Text(title, color = Ink, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -1098,7 +1351,7 @@ private fun PermissionRestrictionMini(status: PermissionStatus, context: Context
                     Icon(Icons.Filled.ErrorOutline, null, tint = Orange, modifier = Modifier.size(24.dp))
                 }
                 Column(Modifier.weight(1f)) {
-                    Text("Operação em restrição", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                    Text("Operação em restrição", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Text("Falta: ${missing.joinToString(", ")}", color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
@@ -1130,19 +1383,19 @@ private fun IncomingOfferPanel(ride: DriverRide, onAccept: (DriverRide) -> Unit,
         ) {
             Icon(Icons.Filled.ErrorOutline, null, tint = Color.White, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(8.dp))
-            Text("NOVA CORRIDA URGENTE", color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+            Text("NOVA CORRIDA URGENTE", color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             Box(Modifier.clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .18f)).border(1.dp, Color.White.copy(alpha = .3f), RoundedCornerShape(13.dp)).padding(horizontal = 10.dp, vertical = 5.dp)) {
-                Text(offerCountdownText(ride, now), color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Black)
+                Text(offerCountdownText(ride, now), color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Coleta", color = Green, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Black)
-                    Text(ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, color = Ink, fontFamily = AppFont, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text("Coleta", color = Green, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, color = Ink, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (ride.neighborhood.isNotBlank()) Text(ride.neighborhood, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                Text(ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }, color = Green, fontFamily = AppFont, fontSize = 28.sp, lineHeight = 30.sp, fontWeight = FontWeight.Black)
+                Text(ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }, color = Green, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 OfferMetric("Distância", ride.distance.ifBlank { "—" }, Icons.Filled.Route, Modifier.weight(1f))
@@ -1185,8 +1438,8 @@ private fun OfferMetric(label: String, value: String, icon: ImageVector, modifie
     Row(modifier.clip(RoundedCornerShape(22.dp)).background(SurfaceSoft).border(1.dp, Border, RoundedCornerShape(22.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
         Icon(icon, null, tint = Green, modifier = Modifier.size(20.dp))
         Column {
-            Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Black)
-            Text(value, color = Ink, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Black, maxLines = 1)
+            Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(value, color = Ink, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
         }
     }
 }
@@ -1284,7 +1537,7 @@ private fun RouteTopHeader(ride: DriverRide) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Rota #${ride.routeCode()}", color = Color.White, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black)
+                Text("Rota #${ride.routeCode()}", color = Color.White, fontFamily = AppFont, fontSize = 24.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
                 Text("${ride.stageLabel()} • ${ride.ordersReadyLabel()}", color = Color.White.copy(alpha = .78f), fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             StatusChip(ride.stageShort(), ride.stageColor(), Icons.Filled.Route)
@@ -1305,8 +1558,8 @@ private fun NextActionCard(ride: DriverRide, action: RouteAction, onMainClick: (
                 Icon(Icons.Filled.Bolt, null, tint = action.accent, modifier = Modifier.size(28.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text("Próxima ação", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Black)
-                Text(action.title, color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                Text("Próxima ação", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(action.title, color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(action.message, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold)
             }
         }
@@ -1318,8 +1571,8 @@ private fun NextActionCard(ride: DriverRide, action: RouteAction, onMainClick: (
 @Composable
 private fun ReleaseCodeCard(ride: DriverRide) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp)).background(GreenSoft).border(1.dp, Green.copy(alpha = .22f), RoundedCornerShape(26.dp)).padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Código de retirada", color = GreenDark, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Black)
-        Text(ride.releaseCode(), color = Ink, fontFamily = AppFont, fontSize = 44.sp, fontWeight = FontWeight.Black)
+        Text("Código de retirada", color = GreenDark, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(ride.releaseCode(), color = Ink, fontFamily = AppFont, fontSize = 44.sp, fontWeight = FontWeight.Bold)
         Text("Mostre no balcão", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
@@ -1327,7 +1580,7 @@ private fun ReleaseCodeCard(ride: DriverRide) {
 @Composable
 private fun CompactStopsCard(ride: DriverRide, isDelivering: Boolean) {
     PremiumCard {
-        Text("Paradas", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Black)
+        Text("Paradas", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         RoutePointLine(Icons.Filled.Storefront, "Coleta", ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, Green)
         RoutePointLine(Icons.Filled.Place, "Entrega", if (isDelivering) ride.dropoff.ifBlank { ride.neighborhood.ifBlank { "Endereço não informado" } } else "Endereço protegido até a saída", Orange)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
@@ -1342,8 +1595,8 @@ private fun RoutePointLine(icon: ImageVector, label: String, value: String, colo
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
         Box(Modifier.size(36.dp).clip(CircleShape).background(color.copy(alpha = .12f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(20.dp)) }
         Column(Modifier.weight(1f)) {
-            Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Black)
-            Text(value.ifBlank { "Não informado" }, color = Ink, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(value.ifBlank { "Não informado" }, color = Ink, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -1357,8 +1610,8 @@ private fun PaymentChipsCard(payment: PaymentUi) {
                 Icon(if (payment.requiresMachine) Icons.Filled.CreditCard else Icons.Filled.Payments, null, tint = payment.color, modifier = Modifier.size(23.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text("Pagamento", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Black)
-                Text(payment.label, color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Pagamento", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(payment.label, color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (payment.amountLabel.isNotBlank()) {
                 StatusChip(payment.amountLabel, if (payment.requiresChange) Orange else Green)
@@ -1389,7 +1642,7 @@ private fun OrdersCompactSection(ride: DriverRide, expanded: Boolean, onToggle: 
     PremiumCard {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable { onToggle() }) {
             Column(Modifier.weight(1f)) {
-                Text("Pedidos da rota", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                Text("Pedidos da rota", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Text(if (waiting) "Aguardando loja • ${ride.ordersReadyLabel()}" else ride.ordersReadyLabel(), color = if (waiting) Orange else Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted)
@@ -1404,7 +1657,7 @@ private fun OrdersCompactSection(ride: DriverRide, expanded: Boolean, onToggle: 
 private fun RouteOrderLine(order: RouteOrder, fallbackPayment: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(SurfaceSoft).padding(12.dp)) {
         Column(Modifier.weight(1f)) {
-            Text("#${order.code.ifBlank { order.id.takeLast(4).uppercase(Locale.ROOT) }} • ${order.customerName.ifBlank { "Cliente" }}", color = Ink, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("#${order.code.ifBlank { order.id.takeLast(4).uppercase(Locale.ROOT) }} • ${order.customerName.ifBlank { "Cliente" }}", color = Ink, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(order.paymentSummary.ifBlank { fallbackPayment }, color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         StatusChip(if (order.terminal) "Cancelado" else if (order.ready) "Pronto" else "Preparo", if (order.terminal) Red else if (order.ready) Green else Orange)
@@ -1415,7 +1668,7 @@ private fun RouteOrderLine(order: RouteOrder, fallbackPayment: String) {
 private fun CollapsibleFinance(ride: DriverRide, expanded: Boolean, onToggle: () -> Unit) {
     PremiumCard {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable { onToggle() }) {
-            Text("Financeiro e repasse", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+            Text("Financeiro e repasse", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted)
         }
         if (expanded) {
@@ -1432,7 +1685,7 @@ private fun CollapsibleFinance(ride: DriverRide, expanded: Boolean, onToggle: ()
 private fun FinanceLine(label: String, value: String) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Text(value, color = Ink, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Black)
+        Text(value, color = Ink, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -1470,7 +1723,7 @@ private fun EmptyOperationScreen(title: String, message: String, icon: ImageVect
         Spacer(Modifier.height(50.dp))
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(15.dp)) {
             Box(Modifier.size(88.dp).clip(CircleShape).background(color.copy(alpha = .12f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(44.dp)) }
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 24.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(message, color = Muted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
         }
     }
@@ -1479,41 +1732,50 @@ private fun EmptyOperationScreen(title: String, message: String, icon: ImageVect
 @Composable
 private fun WalletContent(profile: DriverProfile, stats: DriverStats, history: List<DriverHistory>, hideValues: Boolean, onToggleValues: () -> Unit) {
     ScreenScroll {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BrandHeader(title = "Carteira", subtitle = "Saldo, ganhos e repasses da operação.", icon = Icons.Filled.AccountBalanceWallet)
-        }
-        PremiumCard {
-            Row(verticalAlignment = Alignment.Top) {
-                Column(Modifier.weight(1f)) {
-                    Text("Ganhos de hoje", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Black)
-                    Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), color = Ink, fontFamily = AppFont, fontSize = 34.sp, fontWeight = FontWeight.Black)
-                    Text("${stats.finishedTodayCount} finalizadas hoje", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        ScreenHeader("Carteira", "Saldo, ganhos e repasses.", Icons.Filled.AccountBalanceWallet, null)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(26.dp))
+                .background(Brush.linearGradient(listOf(GreenDark, Green)))
+                .padding(20.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Saldo disponível", color = Color.White.copy(alpha = .86f), fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Box(Modifier.size(38.dp).clip(CircleShape).background(Color.White.copy(alpha = .15f)).clickable { onToggleValues() }, contentAlignment = Alignment.Center) { Icon(if (hideValues) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, null, tint = Color.White) }
                 }
-                Box(Modifier.size(44.dp).clip(CircleShape).background(SurfaceSoft).clickable { onToggleValues() }, contentAlignment = Alignment.Center) { Icon(if (hideValues) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, null, tint = Muted) }
+                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.valorAReceber.takeIf { it > 0.0 } ?: stats.totalWeek), color = Color.White, fontFamily = AppFont, fontSize = 39.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            AmountCard("Semana", stats.totalWeek, hideValues, Modifier.weight(1f))
-            AmountCard("Mês", stats.totalMonth, hideValues, Modifier.weight(1f))
+            AmountCard("Saldo pendente", stats.valorARepassar, hideValues, Modifier.weight(1f))
+            AmountCard("Total a receber", stats.valorAReceber, hideValues, Modifier.weight(1f))
         }
         PremiumCard {
-            Text("Acerto da operação", color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Black)
-            FinanceLine("Dinheiro recebido", moneyMaybe(stats.dinheiroRecebido, hideValues))
-            FinanceLine("Cartão/maquininha", moneyMaybe(stats.cartaoRecebido, hideValues))
-            FinanceLine("Pix", moneyMaybe(stats.pixRecebido, hideValues))
-            FinanceLine("Taxas", moneyMaybe(stats.taxasMaquininha, hideValues))
-            FinanceLine("A repassar loja", moneyMaybe(stats.valorARepassar, hideValues))
-            FinanceLine("A receber", moneyMaybe(stats.valorAReceber, hideValues))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(GreenSoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Schedule, null, tint = Green, modifier = Modifier.size(28.dp)) }
+                Column(Modifier.weight(1f)) {
+                    Text("Próximo repasse", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(stats.proximoRepasseLabel.ifBlank { "A definir pela operação" }, color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stats.proximoRepasseDescricao.ifBlank { "Estimativa de crédito será atualizada." }, color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp)
+                }
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted)
+            }
         }
         PremiumCard {
-            Text("Próximo repasse", color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Black)
-            Text(stats.proximoRepasseLabel, color = Green, fontFamily = AppFont, fontSize = 19.sp, fontWeight = FontWeight.Black)
-            Text(stats.proximoRepasseDescricao, color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 17.sp)
-        }
-        PremiumCard {
-            Text("Pix/Banco", color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Black)
-            RoutePointLine(Icons.Filled.Payments, "Pix", stats.pixKey.ifBlank { profile.pixKey.ifBlank { "Não informado" } }, Green)
+            RoutePointLine(Icons.Filled.Payments, "Chave Pix cadastrada", stats.pixKey.ifBlank { profile.pixKey.ifBlank { "Não informada" } }, Green)
             RoutePointLine(Icons.Filled.AccountBalanceWallet, "Banco", stats.bankName.ifBlank { profile.bankName.ifBlank { "Não informado" } }, Blue)
+        }
+        PremiumCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Últimos repasses", color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("Ver todos", color = Green, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+            history.filter { it.action.contains("FINAL", true) || it.action.contains("PAGO", true) }.take(3).forEach { item ->
+                FinanceLine(item.createdLabel, item.value.ifBlank { "Pago" })
+            }
+            if (history.isEmpty()) Text("Nenhum repasse registrado ainda.", color = Muted, fontFamily = AppFont, fontSize = 12.sp)
         }
     }
 }
@@ -1521,8 +1783,8 @@ private fun WalletContent(profile: DriverProfile, stats: DriverStats, history: L
 @Composable
 private fun AmountCard(label: String, amount: Double, hide: Boolean, modifier: Modifier) {
     PremiumCard(modifier = modifier) {
-        Text(label, color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Black)
-        Text(if (hide) "••••" else DriverRepository.formatCurrency(amount), color = Ink, fontFamily = AppFont, fontSize = 19.sp, fontWeight = FontWeight.Black, maxLines = 1)
+        Text(label, color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text(if (hide) "••••" else DriverRepository.formatCurrency(amount), color = Ink, fontFamily = AppFont, fontSize = 19.sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
 
@@ -1552,9 +1814,9 @@ private fun HistoryCard(item: DriverHistory) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusChip(historyLabel(item.action), color)
             Spacer(Modifier.weight(1f))
-            Text(item.value.ifBlank { "—" }, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black)
+            Text(item.value.ifBlank { "—" }, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
-        Text("#${item.rideId.takeLast(6).uppercase(Locale.ROOT)} • ${item.createdLabel}", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Text("#${item.rideId.takeLast(6).uppercase(Locale.ROOT)} • ${item.createdLabel}", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Text(historySubtitle(item), color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -1571,7 +1833,7 @@ private fun NotificationsScreen(notices: List<AppNotice>, onBack: () -> Unit) {
                     Spacer(Modifier.weight(1f))
                     Text(notice.createdLabel, color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text(notice.title.ifBlank { "Aviso" }, color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Black)
+                Text(notice.title.ifBlank { "Aviso" }, color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Text(notice.message.ifBlank { "Sem descrição." }, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
             }
         }
@@ -1623,7 +1885,7 @@ private fun MoreContent(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Avatar(profile.name, profile.photoUrl, 58)
                     Column(Modifier.weight(1f)) {
-                        Text(profile.name, color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(profile.name, color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(if (online) "Disponível" else "Indisponível", color = if (online) Green else Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -1636,12 +1898,12 @@ private fun MoreContent(
             PremiumCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Ocultar valores", color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Black)
+                        Text("Ocultar valores", color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         Text("Mostra ou esconde ganhos e repasses", color = Muted, fontFamily = AppFont, fontSize = 12.sp)
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 6.21.1 • Reconstrução Visual Integral", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 6.21.4 • Tipografia visual ajustada", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -1664,7 +1926,7 @@ private fun MenuTile(title: String, subtitle: String, icon: ImageVector, onClick
     ) {
         Box(Modifier.size(42.dp).clip(CircleShape).background(GreenSoft), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Green, modifier = Modifier.size(22.dp)) }
         Column(Modifier.weight(1f)) {
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted2, modifier = Modifier.size(21.dp))
@@ -1686,7 +1948,7 @@ private fun ProfileScreen(profile: DriverProfile, online: Boolean, onBack: () ->
         PremiumCard {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Avatar(profile.name, profile.photoUrl, 94)
-                Text(profile.name, color = Ink, fontFamily = AppFont, fontSize = 23.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+                Text(profile.name, color = Ink, fontFamily = AppFont, fontSize = 21.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 StatusChip(if (online) "Disponível" else "Indisponível", if (online) Green else Muted)
             }
         }
@@ -1750,7 +2012,7 @@ private fun PreferenceSwitch(title: String, subtitle: String, checked: Boolean, 
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium)
         }
         Switch(checked = checked, onCheckedChange = onChecked)
@@ -1789,13 +2051,13 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
     ScreenScroll {
         ScreenHeader("Suporte", "Ações de segurança para operação real.", Icons.Filled.SupportAgent, onBack)
         PremiumCard {
-            Text("Destravar operação", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Destravar operação", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text("Use se o gestor cancelou/finalizou uma rota e o app ficou preso nela.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
             SecondaryButton("Destravar operação", icon = Icons.Filled.Shield, color = Orange, onClick = onForceUnlock)
         }
         PremiumCard {
-            Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Black)
-            Text("6.21.1 — Reconstrução Visual Integral", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("6.21.4 — Tipografia visual ajustada", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -1807,7 +2069,7 @@ private fun OccurrenceDialog(onClose: () -> Unit, onConfirm: (String, String) ->
     val reasons = listOf("Problema no veículo", "Loja demorando", "Pedido não encontrado", "Cliente não atende", "Endereço divergente", "Pagamento com problema", "Local inseguro", "Outro")
     AlertDialog(
         onDismissRequest = onClose,
-        title = { Text("Problema na rota", color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Black) },
+        title = { Text("Problema na rota", color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 reasons.forEach { reason ->
@@ -1819,7 +2081,7 @@ private fun OccurrenceDialog(onClose: () -> Unit, onConfirm: (String, String) ->
                 OutlinedTextField(value = details, onValueChange = { details = it }, label = { Text("Detalhes opcionais") }, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(selected, details.ifBlank { "Ocorrência enviada pelo app do entregador." }) }) { Text("Enviar", color = Orange, fontFamily = AppFont, fontWeight = FontWeight.Black) } },
+        confirmButton = { TextButton(onClick = { onConfirm(selected, details.ifBlank { "Ocorrência enviada pelo app do entregador." }) }) { Text("Enviar", color = Orange, fontFamily = AppFont, fontWeight = FontWeight.Bold) } },
         dismissButton = { TextButton(onClick = onClose) { Text("Cancelar", color = Muted, fontFamily = AppFont, fontWeight = FontWeight.Bold) } },
         containerColor = Color.White,
         shape = RoundedCornerShape(28.dp)
@@ -1832,9 +2094,9 @@ private fun RejectDialog(onClose: () -> Unit, onConfirm: (String) -> Unit) {
     val reasons = listOf("Não consigo atender agora", "Muito longe", "Sem maquininha", "Sem troco", "Problema no veículo", "Outro")
     AlertDialog(
         onDismissRequest = onClose,
-        title = { Text("Recusar corrida", color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Black) },
+        title = { Text("Recusar corrida", color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Bold) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { reasons.forEach { Text(it, color = if (selected == it) Red else Ink, fontFamily = AppFont, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(if (selected == it) RedSoft else SurfaceSoft).clickable { selected = it }.padding(12.dp)) } } },
-        confirmButton = { TextButton(onClick = { onConfirm(selected) }) { Text("Recusar", color = Red, fontFamily = AppFont, fontWeight = FontWeight.Black) } },
+        confirmButton = { TextButton(onClick = { onConfirm(selected) }) { Text("Recusar", color = Red, fontFamily = AppFont, fontWeight = FontWeight.Bold) } },
         dismissButton = { TextButton(onClick = onClose) { Text("Voltar", color = Muted, fontFamily = AppFont, fontWeight = FontWeight.Bold) } },
         containerColor = Color.White,
         shape = RoundedCornerShape(28.dp)
@@ -1848,7 +2110,7 @@ private fun PaymentConfirmDialog(ride: DriverRide, machines: List<PaymentMachine
     val machine = machines.firstOrNull { it.active }
     AlertDialog(
         onDismissRequest = onClose,
-        title = { Text("Finalizar entrega", color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Black) },
+        title = { Text("Finalizar entrega", color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Confirme o recebimento antes de finalizar.", color = Muted, fontFamily = AppFont, fontSize = 13.sp)
@@ -1874,7 +2136,7 @@ private fun PaymentConfirmDialog(ride: DriverRide, machines: List<PaymentMachine
                     receivedBy = if (method == "Pago online") "SISTEMA" else "ENTREGADOR",
                     note = "Confirmado no app entregador"
                 ))
-            }) { Text("Confirmar", color = Green, fontFamily = AppFont, fontWeight = FontWeight.Black) }
+            }) { Text("Confirmar", color = Green, fontFamily = AppFont, fontWeight = FontWeight.Bold) }
         },
         dismissButton = { TextButton(onClick = onClose) { Text("Voltar", color = Muted, fontFamily = AppFont, fontWeight = FontWeight.Bold) } },
         containerColor = Color.White,
@@ -1887,7 +2149,7 @@ private fun EmptyInsideCard(title: String, message: String, icon: ImageVector) {
     PremiumCard {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(72.dp).clip(CircleShape).background(GreenSoft), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Green, modifier = Modifier.size(34.dp)) }
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 19.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 19.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(message, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp, textAlign = TextAlign.Center)
         }
     }
@@ -1897,7 +2159,7 @@ private fun EmptyInsideCard(title: String, message: String, icon: ImageVector) {
 private fun Avatar(name: String, photoUrl: String = "", size: Int) {
     Box(Modifier.size(size.dp).clip(CircleShape).background(GreenSoft).border(2.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
         if (photoUrl.isNotBlank()) AsyncImage(model = photoUrl, contentDescription = name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-        else Text(name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "E", color = Green, fontFamily = AppFont, fontSize = (size / 2.4).sp, fontWeight = FontWeight.Black)
+        else Text(name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "E", color = Green, fontFamily = AppFont, fontSize = (size / 2.4).sp, fontWeight = FontWeight.Bold)
     }
 }
 

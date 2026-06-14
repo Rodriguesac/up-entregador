@@ -5,7 +5,10 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 
 @Composable
 fun RodriguesNativeTheme(
@@ -55,5 +58,8 @@ fun RodriguesNativeTheme(
         outline = Color(0xFFE3E8EF)
     )
 
-    MaterialTheme(colorScheme = light, typography = typography, content = content)
+    val density = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
+        MaterialTheme(colorScheme = light, typography = typography, content = content)
+    }
 }
