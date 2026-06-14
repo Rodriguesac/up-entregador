@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "6.24.0-gadm-bridge"
+    private const val APP_VERSION = "6.26.0-taxa-separada-repasse"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -679,13 +679,13 @@ object DriverRepository {
                 .firstOrNull { it.status in listOf("accepted", "pickup", "delivering", "arrived_client", "occurrence") }
             if (active != null) {
                 rememberActiveRide(context, active)
-            } else {
-                if (hasLocalActiveMission(context)) {
-                    releaseStaleMission(context, profile, "MISSAO_ENCERRADA_OU_CANCELADA")
-                } else {
-                    forgetActiveRide(context)
-                }
+            } else if (!hasLocalActiveMission(context)) {
+                forgetActiveRide(context)
             }
+            // Não destrava o entregador automaticamente quando uma leitura vem vazia.
+            // Durante troca de status (ex.: Cheguei na coleta) o Firestore pode entregar
+            // um snapshot intermediário; destravar aqui fazia a corrida sumir e o app
+            // parecer livre mesmo com missão em andamento.
             onRide(active)
         }
 
@@ -1426,16 +1426,24 @@ object DriverRepository {
         findMissionDocument(rideId, onFound = { doc ->
             val collectionName = doc.reference.parent.id
             val ride = doc.toDriverRide(collectionName)
-            if (status == "delivering" && ride != null && !ride.pickupReleaseAllowed) {
+            val requestedStatus = status.upperOrTrim()
+            val uiStatus = when (requestedStatus) {
+                "PICKUP", "NA_COLETA", "CHEGUEI_COLETA", "CHEGUEI_NA_COLETA", "COLETA", "COLETANDO", "CHEGOU_LOJA", "ENTREGADOR_CHEGOU_LOJA" -> "pickup"
+                "DELIVERING", "EM_ENTREGA", "INICIAR_ENTREGA", "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "COM_ENTREGADOR" -> "delivering"
+                "ARRIVED_CLIENT", "ENTREGADOR_NO_LOCAL", "CHEGUEI_CLIENTE", "CHEGUEI_NO_CLIENTE", "CHEGOU_CLIENTE", "NO_CLIENTE" -> "arrived_client"
+                "FINISHED", "FINALIZADA", "FINALIZADO", "CONCLUIDA", "CONCLUÍDA", "ENTREGUE", "DELIVERED" -> "finished"
+                else -> status
+            }
+            if (uiStatus == "delivering" && ride != null && !ride.pickupReleaseAllowed) {
                 onError("A rota ainda precisa ser liberada pelo gestor antes da saída.")
                 return@findMissionDocument
             }
-            val realStatus = when (status) {
+            val realStatus = when (uiStatus) {
                 "pickup" -> "COLETANDO"
                 "delivering" -> "EM_ROTA"
                 "arrived_client" -> "ENTREGADOR_NO_LOCAL"
                 "finished" -> "CONCLUIDA"
-                else -> status
+                else -> requestedStatus.ifBlank { status }
             }
             val fields = linkedMapOf<String, Any?>(
                 "status" to realStatus,
@@ -1443,47 +1451,59 @@ object DriverRepository {
                 "statusMotoboy" to realStatus,
                 "statusAtualizadoEm" to Timestamp.now(),
                 "atualizadoEm" to Timestamp.now(),
-                "updatedAt" to Timestamp.now()
+                "updatedAt" to Timestamp.now(),
+                "appVersion" to APP_VERSION
             )
-            when (status) {
+            when (uiStatus) {
                 "pickup" -> {
                     fields["chegouColetaEm"] = Timestamp.now()
+                    fields["chegouLojaEm"] = Timestamp.now()
                     fields["pickupStartedAt"] = Timestamp.now()
+                    fields["statusEntrega"] = "ENTREGADOR_CHEGOU_LOJA"
                 }
                 "delivering" -> {
                     fields["saiuEntregaEm"] = Timestamp.now()
+                    fields["retiradoEm"] = Timestamp.now()
                     fields["deliveryStartedAt"] = Timestamp.now()
+                    fields["statusEntrega"] = "EM_ROTA"
                 }
                 "arrived_client" -> {
                     fields["chegouClienteEm"] = Timestamp.now()
                     fields["arrivedClientAt"] = Timestamp.now()
                     fields["aguardandoCodigoEntrega"] = true
                     fields["deliveryCodeRequired"] = true
+                    fields["statusEntrega"] = "EM_ROTA"
                 }
                 "finished" -> {
                     fields["concluidaEm"] = Timestamp.now()
                     fields["finishedAt"] = Timestamp.now()
                     fields["entregueEm"] = Timestamp.now()
+                    fields["statusEntrega"] = "ENTREGUE"
+                    fields["statusPedido"] = "FINALIZADO"
+                    fields["statusCorrida"] = "FINALIZADA"
+                    fields["ativa"] = false
+                    fields["active"] = false
+                    fields["ofertaAtiva"] = false
                     fields["repasseEntregadorConfirmado"] = ride?.valueNumber ?: 0.0
                     fields["valorRepasseMotoboy"] = ride?.valueNumber ?: 0.0
+                    fields["valorCorrida"] = ride?.valueNumber ?: 0.0
                     fields["financeiroConferidoPeloApp"] = true
                     fields["acerto.origem"] = "APP_ENTREGADOR"
                     fields["acerto.status"] = "AGUARDANDO_CONFERENCIA"
                     fields["acerto.taxaMotoboy"] = ride?.valueNumber ?: 0.0
-                    fields["acerto.precisaInformarPagamento"] = ride?.paymentMethod.isNullOrBlank()
                     fields["financeiro.precisaConferencia"] = true
                 }
             }
             doc.reference.set(fields, SetOptions.merge())
                 .addOnSuccessListener {
-                    val pedidoEntregaStatus = when (status) {
+                    val pedidoEntregaStatus = when (uiStatus) {
                         "pickup" -> "ENTREGADOR_CHEGOU_LOJA"
                         "delivering" -> "EM_ROTA"
                         "arrived_client" -> "ENTREGADOR_NO_LOCAL"
                         "finished" -> "ENTREGUE"
                         else -> realStatus
                     }
-                    val corridaStatus = when (status) {
+                    val corridaStatus = when (uiStatus) {
                         "finished" -> "FINALIZADA"
                         "delivering" -> "EM_ROTA"
                         "pickup" -> "COLETANDO"
@@ -1506,14 +1526,14 @@ object DriverRepository {
                             "missaoAtualId" to rideId,
                             "pedidoAtualId" to if (collectionName == "pedidos") rideId else null,
                             "rotaAtualId" to if (collectionName == "rotas_entrega") rideId else null,
-                            "rastreamentoAtivo" to (status != "finished"),
+                            "rastreamentoAtivo" to (uiStatus != "finished"),
                             "codigoPedidoAtual" to ((ride?.orderCode ?: "").ifBlank { rideId.takeLast(4).uppercase(Locale.ROOT) }),
                             "atualizadoEm" to Timestamp.now(),
                             "updatedAt" to Timestamp.now()
                         ),
                         SetOptions.merge()
                     )
-                    if (status == "finished") {
+                    if (uiStatus == "finished") {
                         forgetActiveRide(context)
                         db.collection(profile.collectionName).document(profile.id).set(
                             mapOf(
@@ -1823,7 +1843,7 @@ object DriverRepository {
                 "updatedAt" to now,
                 "criadoEm" to now,
                 "createdAt" to now,
-                "origem" to "android_native_gadm_bridge_v6_24",
+                "origem" to "android_native_gadm_bridge_v6_25",
                 "eventosStatus" to FieldValue.arrayUnion(
                     mapOf(
                         "status" to action,
@@ -2136,29 +2156,57 @@ object DriverRepository {
     }
 
     private fun DocumentSnapshot.driverPayoutValue(): Double {
-        return anyDouble(
+        val configured = anyDouble(
             "repasseFrota",
             "repassePiloto",
             "valorRepasseFrota",
             "valorRepassePiloto",
+            "repasseEntregador",
+            "valorRepasse",
+            "valorRepasseEntregador",
+            "valorRepasseMotoboy",
+            "valorCorrida",
+            "valorRota",
+            "valueNumber",
+            "amount",
+            "value",
             "financeiroEntrega.repasseFrota",
             "financeiroEntrega.repassePiloto",
+            "financeiroEntrega.valorRepasseEntregador",
+            "financeiroEntrega.valorRepasseMotoboy",
+            "financeiro.valorRepasseEntregador",
+            "financeiro.valorRepasseMotoboy",
             "valores.repasseFrota",
             "valores.repassePiloto",
+            "valores.valorRepasseEntregador",
+            "valores.valorRepasseMotoboy",
+            "valores.valorCorrida",
+            "valores.valorRota",
+            "entrega.valorRepasseEntregador",
+            "entrega.valorRepasseMotoboy",
             "logistica.repasseFrota",
             "logistica.repassePiloto",
+            "logistica.valorRepasseEntregador",
+            "logistica.valorRepasseMotoboy",
             "calculo.valorTotalMotoboy",
             "valorTotalMotoboy",
             "valorMotoboy",
-            "valorEntregador",
-            "valorRepasseMotoboy",
-            "valorCorrida",
-            "valorRota"
-        ) ?: anyString("repasse", "valorRepasse", "valorMotoboyFormatado").toMoneyDouble() ?: 0.0
+            "valorEntregador"
+        ) ?: anyString(
+            "repasse", "valorRepasse", "valorMotoboyFormatado", "valorCorridaFormatado", "valorRotaFormatado"
+        ).toMoneyDouble() ?: 0.0
+        if (configured > 0.0) return configured
+        // Taxa de entrega é valor cobrado do cliente, não é repasse do entregador.
+        // Se não houver campo de repasse/corrida, mostra R$0,00 para não confundir financeiro.
+        return 0.0
     }
 
     private fun DocumentSnapshot.clientTotalValue(): Double {
         return anyDouble(
+            "pagamento.valorPedido",
+            "valores.valorPedido",
+            "valores.totalPedido",
+            "valores.total",
             "valorTotalPedido",
             "totalPedido",
             "total",
@@ -2699,10 +2747,10 @@ private val STORE_NOT_ACCEPTED_STATUSES = setOf(
     "CARRINHO"
 )
 private val ACCEPTED_STATUSES = setOf("ACEITA", "ACEITO", "ACEITO_PELO_ENTREGADOR", "A_CAMINHO_LOJA", "ENTREGADOR_A_CAMINHO_LOJA", "INDO_PARA_LOJA", "AGUARDANDO_PRONTOS", "AGUARDANDO_TODOS_PRONTOS", "AGUARDANDO_COLETA", "ACCEPTED", "INDO_COLETA")
-private val PICKUP_STATUSES = setOf("COLETANDO", "ENTREGADOR_CHEGOU_LOJA", "CHEGOU_LOJA", "CHEGOU_COLETA", "RETIRADO_PELO_ENTREGADOR", "ROTA_PRONTA_PARA_RETIRADA", "AGUARDANDO_LIBERACAO_GESTOR", "AGUARDANDO_LIBERAÇÃO_GESTOR", "AGUARDANDO_SAIDA", "LIBERADA_PARA_SAIDA", "PICKUP", "EM_COLETA", "COLETADO")
+private val PICKUP_STATUSES = setOf("NA_COLETA", "CHEGUEI_NA_COLETA", "COLETANDO", "ENTREGADOR_CHEGOU_LOJA", "CHEGOU_LOJA", "CHEGOU_COLETA", "RETIRADO_PELO_ENTREGADOR", "ROTA_PRONTA_PARA_RETIRADA", "AGUARDANDO_LIBERACAO_GESTOR", "AGUARDANDO_LIBERAÇÃO_GESTOR", "AGUARDANDO_SAIDA", "LIBERADA_PARA_SAIDA", "PICKUP", "EM_COLETA", "COLETADO")
 private val ARRIVED_CLIENT_STATUSES = setOf("ENTREGADOR_NO_LOCAL", "CHEGOU_CLIENTE", "CHEGOU_ENTREGA", "NO_CLIENTE", "ARRIVED_CLIENT", "ARRIVED_AT_CLIENT")
-private val DELIVERING_STATUSES = setOf("COM_ENTREGADOR", "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "RETIRADO_PELO_ENTREGADOR", "DELIVERING", "EM_ENTREGA")
-private val FINAL_HISTORY_STATUSES = setOf("CONCLUIDA", "ENTREGUE", "FINALIZADA", "FINISHED", "DELIVERED", "finished", "delivered")
+private val DELIVERING_STATUSES = setOf("EM_ENTREGA", "INICIAR_ENTREGA", "COM_ENTREGADOR", "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "RETIRADO_PELO_ENTREGADOR", "DELIVERING", "EM_ENTREGA")
+private val FINAL_HISTORY_STATUSES = setOf("FINALIZADA", "FINALIZADO", "CONCLUIDA", "ENTREGUE", "FINALIZADA", "FINISHED", "DELIVERED", "finished", "delivered")
 private val OCCURRENCE_STATUSES = setOf("OCORRENCIA", "OCORRÊNCIA", "PROBLEMA", "SUPORTE", "AGUARDANDO_GESTOR", "PENDENTE_GESTOR")
 private val APPROVED_STATUSES = setOf("APROVADO", "APPROVED", "LIBERADO", "ATIVO", "ACTIVE")
 private val BLOCKED_STATUSES = setOf("REPROVADO", "BLOQUEADO", "BLOCKED", "SUSPENSO", "SUSPENDED", "CANCELADO")
@@ -2843,25 +2891,48 @@ private fun DocumentSnapshot.deliveryReleasedToDriver(collectionName: String): B
 }
 
 private fun DocumentSnapshot.driverPayoutValue(): Double {
-    return anyDouble(
+    val configured = anyDouble(
         "repasseFrota",
         "repassePiloto",
         "valorRepasseFrota",
         "valorRepassePiloto",
+        "repasseEntregador",
+        "valorRepasse",
+        "valorRepasseEntregador",
+        "valorRepasseMotoboy",
+        "valorCorrida",
+        "valorRota",
+        "valueNumber",
+        "amount",
+        "value",
         "financeiroEntrega.repasseFrota",
         "financeiroEntrega.repassePiloto",
+        "financeiroEntrega.valorRepasseEntregador",
+        "financeiroEntrega.valorRepasseMotoboy",
+        "financeiro.valorRepasseEntregador",
+        "financeiro.valorRepasseMotoboy",
         "valores.repasseFrota",
         "valores.repassePiloto",
+        "valores.valorRepasseEntregador",
+        "valores.valorRepasseMotoboy",
+        "valores.valorCorrida",
+        "valores.valorRota",
+        "entrega.valorRepasseEntregador",
+        "entrega.valorRepasseMotoboy",
         "logistica.repasseFrota",
         "logistica.repassePiloto",
+        "logistica.valorRepasseEntregador",
+        "logistica.valorRepasseMotoboy",
         "calculo.valorTotalMotoboy",
         "valorTotalMotoboy",
         "valorMotoboy",
-        "valorEntregador",
-        "valorRepasseMotoboy",
-        "valorCorrida",
-        "valorRota"
-    ) ?: anyString("repasse", "valorRepasse", "valorMotoboyFormatado").toMoneyDouble() ?: 0.0
+        "valorEntregador"
+    ) ?: anyString(
+        "repasse", "valorRepasse", "valorMotoboyFormatado", "valorCorridaFormatado", "valorRotaFormatado"
+    ).toMoneyDouble() ?: 0.0
+    if (configured > 0.0) return configured
+    // Taxa de entrega é valor cobrado do cliente, não é repasse do entregador.
+    return 0.0
 }
 
 private fun DocumentSnapshot.clientTotalValue(): Double {

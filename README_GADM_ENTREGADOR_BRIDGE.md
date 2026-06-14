@@ -12,8 +12,13 @@ Este pacote foi ajustado para conversar melhor com o GADM.
 
 ## Versão
 
-`6.24.0-gadm-bridge`
+`6.26.0-taxa-separada-repasse`
 
 ## Observação
 
 Depois de subir no GitHub, gere um APK novo pelo workflow e instale no aparelho do entregador. O GADM precisa continuar criando a missão em `rides`/`corridas`/`pedidos` conforme o ZIP 19.
+
+
+## v6.26.0
+
+Correção financeira: taxa de entrega cobrada do cliente não é usada como repasse do entregador. O app só mostra valor da corrida quando vier de campos de repasse/corrida (`valorCorrida`, `valorRepasseEntregador`, `repassePiloto`, etc.).

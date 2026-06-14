@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 824
-        versionName = "6.24.0-gadm-bridge"
+        versionCode = 826
+        versionName = "6.26.0-taxa-separada-repasse"
     }
 
     buildFeatures { compose = true }
