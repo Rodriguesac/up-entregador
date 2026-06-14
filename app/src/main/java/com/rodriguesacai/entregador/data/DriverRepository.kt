@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "6.23.0"
+    private const val APP_VERSION = "6.24.0-gadm-bridge"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -37,7 +37,7 @@ object DriverRepository {
 
     private const val REAL_DRIVER_COLLECTION = "entregadores"
     private val DRIVER_COLLECTIONS = listOf("entregadores", "drivers", "motoboys", "deliveryDrivers", "couriers")
-    private val MISSION_COLLECTIONS = listOf("rotas_entrega", "pedidos", "rides")
+    private val MISSION_COLLECTIONS = listOf("rides", "corridas", "rotas_entrega", "pedidos")
     private val CAROUSEL_COLLECTIONS = listOf("app_carousel_banners", "carrosselApp", "bannersApp", "appBanners", "bannersEntregador", "carrossel_entregador", "entregadorBanners")
     private val NOTICE_COLLECTIONS = listOf("app_notifications", "notificacoesEntregador", "avisosEntregador", "appAvisos", "operacaoAvisos")
     private val MACHINE_COLLECTIONS = listOf("maquininhas", "maquininhasEntrega", "cardMachines")
@@ -631,6 +631,10 @@ object DriverRepository {
                 base.whereEqualTo("statusOfertaEntregador", "OFERTA").limit(80),
                 base.whereEqualTo("statusEntregador", "OFERTA").limit(80),
                 base.whereEqualTo("statusMotoboy", "OFERTA").limit(80),
+                base.whereEqualTo("status", "OFERTA").limit(80),
+                base.whereEqualTo("status", "OFERTA_RECEBIDA").limit(80),
+                base.whereEqualTo("statusCorrida", "OFERTA_RECEBIDA").limit(80),
+                base.whereEqualTo("statusCorrida", "OFERTA").limit(80),
                 base.whereEqualTo("liberadoParaEntregador", true).limit(80),
                 base.whereEqualTo("ofertaLiberada", true).limit(80),
                 base.whereEqualTo("entregadorAtualOferta", profile.id).limit(80),
@@ -694,8 +698,8 @@ object DriverRepository {
                 base.whereEqualTo("entregadorId", profile.id).limit(80),
                 base.whereEqualTo("driverId", profile.id).limit(80),
                 base.whereEqualTo("uidEntregador", profile.id).limit(80),
-                base.whereEqualTo("entregadorAtualOferta", profile.id).limit(80),
-                base.whereEqualTo("targetDriverId", profile.id).limit(80)
+                base.whereEqualTo("targetDriverId", profile.id).limit(80),
+                base.whereEqualTo("entregadorAtualOferta", profile.id).limit(80)
             )
             queries.forEachIndexed { index, firestoreQuery ->
                 val key = "$collectionName:$index"
@@ -707,7 +711,7 @@ object DriverRepository {
                         }
                         val rides = snap?.documents.orEmpty()
                             .mapNotNull { doc -> runCatching { doc.toDriverRide(collectionName) }.getOrNull() }
-                            .filter { ride -> ride.matchesDriver(profile.id) && ride.status in listOf("accepted", "pickup", "delivering") }
+                            .filter { ride -> ride.matchesDriver(profile.id) && ride.status in listOf("accepted", "pickup", "delivering", "arrived_client", "occurrence") }
                             .distinctBy { it.id }
                         state[key] = rides
                         emit()
@@ -1180,6 +1184,21 @@ object DriverRepository {
             )
             doc.reference.set(update, SetOptions.merge())
                 .addOnSuccessListener {
+                    syncGadmMissionStatus(
+                        doc = doc,
+                        ride = ride,
+                        profile = profile,
+                        appStatus = "A_CAMINHO_LOJA",
+                        pedidoStatusEntrega = "ACEITO_PELO_ENTREGADOR",
+                        corridaStatus = "ACEITA",
+                        extra = mapOf(
+                            "aceitaEm" to Timestamp.now(),
+                            "acceptedAt" to Timestamp.now(),
+                            "ativa" to false,
+                            "ofertaAtiva" to false,
+                            "ofertaAceita" to true
+                        )
+                    )
                     db.collection(profile.collectionName).document(profile.id).set(
                         mapOf("status" to "Em rota", "online" to true, "ultimaAceitacaoEm" to Timestamp.now()),
                         SetOptions.merge()
@@ -1242,6 +1261,21 @@ object DriverRepository {
             }
             doc.reference.set(update, SetOptions.merge())
                 .addOnSuccessListener {
+                    syncGadmMissionStatus(
+                        doc = doc,
+                        ride = ride,
+                        profile = profile,
+                        appStatus = "REJEITADA",
+                        pedidoStatusEntrega = "AGUARDANDO_DESPACHO",
+                        corridaStatus = "REJEITADA",
+                        extra = mapOf(
+                            "rejeitados" to FieldValue.arrayUnion(profile.id),
+                            "rejectedDriverIds" to FieldValue.arrayUnion(profile.id),
+                            "motivoRejeicao" to reason.trim(),
+                            "ativa" to false,
+                            "ofertaAtiva" to false
+                        )
+                    )
                     addHistory(profile, rideId, if (reason.isBlank()) "REJEITADA" else "REJEITADA: $reason", ride?.valueNumber ?: 0.0, collectionName, ride)
                     onDone()
                 }
@@ -1273,7 +1307,22 @@ object DriverRepository {
                 ),
                 SetOptions.merge()
             ).addOnSuccessListener {
-                addHistory(profile, rideId, "EXPIRADA", 0.0, collectionName, doc.toDriverRide(collectionName))
+                val ride = doc.toDriverRide(collectionName)
+                syncGadmMissionStatus(
+                    doc = doc,
+                    ride = ride,
+                    profile = profile,
+                    appStatus = "EXPIRADA",
+                    pedidoStatusEntrega = "AGUARDANDO_DESPACHO",
+                    corridaStatus = "EXPIRADA",
+                    extra = mapOf(
+                        "expiredDriverIds" to FieldValue.arrayUnion(profile.id),
+                        "lastExpiredFor" to profile.id,
+                        "ativa" to false,
+                        "ofertaAtiva" to false
+                    )
+                )
+                addHistory(profile, rideId, "EXPIRADA", 0.0, collectionName, ride)
                 onDone()
             }.addOnFailureListener { onError(it.message ?: "Falha ao expirar oferta.") }
         }, onNotFound = {
@@ -1427,6 +1476,28 @@ object DriverRepository {
             }
             doc.reference.set(fields, SetOptions.merge())
                 .addOnSuccessListener {
+                    val pedidoEntregaStatus = when (status) {
+                        "pickup" -> "ENTREGADOR_CHEGOU_LOJA"
+                        "delivering" -> "EM_ROTA"
+                        "arrived_client" -> "ENTREGADOR_NO_LOCAL"
+                        "finished" -> "ENTREGUE"
+                        else -> realStatus
+                    }
+                    val corridaStatus = when (status) {
+                        "finished" -> "FINALIZADA"
+                        "delivering" -> "EM_ROTA"
+                        "pickup" -> "COLETANDO"
+                        else -> realStatus
+                    }
+                    syncGadmMissionStatus(
+                        doc = doc,
+                        ride = ride,
+                        profile = profile,
+                        appStatus = realStatus,
+                        pedidoStatusEntrega = pedidoEntregaStatus,
+                        corridaStatus = corridaStatus,
+                        extra = fields
+                    )
                     addHistory(profile, rideId, realStatus, ride?.valueNumber ?: 0.0, collectionName, ride)
                     db.collection(profile.collectionName).document(profile.id).set(
                         mapOf(
@@ -1620,6 +1691,81 @@ object DriverRepository {
             .addOnFailureListener { onError(it.message ?: "Falha ao destravar entregador.") }
     }
 
+
+    private fun syncGadmMissionStatus(
+        doc: DocumentSnapshot,
+        ride: DriverRide?,
+        profile: DriverProfile,
+        appStatus: String,
+        pedidoStatusEntrega: String,
+        corridaStatus: String,
+        extra: Map<String, Any?> = emptyMap()
+    ) {
+        val collectionName = doc.reference.parent.id
+        val now = Timestamp.now()
+        val pedidoId = doc.anyString("pedidoId", "orderId", "pedido.id", "order.id").ifBlank {
+            when (collectionName) {
+                "pedidos", "rides" -> doc.id
+                else -> ""
+            }
+        }
+        val corridaId = doc.anyString("corridaId", "rideId", "idCorrida").ifBlank {
+            if (collectionName == "corridas") doc.id else ""
+        }
+        val statusPayload = linkedMapOf<String, Any?>(
+            "statusEntrega" to pedidoStatusEntrega,
+            "statusEntregador" to appStatus,
+            "statusMotoboy" to appStatus,
+            "statusOfertaEntregador" to corridaStatus,
+            "statusOferta" to corridaStatus,
+            "statusCorrida" to corridaStatus,
+            "entregadorId" to profile.id,
+            "entregadorUid" to profile.id,
+            "uidEntregador" to profile.id,
+            "driverId" to profile.id,
+            "entregadorNome" to profile.name,
+            "driverName" to profile.name,
+            "atualizadoEm" to now,
+            "updatedAt" to now,
+            "statusAtualizadoEm" to now
+        )
+        statusPayload.putAll(extra)
+
+        if (pedidoId.isNotBlank()) {
+            db.collection("pedidos").document(pedidoId).set(
+                statusPayload + mapOf(
+                    "corridaAtualId" to (corridaId.ifBlank { doc.anyString("corridaAtualId", "ofertaAtualId") }),
+                    "entrega.entregadorId" to profile.id,
+                    "entrega.entregadorNome" to profile.name,
+                    "entrega.status" to pedidoStatusEntrega
+                ),
+                SetOptions.merge()
+            )
+            db.collection("rides").document(pedidoId).set(
+                statusPayload + mapOf(
+                    "status" to if (appStatus == "A_CAMINHO_LOJA") "accepted" else appStatus,
+                    "pedidoId" to pedidoId,
+                    "orderId" to pedidoId,
+                    "ativa" to (appStatus !in setOf("REJEITADA", "EXPIRADA", "CONCLUIDA")),
+                    "active" to (appStatus !in setOf("REJEITADA", "EXPIRADA", "CONCLUIDA"))
+                ),
+                SetOptions.merge()
+            )
+        }
+        if (corridaId.isNotBlank()) {
+            db.collection("corridas").document(corridaId).set(
+                statusPayload + mapOf(
+                    "status" to corridaStatus,
+                    "pedidoId" to pedidoId,
+                    "orderId" to pedidoId,
+                    "ativa" to (appStatus !in setOf("REJEITADA", "EXPIRADA", "CONCLUIDA")),
+                    "active" to (appStatus !in setOf("REJEITADA", "EXPIRADA", "CONCLUIDA"))
+                ),
+                SetOptions.merge()
+            )
+        }
+    }
+
     private fun findMissionDocument(rideId: String, onFound: (DocumentSnapshot) -> Unit, onNotFound: () -> Unit) {
         fun tryCollection(index: Int) {
             if (index >= MISSION_COLLECTIONS.size) {
@@ -1677,7 +1823,7 @@ object DriverRepository {
                 "updatedAt" to now,
                 "criadoEm" to now,
                 "createdAt" to now,
-                "origem" to "android_native_v6_10_1",
+                "origem" to "android_native_gadm_bridge_v6_24",
                 "eventosStatus" to FieldValue.arrayUnion(
                     mapOf(
                         "status" to action,
@@ -2481,6 +2627,9 @@ private val PICKUP_RELEASED_STATUSES = setOf("LIBERADA_PARA_SAIDA", "SAIDA_LIBER
 private val ROUTE_LOCKED_STATUSES = setOf("COM_ENTREGADOR", "A_CAMINHO_CLIENTE", "EM_ROTA", "SAIU_ENTREGA", "ENTREGADOR_NO_LOCAL", "ENTREGUE", "FINALIZADA")
 
 private val OFFER_STATUSES = setOf(
+    "OFERTA_RECEBIDA",
+    "OFERTADO",
+    "OFERTADA",
     "BUSCANDO_ENTREGADOR",
     "OFERTA",
     "OFERTA_REAL",
@@ -2501,6 +2650,9 @@ private val OFFER_STATUSES = setOf(
 )
 private val ROUTE_OFFER_STATUSES = OFFER_STATUSES
 private val PEDIDO_OFFER_STATUSES = setOf(
+    "OFERTA_RECEBIDA",
+    "OFERTADO",
+    "OFERTADA",
     "BUSCANDO_ENTREGADOR",
     "OFERTA",
     "OFERTA_REAL",
@@ -2546,10 +2698,10 @@ private val STORE_NOT_ACCEPTED_STATUSES = setOf(
     "AGUARDANDO_CONFIRMAÇÃO",
     "CARRINHO"
 )
-private val ACCEPTED_STATUSES = setOf("ACEITA", "A_CAMINHO_LOJA", "AGUARDANDO_PRONTOS", "AGUARDANDO_TODOS_PRONTOS", "AGUARDANDO_COLETA", "ACCEPTED", "ACEITO", "INDO_COLETA")
-private val PICKUP_STATUSES = setOf("COLETANDO", "ROTA_PRONTA_PARA_RETIRADA", "AGUARDANDO_LIBERACAO_GESTOR", "AGUARDANDO_LIBERAÇÃO_GESTOR", "AGUARDANDO_SAIDA", "LIBERADA_PARA_SAIDA", "PICKUP", "EM_COLETA", "COLETADO")
+private val ACCEPTED_STATUSES = setOf("ACEITA", "ACEITO", "ACEITO_PELO_ENTREGADOR", "A_CAMINHO_LOJA", "ENTREGADOR_A_CAMINHO_LOJA", "INDO_PARA_LOJA", "AGUARDANDO_PRONTOS", "AGUARDANDO_TODOS_PRONTOS", "AGUARDANDO_COLETA", "ACCEPTED", "INDO_COLETA")
+private val PICKUP_STATUSES = setOf("COLETANDO", "ENTREGADOR_CHEGOU_LOJA", "CHEGOU_LOJA", "CHEGOU_COLETA", "RETIRADO_PELO_ENTREGADOR", "ROTA_PRONTA_PARA_RETIRADA", "AGUARDANDO_LIBERACAO_GESTOR", "AGUARDANDO_LIBERAÇÃO_GESTOR", "AGUARDANDO_SAIDA", "LIBERADA_PARA_SAIDA", "PICKUP", "EM_COLETA", "COLETADO")
 private val ARRIVED_CLIENT_STATUSES = setOf("ENTREGADOR_NO_LOCAL", "CHEGOU_CLIENTE", "CHEGOU_ENTREGA", "NO_CLIENTE", "ARRIVED_CLIENT", "ARRIVED_AT_CLIENT")
-private val DELIVERING_STATUSES = setOf("COM_ENTREGADOR", "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "DELIVERING", "EM_ENTREGA")
+private val DELIVERING_STATUSES = setOf("COM_ENTREGADOR", "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "RETIRADO_PELO_ENTREGADOR", "DELIVERING", "EM_ENTREGA")
 private val FINAL_HISTORY_STATUSES = setOf("CONCLUIDA", "ENTREGUE", "FINALIZADA", "FINISHED", "DELIVERED", "finished", "delivered")
 private val OCCURRENCE_STATUSES = setOf("OCORRENCIA", "OCORRÊNCIA", "PROBLEMA", "SUPORTE", "AGUARDANDO_GESTOR", "PENDENTE_GESTOR")
 private val APPROVED_STATUSES = setOf("APROVADO", "APPROVED", "LIBERADO", "ATIVO", "ACTIVE")

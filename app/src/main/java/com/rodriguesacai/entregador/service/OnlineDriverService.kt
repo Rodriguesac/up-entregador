@@ -70,7 +70,12 @@ class OnlineDriverService : Service() {
                         distance = ride.distance,
                         duration = ride.duration,
                         pickup = ride.pickup,
-                        dropoff = ride.dropoff
+                        dropoff = ride.dropoff,
+                        paymentMethod = ride.paymentMethod,
+                        paymentStatus = ride.paymentStatus,
+                        amountToCollect = DriverRepository.formatCurrency(ride.amountToCollectNumber),
+                        changeFor = if (ride.changeForNumber > 0.0) DriverRepository.formatCurrency(ride.changeForNumber) else "",
+                        requiresMachine = if (ride.requiresMachine) "true" else "false"
                     )
                 }
             },
