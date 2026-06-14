@@ -1,4 +1,4 @@
-name: Gerar APK Rodrigues Entregador V6.21.4
+name: Gerar APK Rodrigues Entregador V6.21.5
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    name: Gerar APK Debug V6.21.4
+    name: Gerar APK Debug V6.21.5
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -37,7 +37,7 @@ jobs:
         with:
           gradle-version: 8.14.3
 
-      - name: Conferir projeto V6.21.4
+      - name: Conferir projeto V6.21.5
         shell: bash
         run: |
           ls -la
@@ -55,7 +55,7 @@ jobs:
         run: |
           gradle --no-daemon clean :app:assembleDebug --stacktrace
 
-      - name: Upload APK V6.21.4
+      - name: Upload APK V6.21.5
         uses: actions/upload-artifact@v4
         with:
           name: Rodrigues-Entregador-V6-21-3-Contrato-Visual-debug-apk

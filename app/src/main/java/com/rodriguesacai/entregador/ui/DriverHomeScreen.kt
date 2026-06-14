@@ -1745,12 +1745,12 @@ private fun WalletContent(profile: DriverProfile, stats: DriverStats, history: L
                     Text("Saldo disponível", color = Color.White.copy(alpha = .86f), fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                     Box(Modifier.size(38.dp).clip(CircleShape).background(Color.White.copy(alpha = .15f)).clickable { onToggleValues() }, contentAlignment = Alignment.Center) { Icon(if (hideValues) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, null, tint = Color.White) }
                 }
-                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.valorAReceber.takeIf { it > 0.0 } ?: stats.totalWeek), color = Color.White, fontFamily = AppFont, fontSize = 39.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold)
+                Text(if (hideValues) "••••" else DriverRepository.formatCurrency((stats.valorAReceber ?: 0.0).takeIf { it > 0.0 } ?: stats.totalWeek), color = Color.White, fontFamily = AppFont, fontSize = 39.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            AmountCard("Saldo pendente", stats.valorARepassar, hideValues, Modifier.weight(1f))
-            AmountCard("Total a receber", stats.valorAReceber, hideValues, Modifier.weight(1f))
+            AmountCard("Saldo pendente", stats.valorARepassar ?: 0.0, hideValues, Modifier.weight(1f))
+            AmountCard("Total a receber", stats.valorAReceber ?: 0.0, hideValues, Modifier.weight(1f))
         }
         PremiumCard {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1903,7 +1903,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 6.21.4 • Tipografia visual ajustada", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 6.21.5 • Tipografia + build corrigido", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2057,7 +2057,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("6.21.4 — Tipografia visual ajustada", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("6.21.5 — Tipografia + build corrigido", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
