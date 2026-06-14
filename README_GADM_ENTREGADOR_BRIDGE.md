@@ -22,3 +22,11 @@ Depois de subir no GitHub, gere um APK novo pelo workflow e instale no aparelho 
 ## v6.26.0
 
 Correção financeira: taxa de entrega cobrada do cliente não é usada como repasse do entregador. O app só mostra valor da corrida quando vier de campos de repasse/corrida (`valorCorrida`, `valorRepasseEntregador`, `repassePiloto`, etc.).
+
+
+## v6.27.0-ifood-gadm
+- Visual redesenhado com base em app de entregador: vermelho operacional, cards brancos, fundo claro e mapa mais limpo.
+- Corrigido aviso de saída bloqueada quando a rota já está liberada.
+- `NA_COLETA`/`COLETANDO` permanece missão ativa e não libera o entregador indevidamente.
+- Ganhos do dia somam missões do dia com repasse, mesmo antes do fechamento final.
+- Distância e tempo buscam campos de `logistica`, `entrega`, `rota` e `calculo`.

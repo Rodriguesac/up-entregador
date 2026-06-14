@@ -36,9 +36,9 @@ fun RodriguesNativeTheme(
     )
 
     val dark = darkColorScheme(
-        primary = Color(0xFF0F2742),
+        primary = Color(0xFFEA1D2C),
         onPrimary = Color.White,
-        secondary = Color(0xFF0E9F6E),
+        secondary = Color(0xFF16A34A),
         background = Color(0xFF050B12),
         surface = Color(0xFF111827),
         onSurface = Color.White,
@@ -47,14 +47,14 @@ fun RodriguesNativeTheme(
     )
 
     val light = lightColorScheme(
-        primary = Color(0xFF0F2742),
+        primary = Color(0xFFEA1D2C),
         onPrimary = Color.White,
-        secondary = Color(0xFF0E9F6E),
-        background = Color(0xFFF6F8FB),
+        secondary = Color(0xFF16A34A),
+        background = Color(0xFFF7F7F7),
         surface = Color(0xFFFFFFFF),
-        surfaceVariant = Color(0xFFF1F5F9),
-        onSurface = Color(0xFF101828),
-        onBackground = Color(0xFF101828),
+        surfaceVariant = Color(0xFFF2F2F2),
+        onSurface = Color(0xFF1F1F1F),
+        onBackground = Color(0xFF1F1F1F),
         outline = Color(0xFFE2E8F0)
     )
 

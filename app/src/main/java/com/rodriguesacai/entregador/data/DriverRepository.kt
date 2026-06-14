@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "6.26.0-taxa-separada-repasse"
+    private const val APP_VERSION = "6.27.0-ifood-gadm"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -745,8 +745,8 @@ object DriverRepository {
                                 .ifBlank { rawRideId.takeLast(4).uppercase(Locale.ROOT) }
                             val date = doc.anyTimestamp("statusAtualizadoEm", "atualizadoEm", "updatedAt", "criadoEm", "createdAt")?.toDate()
                             val hasValue = doc.hasAnyValue(
-                                "valorRota", "valor", "valueNumber", "repasseEntregador", "valorRepasseMotoboy",
-                                "taxaEntrega", "valorEntrega", "preco", "total", "valorTotal"
+                                "valorRota", "valorCorrida", "valueNumber", "repasseEntregador", "valorRepasseMotoboy",
+                                "repasseFrota", "repassePiloto", "valorRepasseEntregador", "valorMotoboy"
                             )
                             DriverHistory(
                                 id = doc.id,
@@ -839,12 +839,18 @@ object DriverRepository {
                     val millis = doc.anyTimestamp("statusAtualizadoEm", "atualizadoEm", "updatedAt", "criadoEm", "createdAt")?.toDate()?.time
                     statusOk && millis != null && millis.isWithinLastDays(31)
                 }
+                val latestTodayByRide = todayDocs.groupBy { doc ->
+                    doc.anyString("rotaId", "rideId", "pedidoId", "missaoId", "corridaId").ifBlank { doc.id }
+                }.mapNotNull { (_, docs) ->
+                    docs.maxByOrNull { d -> d.anyTimestamp("statusAtualizadoEm", "atualizadoEm", "updatedAt", "criadoEm", "createdAt")?.toDate()?.time ?: 0L }
+                }
+                val projectedToday = latestTodayByRide.sumOf { doc -> runCatching { valueNumberFromDoc(doc) }.getOrDefault(0.0) }
                 historyBase = DriverStats(
-                    totalToday = finishedToday.sumOf { doc -> runCatching { valueNumberFromDoc(doc) }.getOrDefault(0.0) },
+                    totalToday = projectedToday,
                     totalWeek = finishedWeek.sumOf { doc -> runCatching { valueNumberFromDoc(doc) }.getOrDefault(0.0) },
                     totalMonth = finishedMonth.sumOf { doc -> runCatching { valueNumberFromDoc(doc) }.getOrDefault(0.0) },
                     finishedCount = finishedToday.size,
-                    ridesTodayCount = todayDocs.size,
+                    ridesTodayCount = latestTodayByRide.size,
                     finishedTodayCount = finishedToday.size,
                     score = 0
                 )
@@ -1434,9 +1440,13 @@ object DriverRepository {
                 "FINISHED", "FINALIZADA", "FINALIZADO", "CONCLUIDA", "CONCLUÍDA", "ENTREGUE", "DELIVERED" -> "finished"
                 else -> status
             }
-            if (uiStatus == "delivering" && ride != null && !ride.pickupReleaseAllowed) {
-                onError("A rota ainda precisa ser liberada pelo gestor antes da saída.")
-                return@findMissionDocument
+            if (uiStatus == "delivering" && ride != null) {
+                val releaseText = listOf(ride.pickupReleaseStatus, ride.rawStatus, ride.status).joinToString(" ").upperOrTrim()
+                val releaseLooksAllowed = releaseText.contains("LIBER") || releaseText.contains("SAIU") || releaseText.contains("COM_ENTREGADOR")
+                if (!ride.pickupReleaseAllowed && !releaseLooksAllowed) {
+                    onError("A rota ainda precisa ser liberada pelo gestor antes da saída.")
+                    return@findMissionDocument
+                }
             }
             val realStatus = when (uiStatus) {
                 "pickup" -> "COLETANDO"
@@ -1460,6 +1470,10 @@ object DriverRepository {
                     fields["chegouLojaEm"] = Timestamp.now()
                     fields["pickupStartedAt"] = Timestamp.now()
                     fields["statusEntrega"] = "ENTREGADOR_CHEGOU_LOJA"
+                    fields["ativa"] = true
+                    fields["active"] = true
+                    fields["ofertaAtiva"] = true
+                    fields["emCorrida"] = true
                 }
                 "delivering" -> {
                     fields["saiuEntregaEm"] = Timestamp.now()
@@ -3046,8 +3060,14 @@ private fun DocumentSnapshot.toDriverRide(collectionName: String): DriverRide? {
     val expired = anyStringList("expiredDriverIds", "expiradoPara", "expirados")
     val pickup = anyString("lojaEndereco", "pickup", "pickupAddress", "enderecoLoja", "nomeLoja", "lojaNome")
     val dropoff = anyAddressString()
-    val km = anyDouble("kmTotal", "distanciaKm", "distanciaTotal", "distancia", "calculo.kmTotalEstimado", "calculo.kmTotal", "calculo.distanciaKm") ?: 0.0
-    val minutes = anyDouble("tempoTotalMin", "tempoMin", "tempoEstimado", "tempo", "calculo.tempoTotalMin", "calculo.tempoMin") ?: 0.0
+    val km = anyDouble(
+        "kmTotal", "distanciaKm", "distanciaTotal", "distancia", "calculo.kmTotalEstimado", "calculo.kmTotal", "calculo.distanciaKm",
+        "logistica.distanciaKm", "entrega.distanciaKm", "rota.distanciaKm", "distanciaEntregaKm"
+    ) ?: 0.0
+    val minutes = anyDouble(
+        "tempoTotalMin", "tempoMin", "tempoEstimado", "tempo", "tempoEstimadoMin", "calculo.tempoTotalMin", "calculo.tempoMin",
+        "logistica.tempoEstimadoMin", "entrega.tempoEstimadoMin", "rota.tempoEstimadoMin", "tempoEntregaMin"
+    ) ?: 0.0
     val pickupLat = anyCoordinate("latLoja", "lojaLat", "latitudeLoja", "pickupLat", "pickupLatitude", "coletaLat", "latColeta", "origemLat")
     val pickupLng = anyCoordinate("lngLoja", "lojaLng", "longitudeLoja", "pickupLng", "pickupLongitude", "coletaLng", "lngColeta", "origemLng", "lonLoja")
     val dropoffLat = anyCoordinate("latEntrega", "entregaLat", "clienteLat", "dropoffLat", "dropoffLatitude", "destinationLat", "destinoLat") ?: nestedCoordinate("endereco", "lat", "latitude")

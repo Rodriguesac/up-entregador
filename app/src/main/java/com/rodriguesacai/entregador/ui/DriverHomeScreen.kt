@@ -140,25 +140,25 @@ private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, No
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
-private val Bg = Color(0xFFF6F8FB)
+private val Bg = Color(0xFFF7F7F7)
 private val Surface = Color(0xFFFFFFFF)
-private val SurfaceSoft = Color(0xFFF1F5F9)
-private val Border = Color(0xFFE2E8F0)
-private val Ink = Color(0xFF101828)
+private val SurfaceSoft = Color(0xFFF2F2F2)
+private val Border = Color(0xFFE6E6E6)
+private val Ink = Color(0xFF1F1F1F)
 private val Muted = Color(0xFF667085)
 private val Muted2 = Color(0xFF98A2B3)
-private val Navy = Color(0xFF0F2742)
-private val NavyDark = Color(0xFF081827)
-private val NavySoft = Color(0xFFEAF0F7)
-private val Green = Color(0xFF0E9F6E)
-private val GreenDark = Color(0xFF047857)
+private val Navy = Color(0xFFEA1D2C)
+private val NavyDark = Color(0xFF9B111E)
+private val NavySoft = Color(0xFFFFEBEE)
+private val Green = Color(0xFF16A34A)
+private val GreenDark = Color(0xFF15803D)
 private val GreenSoft = Color(0xFFE8F7F1)
 private val Orange = Color(0xFFD97706)
 private val OrangeSoft = Color(0xFFFFF6E7)
-private val Red = Color(0xFFE11D48)
-private val RedSoft = Color(0xFFFFF1F2)
-private val Blue = Color(0xFF2563EB)
-private val BlueSoft = Color(0xFFEAF2FF)
+private val Red = Color(0xFFEA1D2C)
+private val RedSoft = Color(0xFFFFEBEE)
+private val Blue = Color(0xFFEA1D2C)
+private val BlueSoft = Color(0xFFFFEBEE)
 private val CardShape = RoundedCornerShape(26.dp)
 private val ButtonShape = RoundedCornerShape(18.dp)
 
@@ -398,14 +398,14 @@ fun DriverHomeScreen(
                         onAccept = { ride -> AppAlertPlayer.playSuccess(context); DriverRepository.acceptRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
                         onReject = { ride, reason -> AppAlertPlayer.playTap(context); DriverRepository.rejectRide(context, ride.id, reason, onDone = { pendingRide = null }, onError = { error = it }) },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
-                        onUpdateRide = { ride, status -> DriverRepository.updateRideStatus(context, ride.id, status, onDone = { AppAlertPlayer.playSuccess(context); notice = "Rota atualizada." }, onError = { error = it }) },
+                        onUpdateRide = { ride, status -> DriverRepository.updateRideStatus(context, ride.id, status, onDone = { AppAlertPlayer.playSuccess(context); error = ""; notice = "Rota atualizada." }, onError = { error = it }) },
                         onOpenNavigator = onOpenNavigator,
                         onOccurrence = { ride, reason, details ->
                             DriverRepository.reportRideOccurrence(context, ride.id, reason, details, onDone = { AppAlertPlayer.playNotice(context); notice = "Ocorrência enviada. Aguarde o gestor." }, onError = { error = it })
                         },
                         onSettleAndFinish = { ride, input ->
                             DriverRepository.savePaymentSettlementForRide(context, ride.id, input, onDone = {
-                                DriverRepository.updateRideStatus(context, ride.id, "FINALIZADA", onDone = { AppAlertPlayer.playSuccess(context); notice = "Entrega finalizada." }, onError = { error = it })
+                                DriverRepository.updateRideStatus(context, ride.id, "FINALIZADA", onDone = { AppAlertPlayer.playSuccess(context); error = ""; notice = "Entrega finalizada." }, onError = { error = it })
                             }, onError = { error = it })
                         }
                     )
@@ -2103,7 +2103,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 6.22.0 • Tema Navy Premium", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 6.27.0 • Visual entregador vermelho", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }

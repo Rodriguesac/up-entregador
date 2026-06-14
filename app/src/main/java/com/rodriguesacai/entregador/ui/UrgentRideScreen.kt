@@ -62,19 +62,19 @@ import com.rodriguesacai.entregador.RodriguesFonts
 import kotlinx.coroutines.delay
 
 private val Font = RodriguesFonts.App
-private val Bg = Color(0xFFF6F8FB)
-private val Ink = Color(0xFF101828)
+private val Bg = Color(0xFFF7F7F7)
+private val Ink = Color(0xFF1F1F1F)
 private val Muted = Color(0xFF667085)
-private val Border = Color(0xFFE2E8F0)
-private val Navy = Color(0xFF0F2742)
-private val NavyDark = Color(0xFF081827)
-private val NavySoft = Color(0xFFEAF0F7)
-private val Green = Color(0xFF0E9F6E)
+private val Border = Color(0xFFE6E6E6)
+private val Navy = Color(0xFFEA1D2C)
+private val NavyDark = Color(0xFF9B111E)
+private val NavySoft = Color(0xFFFFEBEE)
+private val Green = Color(0xFF16A34A)
 private val Orange = Color(0xFFD97706)
-private val Red = Color(0xFFE11D48)
-private val SurfaceSoft = Color(0xFFF1F5F9)
+private val Red = Color(0xFFEA1D2C)
+private val SurfaceSoft = Color(0xFFF2F2F2)
 private val GreenSoft = Color(0xFFE8F7F1)
-private val RedSoft = Color(0xFFFFF1F2)
+private val RedSoft = Color(0xFFFFEBEE)
 
 @Composable
 fun UrgentRideScreen(
