@@ -46,3 +46,26 @@ Este app deve seguir as telas de referência aprovadas pelo usuário como contra
 - Fonte do app usa a família padrão do Android com escala visual travada em 1.0 dentro do app, evitando que a fonte grande do aparelho estoure cards, bottom navigation e títulos.
 - Hierarquia ajustada por tipo de uso: títulos, subtítulos, cards, chips, menu inferior, valores e botões.
 - Peso da fonte foi suavizado: Black/ExtraBold saiu das telas operacionais; Bold/SemiBold mantém leitura forte sem parecer gigante.
+
+
+## V6.22.0 - Navy Premium Operacional
+
+Tema oficial aplicado para deixar o app mais profissional e premium:
+- Navy / azul petróleo como cor principal do produto.
+- Verde reservado para status positivo: disponível, concluído, verificado e ações operacionais.
+- Vermelho reservado para urgência, erro e recusa.
+- Âmbar reservado para atenção e pendências.
+- Fundo cinza claro, cards brancos, bordas suaves e sombras discretas.
+- Bottom navigation e componentes globais deixam de usar verde dominante.
+- Home, carteira, histórico, mais e permissões seguem a lógica premium com menos poluição visual.
+
+
+## v6.23.0 Premium Real
+- Tema Navy Premium mantido: navy como principal, verde apenas para sucesso/status, vermelho para urgência e âmbar para atenção.
+- Home com insights operacionais: demanda, meta diária, ganhos, corrida ativa e atalhos.
+- Carrossel real com banners padrão, banners remotos do Firebase, troca automática, arraste manual e indicadores dinâmicos.
+- Tela Corridas com estado aguardando corrida premium.
+- Carteira com dashboard financeiro estilo fintech.
+- Histórico com filtros visuais e chips de status.
+- Mais/Perfil com estatísticas profissionais do entregador.
+- Tipografia do app com escala fixa e fontScale controlado no tema para não variar conforme o aparelho.

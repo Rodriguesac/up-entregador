@@ -62,16 +62,19 @@ import com.rodriguesacai.entregador.RodriguesFonts
 import kotlinx.coroutines.delay
 
 private val Font = RodriguesFonts.App
-private val Bg = Color(0xFFFAFBFC)
-private val Ink = Color(0xFF101216)
-private val Muted = Color(0xFF5B6673)
-private val Border = Color(0xFFE3E8EF)
-private val Green = Color(0xFF04A957)
-private val Orange = Color(0xFFFF7A00)
-private val Red = Color(0xFFEF233C)
-private val SurfaceSoft = Color(0xFFF4F7F6)
-private val GreenSoft = Color(0xFFEAF8EF)
-private val RedSoft = Color(0xFFFFEAEE)
+private val Bg = Color(0xFFF6F8FB)
+private val Ink = Color(0xFF101828)
+private val Muted = Color(0xFF667085)
+private val Border = Color(0xFFE2E8F0)
+private val Navy = Color(0xFF0F2742)
+private val NavyDark = Color(0xFF081827)
+private val NavySoft = Color(0xFFEAF0F7)
+private val Green = Color(0xFF0E9F6E)
+private val Orange = Color(0xFFD97706)
+private val Red = Color(0xFFE11D48)
+private val SurfaceSoft = Color(0xFFF1F5F9)
+private val GreenSoft = Color(0xFFE8F7F1)
+private val RedSoft = Color(0xFFFFF1F2)
 
 @Composable
 fun UrgentRideScreen(
@@ -106,7 +109,7 @@ fun UrgentRideScreen(
     ) {
         UrgentTop(seconds)
         Card(
-            modifier = Modifier.fillMaxWidth().shadow(12.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Color(0x2204A957), spotColor = Color(0x11000000)).border(1.dp, Border, RoundedCornerShape(24.dp)),
+            modifier = Modifier.fillMaxWidth().shadow(12.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Navy.copy(alpha = .16f), spotColor = Color(0x11000000)).border(1.dp, Border, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -115,11 +118,11 @@ fun UrgentRideScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     UrgentLogoMark()
                     Column(Modifier.weight(1f)) {
-                        Text("Rodrigues Entregador", color = Green, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("Rodrigues Entregador", color = Navy, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         Text("Nova corrida", color = Ink, fontFamily = Font, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                Text(value.ifBlank { "Valor a definir" }, color = Green, fontFamily = Font, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                Text(value.ifBlank { "Valor a definir" }, color = Navy, fontFamily = Font, fontSize = 34.sp, fontWeight = FontWeight.Bold)
                 Text(listOf(distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Dados da rota aguardando sincronização" }, color = Muted, fontFamily = Font, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 UrgentMotionRail(seconds)
             }
@@ -153,7 +156,7 @@ fun UrgentRideScreen(
                 onClick = onAccept,
                 modifier = Modifier.weight(1.4f).height(54.dp),
                 shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Color.White)
             ) {
                 Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
@@ -183,8 +186,8 @@ private fun UrgentTop(seconds: Int) {
         }
         Spacer(Modifier.weight(1f))
         Box(Modifier.size(68.dp), contentAlignment = Alignment.Center) {
-            Box(Modifier.size(66.dp).scale(pulse).alpha(.22f).clip(CircleShape).background(if (seconds <= 10) Red else Green))
-            Box(Modifier.size(62.dp).clip(CircleShape).background(if (seconds <= 10) Red else Green).border(4.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(66.dp).scale(pulse).alpha(.22f).clip(CircleShape).background(if (seconds <= 10) Red else Navy))
+            Box(Modifier.size(62.dp).clip(CircleShape).background(if (seconds <= 10) Red else Navy).border(4.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(seconds.toString(), color = Color.White, fontFamily = Font, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("seg", color = Color.White.copy(alpha = .85f), fontFamily = Font, fontSize = 9.sp, fontWeight = FontWeight.Bold)
@@ -196,7 +199,7 @@ private fun UrgentTop(seconds: Int) {
 
 @Composable
 private fun UrgentLogoMark() {
-    Box(Modifier.size(56.dp).shadow(10.dp, RoundedCornerShape(19.dp), clip = false).clip(RoundedCornerShape(19.dp)).background(Color.White).border(1.dp, Green.copy(alpha = .18f), RoundedCornerShape(19.dp)), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(56.dp).shadow(10.dp, RoundedCornerShape(19.dp), clip = false).clip(RoundedCornerShape(19.dp)).background(Color.White).border(1.dp, Navy.copy(alpha = .18f), RoundedCornerShape(19.dp)), contentAlignment = Alignment.Center) {
         Image(painter = painterResource(R.drawable.ic_rodrigues_logo), contentDescription = "Logo", modifier = Modifier.size(46.dp), contentScale = ContentScale.Fit)
     }
 }
@@ -204,7 +207,7 @@ private fun UrgentLogoMark() {
 @Composable
 private fun UrgentMotionRail(seconds: Int) {
     val fraction = (seconds / 60f).coerceIn(.03f, 1f)
-    val color = if (seconds <= 10) Red else Green
+    val color = if (seconds <= 10) Red else Navy
     Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(999.dp)).background(color.copy(alpha = .14f))) {
         Box(Modifier.fillMaxWidth(fraction).height(8.dp).clip(RoundedCornerShape(999.dp)).background(Brush.horizontalGradient(listOf(color, Color.White.copy(alpha = .45f)))))
     }
@@ -228,7 +231,7 @@ private fun UrgentPaymentLine(method: String, status: String, amount: String, ch
     val paid = raw.contains("pago", ignoreCase = true) || raw.contains("online", ignoreCase = true)
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(SurfaceSoft).padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(if (machine) Icons.Filled.CreditCard else Icons.Filled.Payments, null, tint = if (machine) Orange else Green, modifier = Modifier.size(20.dp))
+            Icon(if (machine) Icons.Filled.CreditCard else Icons.Filled.Payments, null, tint = if (machine) Orange else Navy, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
             Text(if (paid) "Pago online" else raw, color = Ink, fontFamily = Font, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }

@@ -33,6 +33,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -138,21 +140,24 @@ private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, No
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
-private val Bg = Color(0xFFFAFBFC)
+private val Bg = Color(0xFFF6F8FB)
 private val Surface = Color(0xFFFFFFFF)
-private val SurfaceSoft = Color(0xFFF4F7F6)
-private val Border = Color(0xFFE3E8EF)
-private val Ink = Color(0xFF101418)
-private val Muted = Color(0xFF5B6673)
-private val Muted2 = Color(0xFF8A94A1)
-private val Green = Color(0xFF04A957)
-private val GreenDark = Color(0xFF036B39)
-private val GreenSoft = Color(0xFFE6F8EE)
-private val Orange = Color(0xFFFF7A00)
-private val OrangeSoft = Color(0xFFFFF0DF)
-private val Red = Color(0xFFE9253F)
-private val RedSoft = Color(0xFFFFE9EE)
-private val Blue = Color(0xFF1D6BFF)
+private val SurfaceSoft = Color(0xFFF1F5F9)
+private val Border = Color(0xFFE2E8F0)
+private val Ink = Color(0xFF101828)
+private val Muted = Color(0xFF667085)
+private val Muted2 = Color(0xFF98A2B3)
+private val Navy = Color(0xFF0F2742)
+private val NavyDark = Color(0xFF081827)
+private val NavySoft = Color(0xFFEAF0F7)
+private val Green = Color(0xFF0E9F6E)
+private val GreenDark = Color(0xFF047857)
+private val GreenSoft = Color(0xFFE8F7F1)
+private val Orange = Color(0xFFD97706)
+private val OrangeSoft = Color(0xFFFFF6E7)
+private val Red = Color(0xFFE11D48)
+private val RedSoft = Color(0xFFFFF1F2)
+private val Blue = Color(0xFF2563EB)
 private val BlueSoft = Color(0xFFEAF2FF)
 private val CardShape = RoundedCornerShape(26.dp)
 private val ButtonShape = RoundedCornerShape(18.dp)
@@ -469,14 +474,14 @@ private fun RowScope.BottomItem(item: AppTab, selected: AppTab, label: String, i
         icon = {
             Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
                 Icon(icon, label, modifier = Modifier.size(23.dp).scale(scale))
-                if (isSelected) Box(Modifier.align(Alignment.BottomCenter).size(5.dp).clip(CircleShape).background(Green))
+                if (isSelected) Box(Modifier.align(Alignment.BottomCenter).size(5.dp).clip(CircleShape).background(Navy))
             }
         },
         label = { Text(label, fontSize = 10.sp, fontFamily = AppFont, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold) },
         colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = Green,
-            selectedTextColor = Green,
-            indicatorColor = GreenSoft,
+            selectedIconColor = Navy,
+            selectedTextColor = Navy,
+            indicatorColor = NavySoft,
             unselectedIconColor = Muted2,
             unselectedTextColor = Muted2
         )
@@ -501,7 +506,7 @@ private fun PremiumCard(modifier: Modifier = Modifier, content: @Composable Colu
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(5.dp, CardShape, clip = false, ambientColor = Color(0x1404A957), spotColor = Color(0x12000000))
+            .shadow(5.dp, CardShape, clip = false, ambientColor = Color(0x160F2742), spotColor = Color(0x12000000))
             .border(1.dp, Border, CardShape),
         colors = CardDefaults.cardColors(containerColor = Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
@@ -521,7 +526,7 @@ private fun MiniCard(modifier: Modifier = Modifier, content: @Composable ColumnS
 }
 
 @Composable
-private fun PrimaryButton(text: String, icon: ImageVector? = null, enabled: Boolean = true, color: Color = Green, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun PrimaryButton(text: String, icon: ImageVector? = null, enabled: Boolean = true, color: Color = Navy, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -652,7 +657,7 @@ private fun PermissionSetupCard(title: String, message: String, ok: Boolean, ico
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(Modifier.size(48.dp).clip(CircleShape).background(if (ok) GreenSoft else SurfaceSoft), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = Green, modifier = Modifier.size(23.dp))
+            Icon(icon, null, tint = if (ok) Green else Navy, modifier = Modifier.size(23.dp))
         }
         Column(Modifier.weight(1f)) {
             Text(title, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
@@ -664,8 +669,8 @@ private fun PermissionSetupCard(title: String, message: String, ok: Boolean, ico
             }
         } else {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Ativar", color = Green, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Green, modifier = Modifier.size(18.dp))
+                Text("Ativar", color = Navy, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Navy, modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -677,7 +682,7 @@ private fun BrandHeader(title: String, subtitle: String, icon: ImageVector) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RodriguesLogoMark(size = 50, pulse = true)
             Column {
-                Text("Rodrigues Entregador", color = Green, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Rodrigues Entregador", color = Navy, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(title, color = Ink, fontFamily = AppFont, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -749,10 +754,10 @@ private fun RodriguesLogoMark(size: Int = 56, pulse: Boolean = false) {
         modifier = Modifier
             .size(size.dp)
             .scale(pulseScale)
-            .shadow(10.dp, RoundedCornerShape((size / 3).dp), clip = false, ambientColor = Color(0x3304A957), spotColor = Color(0x2204A957))
+            .shadow(10.dp, RoundedCornerShape((size / 3).dp), clip = false, ambientColor = Navy.copy(alpha = .18f), spotColor = Navy.copy(alpha = .10f))
             .clip(RoundedCornerShape((size / 3).dp))
             .background(Color.White)
-            .border(1.dp, Green.copy(alpha = .18f), RoundedCornerShape((size / 3).dp)),
+            .border(1.dp, Navy.copy(alpha = .18f), RoundedCornerShape((size / 3).dp)),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -919,12 +924,12 @@ private fun HomeContent(
         )
         ContractStatusPill(status = status, online = online, onToggleOnline = onToggleOnline, onFixPermissions = onFixPermissions)
         ContractTodayCard(stats = stats, hideValues = hideValues, onToggleValues = onToggleValues)
+        ContractOperationalInsights(stats = stats, online = online)
         when {
             activeRide != null -> ContractActiveRideCard(activeRide, onOpenRides)
             pendingRide != null -> IncomingOfferPanel(pendingRide, onAccept = onAccept, onReject = onReject, onExpire = onExpire)
-            else -> ContractNewsBanner(appBanners.firstOrNull { it.isVisible() })
+            else -> ContractSmartCarousel(appBanners)
         }
-        ContractPagerDots()
         ContractQuickActions(onOpenHistory, onOpenWallet, onOpenMap, onOpenSupport)
         if (!permissions.ready) ContractPermissionMini(permissions, context, onFixPermissions)
     }
@@ -978,7 +983,7 @@ private fun RoundIconButton(icon: ImageVector, onClick: () -> Unit, badge: Boole
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, null, tint = Ink, modifier = Modifier.size(22.dp))
+        Icon(icon, null, tint = Navy, modifier = Modifier.size(22.dp))
         if (badge) Box(Modifier.align(Alignment.TopEnd).size(12.dp).clip(CircleShape).background(Green).border(2.dp, Color.White, CircleShape))
     }
 }
@@ -986,10 +991,10 @@ private fun RoundIconButton(icon: ImageVector, onClick: () -> Unit, badge: Boole
 @Composable
 private fun ContractStatusPill(status: OperationalStatus, online: Boolean, onToggleOnline: (Boolean) -> Unit, onFixPermissions: () -> Unit) {
     val color = when (status.kind) {
-        AvailabilityKind.Disponivel -> Green
-        AvailabilityKind.EmEntrega -> Blue
+        AvailabilityKind.Disponivel -> Navy
+        AvailabilityKind.EmEntrega -> Navy
         AvailabilityKind.Restricao -> Red
-        AvailabilityKind.Indisponivel -> Green
+        AvailabilityKind.Indisponivel -> Navy
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -1009,7 +1014,7 @@ private fun ContractStatusPill(status: OperationalStatus, online: Boolean, onTog
                     else -> Icons.Filled.CheckCircle
                 },
                 null,
-                tint = Color.White,
+                tint = if (status.kind == AvailabilityKind.Disponivel) Green else Color.White,
                 modifier = Modifier.size(23.dp)
             )
         }
@@ -1053,30 +1058,150 @@ private fun ContractTodayCard(stats: DriverStats, hideValues: Boolean, onToggleV
 @Composable
 private fun MetricLine(value: String, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(value, color = Green, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(23.dp))
+        Text(value, color = Navy, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(23.dp))
         Text(label, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
+
+@Composable
+private fun ContractOperationalInsights(stats: DriverStats, online: Boolean) {
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    val demand = when (hour) {
+        in 11..13, in 18..22 -> "Demanda alta"
+        in 14..17 -> "Demanda média"
+        else -> if (online) "Aguardando pico" else "Fique online"
+    }
+    val demandColor = when (demand) {
+        "Demanda alta" -> Green
+        "Demanda média" -> Orange
+        else -> Navy
+    }
+    val target = 150.0
+    val done = stats.totalToday.coerceAtLeast(0.0)
+    val missing = (target - done).coerceAtLeast(0.0)
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        PremiumInsightTile(
+            title = demand,
+            subtitle = if (online) "Região monitorada" else "Ative para receber",
+            icon = Icons.Filled.MyLocation,
+            color = demandColor,
+            modifier = Modifier.weight(1f)
+        )
+        PremiumInsightTile(
+            title = if (missing <= 0.0) "Meta batida" else "Faltam ${DriverRepository.formatCurrency(missing)}",
+            subtitle = "Meta diária R$ 150",
+            icon = Icons.Filled.Bolt,
+            color = if (missing <= 0.0) Green else Navy,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun PremiumInsightTile(title: String, subtitle: String, icon: ImageVector, color: Color, modifier: Modifier) {
+    Row(
+        modifier = modifier
+            .height(74.dp)
+            .shadow(2.dp, RoundedCornerShape(20.dp), clip = false, ambientColor = color.copy(alpha = .10f), spotColor = Color(0x08000000))
+            .clip(RoundedCornerShape(20.dp))
+            .background(Surface)
+            .border(1.dp, Border, RoundedCornerShape(20.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(Modifier.size(38.dp).clip(CircleShape).background(color.copy(alpha = .12f)), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+@Composable
+private fun ContractSmartCarousel(appBanners: List<AppCarouselBanner>) {
+    val banners = remember(appBanners) {
+        val remote = appBanners.filter { it.isVisible() }.sortedBy { it.order }
+        (remote + defaultPremiumBanners()).distinctBy { it.id }.take(5)
+    }
+    val pagerState = rememberPagerState(pageCount = { banners.size })
+    LaunchedEffect(banners.size) {
+        if (banners.size > 1) {
+            while (true) {
+                delay(4200)
+                val next = (pagerState.currentPage + 1) % banners.size
+                pagerState.animateScrollToPage(next)
+            }
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth()) { page ->
+            ContractNewsBanner(banners[page])
+        }
+        Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            banners.forEachIndexed { index, _ ->
+                val selected = pagerState.currentPage == index
+                Box(
+                    Modifier
+                        .padding(horizontal = 4.dp)
+                        .width(if (selected) 22.dp else 8.dp)
+                        .height(8.dp)
+                        .clip(CircleShape)
+                        .background(if (selected) Navy else Border)
+                )
+            }
+        }
+    }
+}
+
+private fun defaultPremiumBanners(): List<AppCarouselBanner> = listOf(
+    AppCarouselBanner(
+        id = "local_meta_dia",
+        badge = "META",
+        title = "Meta do dia",
+        description = "Acompanhe seus ganhos e mantenha o ritmo nos horários de pico.",
+        buttonText = "Ver ganhos"
+    ),
+    AppCarouselBanner(
+        id = "local_operacao",
+        badge = "OPERAÇÃO",
+        title = "Rode com segurança",
+        description = "Mantenha GPS, notificações e bateria liberados durante as entregas.",
+        buttonText = "Conferir"
+    ),
+    AppCarouselBanner(
+        id = "local_repasse",
+        badge = "REPASSE",
+        title = "Carteira organizada",
+        description = "Veja saldo, Pix e próximos repasses em uma visão mais limpa.",
+        buttonText = "Abrir carteira"
+    )
+)
+
 @Composable
 private fun ContractNewsBanner(banner: AppCarouselBanner?) {
     val title = banner?.title?.takeIf { it.isNotBlank() } ?: "Novidades da operação"
+    val badge = banner?.badge?.takeIf { it.isNotBlank() } ?: "NOVIDADES"
     val desc = banner?.description?.takeIf { it.isNotBlank() } ?: "Fique por dentro das melhorias e comunicados importantes."
+    val button = banner?.buttonText?.takeIf { it.isNotBlank() } ?: "Saiba mais"
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(166.dp)
-            .shadow(7.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Green.copy(alpha = .20f), spotColor = Color(0x12000000))
+            .shadow(7.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Navy.copy(alpha = .16f), spotColor = Color(0x12000000))
             .clip(RoundedCornerShape(24.dp))
-            .background(Brush.linearGradient(listOf(GreenDark, Green)))
+            .background(Brush.linearGradient(listOf(Navy, NavyDark)))
             .padding(18.dp)
     ) {
         Column(Modifier.align(Alignment.CenterStart).fillMaxWidth(.62f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatusChip("NOVIDADES", Color.White)
+            StatusChip(badge.uppercase(Locale.ROOT).take(14), Color.White)
             Text(title, color = Color.White, fontFamily = AppFont, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
             Text(desc, color = Color.White.copy(alpha = .88f), fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Box(Modifier.clip(RoundedCornerShape(13.dp)).background(Color.White).padding(horizontal = 13.dp, vertical = 8.dp)) {
-                Text("Saiba mais", color = GreenDark, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(button, color = Navy, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
         Box(Modifier.align(Alignment.CenterEnd).size(105.dp).clip(RoundedCornerShape(26.dp)).background(Color.White.copy(alpha = .16f)), contentAlignment = Alignment.Center) {
@@ -1088,7 +1213,7 @@ private fun ContractNewsBanner(banner: AppCarouselBanner?) {
 @Composable
 private fun ContractPagerDots() {
     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Box(Modifier.size(8.dp).clip(CircleShape).background(Green))
+        Box(Modifier.size(8.dp).clip(CircleShape).background(Navy))
         Spacer(Modifier.width(8.dp))
         Box(Modifier.size(8.dp).clip(CircleShape).background(Border))
         Spacer(Modifier.width(8.dp))
@@ -1124,7 +1249,7 @@ private fun ContractQuickTile(title: String, subtitle: String, icon: ImageVector
             .clickable { onClick() }
             .padding(horizontal = 12.dp)
     ) {
-        Icon(icon, null, tint = Green, modifier = Modifier.size(26.dp))
+        Icon(icon, null, tint = Navy, modifier = Modifier.size(26.dp))
         Column(Modifier.weight(1f)) {
             Text(title, color = Ink, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -1187,9 +1312,9 @@ private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleO
     )
     val heroBrush = Brush.linearGradient(
         colors = when (status.kind) {
-            AvailabilityKind.Disponivel -> listOf(Green, GreenDark)
+            AvailabilityKind.Disponivel -> listOf(Navy, NavyDark)
             AvailabilityKind.Restricao -> listOf(Red, Color(0xFFB9142B))
-            AvailabilityKind.EmEntrega -> listOf(Blue, Green)
+            AvailabilityKind.EmEntrega -> listOf(Navy, Blue)
             AvailabilityKind.Indisponivel -> listOf(Color(0xFF171C22), Color(0xFF2D3440))
         }
     )
@@ -1221,7 +1346,7 @@ private fun StatusHeroCard(status: OperationalStatus, online: Boolean, onToggleO
             shape = ButtonShape,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
-                contentColor = if (online) Red else GreenDark,
+                contentColor = if (online) Red else Navy,
                 disabledContainerColor = Color.White.copy(alpha = .45f),
                 disabledContentColor = Color.White
             ),
@@ -1461,12 +1586,41 @@ private fun RidesContent(
     when {
         activeRide != null -> CurrentRouteScreen(activeRide, paymentMachines, onUpdateRide, onOpenNavigator, onOccurrence, onSettleAndFinish)
         pendingRide != null -> ScreenScroll { IncomingOfferPanel(pendingRide, onAccept, onReject, onExpire) }
-        else -> EmptyOperationScreen(
-            title = if (online) "Aguardando corrida" else "Você está indisponível",
-            message = if (online) "Quando a operação enviar uma rota, ela aparece aqui com alerta." else "Volte para a Home e fique disponível para receber ofertas.",
-            icon = Icons.Filled.Route,
-            color = if (online) Green else Muted
-        )
+        else -> WaitingRideScreen(online)
+    }
+}
+
+
+@Composable
+private fun WaitingRideScreen(online: Boolean) {
+    ScreenScroll {
+        Spacer(Modifier.height(20.dp))
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(
+                Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(if (online) NavySoft else SurfaceSoft),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(if (online) Icons.Filled.Route else Icons.Filled.Cancel, null, tint = if (online) Navy else Muted, modifier = Modifier.size(56.dp))
+            }
+            Text(if (online) "Aguardando corrida" else "Você está indisponível", color = Ink, fontFamily = AppFont, fontSize = 25.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text(
+                if (online) "Você está disponível. Assim que surgir uma oportunidade, avisaremos com alerta urgente."
+                else "Volte para a Home e fique disponível para receber ofertas.",
+                color = Muted,
+                fontFamily = AppFont,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                textAlign = TextAlign.Center
+            )
+            PremiumCard {
+                RoutePointLine(Icons.Filled.MyLocation, "Região", "Mantenha o GPS ativo para receber chamadas próximas.", Blue)
+                RoutePointLine(Icons.Filled.NotificationsActive, "Alertas", "Notificações liberadas aumentam a chance de atender rápido.", Orange)
+                RoutePointLine(Icons.Filled.Bolt, "Horário de pico", "Fique atento principalmente no almoço e à noite.", Green)
+            }
+        }
     }
 }
 
@@ -1737,7 +1891,7 @@ private fun WalletContent(profile: DriverProfile, stats: DriverStats, history: L
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(26.dp))
-                .background(Brush.linearGradient(listOf(GreenDark, Green)))
+                .background(Brush.linearGradient(listOf(Navy, NavyDark)))
                 .padding(20.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1752,9 +1906,10 @@ private fun WalletContent(profile: DriverProfile, stats: DriverStats, history: L
             AmountCard("Saldo pendente", stats.valorARepassar ?: 0.0, hideValues, Modifier.weight(1f))
             AmountCard("Total a receber", stats.valorAReceber ?: 0.0, hideValues, Modifier.weight(1f))
         }
+        PremiumFinanceDashboard(stats = stats, hideValues = hideValues)
         PremiumCard {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(GreenSoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Schedule, null, tint = Green, modifier = Modifier.size(28.dp)) }
+                Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(NavySoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Schedule, null, tint = Navy, modifier = Modifier.size(28.dp)) }
                 Column(Modifier.weight(1f)) {
                     Text("Próximo repasse", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Text(stats.proximoRepasseLabel.ifBlank { "A definir pela operação" }, color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -1770,13 +1925,41 @@ private fun WalletContent(profile: DriverProfile, stats: DriverStats, history: L
         PremiumCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Últimos repasses", color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Text("Ver todos", color = Green, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Ver todos", color = Navy, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             history.filter { it.action.contains("FINAL", true) || it.action.contains("PAGO", true) }.take(3).forEach { item ->
                 FinanceLine(item.createdLabel, item.value.ifBlank { "Pago" })
             }
             if (history.isEmpty()) Text("Nenhum repasse registrado ainda.", color = Muted, fontFamily = AppFont, fontSize = 12.sp)
         }
+    }
+}
+
+
+@Composable
+private fun PremiumFinanceDashboard(stats: DriverStats, hideValues: Boolean) {
+    PremiumCard {
+        Text("Resumo financeiro", color = Ink, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            FinanceMetric("Hoje", if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), Green, Modifier.weight(1f))
+            FinanceMetric("Semana", if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalWeek), Navy, Modifier.weight(1f))
+            FinanceMetric("Corridas", stats.finishedTodayCount.toString(), Blue, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun FinanceMetric(label: String, value: String, color: Color, modifier: Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(color.copy(alpha = .09f))
+            .border(1.dp, color.copy(alpha = .14f), RoundedCornerShape(18.dp))
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        Text(value, color = color, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -1792,11 +1975,23 @@ private fun AmountCard(label: String, amount: Double, hide: Boolean, modifier: M
 private fun HistoryContent(history: List<DriverHistory>) {
     ScreenScroll {
         BrandHeader(title = "Histórico", subtitle = "Resumo limpo das corridas e ocorrências.", icon = Icons.Filled.History)
+        HistoryFilterChips()
         if (history.isEmpty()) {
             EmptyInsideCard("Sem corridas ainda", "Corridas aceitas, recusadas, expiradas e canceladas aparecerão aqui.", Icons.Filled.History)
         } else {
             history.take(60).forEach { HistoryCard(it) }
         }
+    }
+}
+
+
+@Composable
+private fun HistoryFilterChips() {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StatusChip("Todas", Navy)
+        StatusChip("Concluídas", Green)
+        StatusChip("Ocorrências", Orange)
+        StatusChip("Expiradas", Muted)
     }
 }
 
@@ -1889,6 +2084,11 @@ private fun MoreContent(
                         Text(if (online) "Disponível" else "Indisponível", color = if (online) Green else Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    ProfileStat("4,9", "Avaliação", Green, Modifier.weight(1f))
+                    ProfileStat("98%", "Aceitação", Navy, Modifier.weight(1f))
+                    ProfileStat("Elite", "Nível", Orange, Modifier.weight(1f))
+                }
             }
             MenuTile("Perfil", "Dados principais da conta", Icons.Filled.Person) { screen = "perfil" }
             MenuTile("Pix/Banco", "Pix, banco e repasse", Icons.Filled.Payments) { screen = "pix" }
@@ -1903,10 +2103,22 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 6.21.5 • Tipografia + build corrigido", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 6.22.0 • Tema Navy Premium", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
+    }
+}
+
+
+@Composable
+private fun ProfileStat(value: String, label: String, color: Color, modifier: Modifier) {
+    Column(
+        modifier = modifier.clip(RoundedCornerShape(16.dp)).background(color.copy(alpha = .09f)).padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(value, color = color, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = Muted, fontFamily = AppFont, fontSize = 10.sp, fontWeight = FontWeight.Medium, maxLines = 1)
     }
 }
 
@@ -1924,7 +2136,7 @@ private fun MenuTile(title: String, subtitle: String, icon: ImageVector, onClick
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Box(Modifier.size(42.dp).clip(CircleShape).background(GreenSoft), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Green, modifier = Modifier.size(22.dp)) }
+        Box(Modifier.size(42.dp).clip(CircleShape).background(NavySoft), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Navy, modifier = Modifier.size(22.dp)) }
         Column(Modifier.weight(1f)) {
             Text(title, color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -2057,7 +2269,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("6.21.5 — Tipografia + build corrigido", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("6.22.0 — Navy Premium operacional", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

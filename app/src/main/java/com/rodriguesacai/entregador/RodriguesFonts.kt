@@ -4,10 +4,11 @@ import androidx.compose.ui.text.font.FontFamily
 
 object RodriguesFonts {
     /**
-     * Fonte final do app: usa a fonte nativa do Android (Roboto/Sans), que fica mais limpa,
-     * mais leve e mais profissional em campos, menus e telas operacionais.
+     * Tipografia propria do app: a familia fica centralizada aqui e a escala/
+     * fontScale ficam travados no RodriguesNativeTheme para nao variar conforme
+     * Xiaomi, Samsung, Motorola ou configuracao de fonte do aparelho.
      */
-    val App: FontFamily = FontFamily.Default
+    val App: FontFamily = FontFamily.SansSerif
 
     // Alias mantido para compatibilidade interna. Nao usa mais Montserrat.
     val Montserrat: FontFamily = App

@@ -36,26 +36,26 @@ fun RodriguesNativeTheme(
     )
 
     val dark = darkColorScheme(
-        primary = Color(0xFF82C91E),
-        onPrimary = Color(0xFF10200A),
-        secondary = Color(0xFF9B6DFF),
-        background = Color(0xFF050507),
-        surface = Color(0xFF15151C),
+        primary = Color(0xFF0F2742),
+        onPrimary = Color.White,
+        secondary = Color(0xFF0E9F6E),
+        background = Color(0xFF050B12),
+        surface = Color(0xFF111827),
         onSurface = Color.White,
         onBackground = Color.White,
-        outline = Color(0xFF3B3644)
+        outline = Color(0xFF334155)
     )
 
     val light = lightColorScheme(
-        primary = Color(0xFF04A957),
+        primary = Color(0xFF0F2742),
         onPrimary = Color.White,
-        secondary = Color(0xFFFF7A00),
-        background = Color(0xFFFAFBFC),
+        secondary = Color(0xFF0E9F6E),
+        background = Color(0xFFF6F8FB),
         surface = Color(0xFFFFFFFF),
-        surfaceVariant = Color(0xFFF4F7F6),
-        onSurface = Color(0xFF101216),
-        onBackground = Color(0xFF101216),
-        outline = Color(0xFFE3E8EF)
+        surfaceVariant = Color(0xFFF1F5F9),
+        onSurface = Color(0xFF101828),
+        onBackground = Color(0xFF101828),
+        outline = Color(0xFFE2E8F0)
     )
 
     val density = LocalDensity.current

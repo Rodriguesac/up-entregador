@@ -21,17 +21,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object EntregadorColors {
-    val Background = Color(0xFFFAFBFC)
+    val Background = Color(0xFFF6F8FB)
     val Surface = Color(0xFFFFFFFF)
-    val SurfaceSoft = Color(0xFFF4F7F6)
-    val Border = Color(0xFFE3E8EF)
-    val Text = Color(0xFF0B1117)
-    val Muted = Color(0xFF5B6673)
-    val MutedLight = Color(0xFF9AA6B2)
-    val Green = Color(0xFF04A957)
-    val GreenDark = Color(0xFF036B39)
-    val Orange = Color(0xFFFF7A00)
-    val Red = Color(0xFFEF233C)
+    val SurfaceSoft = Color(0xFFF1F5F9)
+    val Border = Color(0xFFE2E8F0)
+    val Text = Color(0xFF101828)
+    val Muted = Color(0xFF667085)
+    val MutedLight = Color(0xFF98A2B3)
+    val Navy = Color(0xFF0F2742)
+    val NavyDark = Color(0xFF081827)
+    val NavySoft = Color(0xFFEAF0F7)
+    val Green = Color(0xFF0E9F6E)
+    val GreenDark = Color(0xFF047857)
+    val Orange = Color(0xFFD97706)
+    val Red = Color(0xFFE11D48)
     val Blue = Color(0xFF2563EB)
 }
 
@@ -61,7 +64,7 @@ fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled
         modifier = modifier.fillMaxWidth().height(52.dp),
         shape = EntregadorShape.Button,
         colors = ButtonDefaults.buttonColors(
-            containerColor = EntregadorColors.Green,
+            containerColor = EntregadorColors.Navy,
             contentColor = Color.White,
             disabledContainerColor = Color(0xFFE6EBEF),
             disabledContentColor = EntregadorColors.MutedLight
