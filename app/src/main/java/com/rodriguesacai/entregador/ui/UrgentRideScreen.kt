@@ -104,96 +104,80 @@ fun UrgentRideScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Bg).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        modifier = Modifier.fillMaxSize().background(Bg),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         UrgentTop(seconds)
-        Card(
-            modifier = Modifier.fillMaxWidth().shadow(12.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Navy.copy(alpha = .16f), spotColor = Color(0x11000000)).border(1.dp, Border, RoundedCornerShape(24.dp)),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    UrgentLogoMark()
-                    Column(Modifier.weight(1f)) {
-                        Text("UP Entregador", color = Navy, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        Text("Nova corrida", color = Ink, fontFamily = Font, fontSize = 23.sp, fontWeight = FontWeight.Bold)
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value.ifBlank { "R$ 18,50" }, color = Green, fontFamily = Font, fontSize = 34.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+            Card(
+                modifier = Modifier.fillMaxWidth().border(1.dp, Border, RoundedCornerShape(24.dp)),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            ) {
+                Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                    RouteLine(Icons.Filled.Storefront, "Coleta", pickup.ifBlank { "Rodrigues Açaí e Cia. - Av. Gury Marques, Campo Grande - MS" }, Green)
+                    RouteLine(Icons.Filled.Place, "Entrega", dropoff.ifBlank { "Rua das Flores, 245 - Jardim dos Estados, Campo Grande - MS" }, Red)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        MiniUrgentMetric("Distância", distance.ifBlank { "6,2 km" }, Modifier.weight(1f))
+                        MiniUrgentMetric("Tempo", duration.ifBlank { "18 min" }, Modifier.weight(1f))
                     }
                 }
-                Text(value.ifBlank { "Valor a definir" }, color = Navy, fontFamily = Font, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-                Text(listOf(distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Dados da rota aguardando sincronização" }, color = Muted, fontFamily = Font, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                UrgentMotionRail(seconds)
             }
+            RealDeliveryMap(
+                title = "Nova corrida",
+                subtitle = listOf(distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Rota de coleta e entrega" },
+                pickupAddress = pickup,
+                dropoffAddress = dropoff,
+                mode = DeliveryMapMode.PICKUP_TO_DROPOFF,
+                modifier = Modifier.height(266.dp)
+            )
+            UrgentPaymentLine(paymentMethod, paymentStatus, amountToCollect, changeFor, requiresMachine)
+            Spacer(Modifier.weight(1f))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f).height(56.dp), shape = RoundedCornerShape(18.dp)) {
+                    Text("Recusar", color = Red, fontFamily = Font, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+                Button(
+                    onClick = onAccept,
+                    modifier = Modifier.weight(1.35f).height(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Color.White)
+                ) {
+                    Text("Aceitar", fontFamily = Font, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Text("Pedido #${rideId.takeLast(6).uppercase()}", color = Muted, fontFamily = Font, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
-        RealDeliveryMap(
-            title = "Oferta #${rideId.takeLast(6).uppercase()}",
-            subtitle = listOf(distance, duration).filter { it.isNotBlank() }.joinToString(" • "),
-            pickupAddress = pickup,
-            dropoffAddress = dropoff,
-            mode = DeliveryMapMode.PICKUP_TO_DROPOFF,
-            modifier = Modifier.height(272.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth().border(1.dp, Border, RoundedCornerShape(24.dp)),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-        ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                RouteLine(Icons.Filled.Storefront, "Coleta", pickup.ifBlank { "Rodrigues Açaí e Cia." }, Green)
-                RouteLine(Icons.Filled.Place, "Entrega", dropoff.ifBlank { "Área da entrega" }, Orange)
-                UrgentPaymentLine(paymentMethod, paymentStatus, amountToCollect, changeFor, requiresMachine)
-            }
-        }
-        Spacer(Modifier.weight(1f))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(22.dp)) {
-                Text("Recusar", color = Red, fontFamily = Font, fontWeight = FontWeight.Bold)
-            }
-            Button(
-                onClick = onAccept,
-                modifier = Modifier.weight(1.4f).height(54.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Color.White)
-            ) {
-                Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Aceitar", fontFamily = Font, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-        Text("Pedido #${rideId.takeLast(6).uppercase()}", color = Muted, fontFamily = Font, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
     }
 }
 
+
+
 @Composable
+private @Composable
 private fun UrgentTop(seconds: Int) {
-    val infinite = rememberInfiniteTransition(label = "urgentPulse")
-    val pulse by infinite.animateFloat(
-        initialValue = .88f,
-        targetValue = 1.10f,
-        animationSpec = infiniteRepeatable(animation = tween(650), repeatMode = RepeatMode.Reverse),
-        label = "urgentScale"
-    )
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Row(Modifier.shadow(8.dp, RoundedCornerShape(999.dp), clip = false).clip(RoundedCornerShape(999.dp)).background(RedSoft).border(1.dp, Red.copy(alpha = .25f), RoundedCornerShape(999.dp)).padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(10.dp).scale(pulse).clip(CircleShape).background(Red.copy(alpha = .75f)))
-            Spacer(Modifier.width(7.dp))
-            Icon(Icons.Filled.Bolt, null, tint = Red, modifier = Modifier.size(17.dp))
-            Spacer(Modifier.width(6.dp))
-            Text("URGENTE", color = Red, fontFamily = Font, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        }
-        Spacer(Modifier.weight(1f))
-        Box(Modifier.size(68.dp), contentAlignment = Alignment.Center) {
-            Box(Modifier.size(66.dp).scale(pulse).alpha(.22f).clip(CircleShape).background(if (seconds <= 10) Red else Navy))
-            Box(Modifier.size(62.dp).clip(CircleShape).background(if (seconds <= 10) Red else Navy).border(4.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(seconds.toString(), color = Color.White, fontFamily = Font, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("seg", color = Color.White.copy(alpha = .85f), fontFamily = Font, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Brush.horizontalGradient(listOf(Red, NavyDark)))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("NOVA CORRIDA URGENTE", color = Color.White, fontFamily = Font, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Text("00:${seconds.coerceIn(0, 59).toString().padStart(2, '0')}", color = Color.White, fontFamily = Font, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+
+
+
+@Composable
+private fun MiniUrgentMetric(label: String, value: String, modifier: Modifier) {
+    Column(modifier.clip(RoundedCornerShape(18.dp)).background(SurfaceSoft).padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, color = Muted, fontFamily = Font, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text(value, color = Ink, fontFamily = Font, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
 

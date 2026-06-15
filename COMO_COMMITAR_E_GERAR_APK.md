@@ -8,7 +8,7 @@ Sugestão de comandos:
 
 ```bash
 git add .
-git commit -m "feat: aplica UP Entregador fiel operacional v6.28.0"
+git commit -m "feat: aplica UP Entregador visual fiel operacional v6.29.0"
 git push
 ```
 

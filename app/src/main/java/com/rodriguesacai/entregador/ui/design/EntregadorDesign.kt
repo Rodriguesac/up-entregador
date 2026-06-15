@@ -39,7 +39,7 @@ object EntregadorColors {
 }
 
 object EntregadorShape {
-    val Card = RoundedCornerShape(26.dp)
+    val Card = RoundedCornerShape(24.dp)
     val Button = RoundedCornerShape(18.dp)
     val Chip = RoundedCornerShape(999.dp)
 }
@@ -61,7 +61,7 @@ fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.fillMaxWidth().height(52.dp),
+        modifier = modifier.fillMaxWidth().height(56.dp),
         shape = EntregadorShape.Button,
         colors = ButtonDefaults.buttonColors(
             containerColor = EntregadorColors.Navy,
@@ -76,6 +76,6 @@ fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled
 
 @Composable
 fun EntregadorTitle(title: String, subtitle: String = "") {
-    Text(title, color = EntregadorColors.Text, fontSize = 24.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
-    if (subtitle.isNotBlank()) Text(subtitle, color = EntregadorColors.Muted, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
+    Text(title, color = EntregadorColors.Text, fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
+    if (subtitle.isNotBlank()) Text(subtitle, color = EntregadorColors.Muted, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
 }

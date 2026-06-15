@@ -1,6 +1,6 @@
 # Contrato visual e operacional — UP Entregador
 
-Este pacote é a versão **6.28.0-up-fiel-operacional** do app nativo Android do entregador, em Kotlin + Jetpack Compose.
+Este pacote é a versão **6.29.0-up-visual-operacional-fiel** do app nativo Android do entregador, em Kotlin + Jetpack Compose.
 
 ## Regra visual oficial
 - Produto: **UP Entregador**.
@@ -31,7 +31,10 @@ Este pacote é a versão **6.28.0-up-fiel-operacional** do app nativo Android do
 ## Ajustes desta entrega
 - Branding alterado para **UP Entregador**.
 - Ícone real do UP adicionado como launcher e logo interno.
-- Login redesenhado com hero vermelho e logo UP.
+- Login redesenhado com hero vermelho, logo UP grande, campos limpos e tipografia mais forte.
+- Permissões redesenhadas com progresso 2/5, cards clicáveis e CTA de liberação essencial.
+- Home, Corridas, Nova Corrida, Rota, Histórico e Carteira aproximadas do modelo visual operacional aprovado.
+- Fullscreen de oferta urgente redesenhado com faixa vermelha, valor grande, mapa e botões alinhados.
 - Contrato visual atualizado para vermelho operacional, não verde/navy antigo.
-- Versão atualizada para `6.28.0-up-fiel-operacional`.
+- Versão atualizada para `6.29.0-up-visual-operacional-fiel`.
 - Workflow de GitHub Actions incluído para gerar APK debug ao commitar.

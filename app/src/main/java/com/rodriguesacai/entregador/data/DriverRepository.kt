@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "6.27.0-ifood-gadm"
+    private const val APP_VERSION = "6.29.0-up-visual-operacional-fiel"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"

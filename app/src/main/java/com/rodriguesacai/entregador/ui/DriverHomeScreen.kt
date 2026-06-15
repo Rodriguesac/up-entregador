@@ -606,75 +606,97 @@ private fun PermissionsOnboardingScreen(
     LaunchedEffect(permissionRefreshTick) { permissionStatus = PermissionStatusReader.read(context) }
 
     ScreenScroll {
-        Spacer(Modifier.height(4.dp))
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            RodriguesLogoMark(size = 72, pulse = false)
-            Text("Permissões do app", color = Ink, fontFamily = AppFont, fontSize = 25.sp, lineHeight = 27.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Text("Precisamos de algumas permissões para você receber corridas com segurança e eficiência.", color = Muted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 10.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Permissões do app", color = Ink, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "Precisamos de algumas permissões para você receber corridas com segurança e eficiência.",
+                color = Muted,
+                fontFamily = AppFont,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
+        PermissionProgressHero(permissionStatus, context, onRequestEssentialPermissions)
         PermissionSetupCard("Notificações", "Receba alertas de novas corridas e atualizações.", permissionStatus.notifications, Icons.Filled.NotificationsActive, onClick = onRequestNotificationPermission)
-        PermissionSetupCard("Localização", "Permite encontrar corridas na sua região.", permissionStatus.location, Icons.Filled.MyLocation, onClick = onRequestLocationPermission)
-        PermissionSetupCard("Alerta em tela cheia", "Garante que você veja todas as notificações.", permissionStatus.fullScreenIntent, Icons.Filled.Bolt, onClick = onOpenFullScreenSettings)
-        PermissionSetupCard("Bateria sem restrição", "Evita que o app seja encerrado em segundo plano.", permissionStatus.batteryUnrestricted, Icons.Filled.Shield, onClick = onOpenBatterySettings)
-        PrimaryButton("Configurar permissões", icon = Icons.Filled.CheckCircle, onClick = onRequestEssentialPermissions)
-        SecondaryButton("Continuar", color = Green, onClick = onContinue)
+        PermissionSetupCard("Localização", "Rota, distância e acompanhamento da entrega.", permissionStatus.location, Icons.Filled.MyLocation, onClick = onRequestLocationPermission)
+        PermissionSetupCard("Alerta urgente", "Tela cheia para oferta importante.", permissionStatus.fullScreenIntent, Icons.Filled.Bolt, onClick = onOpenFullScreenSettings)
+        PermissionSetupCard("Bateria", "Evita o app morrer em segundo plano.", permissionStatus.batteryUnrestricted, Icons.Filled.Shield, onClick = onOpenBatterySettings)
+        PermissionSetupCard("Internet/GPS", "Conexão e localização do aparelho.", hasInternet(context) && isGpsEnabled(context), Icons.Filled.Map, onClick = onRequestEssentialPermissions)
+        Spacer(Modifier.height(10.dp))
+        PrimaryButton("Liberar permissões essenciais", icon = Icons.Filled.CheckCircle, color = Navy, onClick = onRequestEssentialPermissions)
+        SecondaryButton("Continuar mesmo assim", color = Muted, onClick = onContinue)
     }
 }
+
+
 
 @Composable
 private fun PermissionProgressHero(status: PermissionStatus, context: Context, onFix: () -> Unit) {
     val missing = permissionMissingLabels(status, context)
+    val released = 5 - missing.size.coerceIn(0, 5)
     val ready = missing.isEmpty()
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(32.dp)).background(if (ready) GreenSoft else OrangeSoft).border(1.dp, if (ready) Green.copy(alpha = .22f) else Orange.copy(alpha = .25f), RoundedCornerShape(32.dp)).padding(18.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(5.dp, RoundedCornerShape(22.dp), clip = false, ambientColor = Navy.copy(alpha = .10f), spotColor = Color(0x11000000))
+            .clip(RoundedCornerShape(22.dp))
+            .background(Color.White)
+            .border(1.dp, Border, RoundedCornerShape(22.dp))
+            .clickable { onFix() }
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(58.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
-                Icon(if (ready) Icons.Filled.CheckCircle else Icons.Filled.Shield, null, tint = if (ready) Green else Orange, modifier = Modifier.size(30.dp))
+            Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(if (ready) GreenSoft else NavySoft), contentAlignment = Alignment.Center) {
+                Icon(if (ready) Icons.Filled.CheckCircle else Icons.Filled.Shield, null, tint = if (ready) Green else Navy, modifier = Modifier.size(29.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(if (ready) "Tudo liberado" else "Faltam permissões", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(if (ready) "Você já pode operar com alerta e localização." else missing.joinToString(" • "), color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Permissões essenciais", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("$released de 5 liberadas", color = if (ready) Green else Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted2, modifier = Modifier.size(22.dp))
         }
-        if (!ready) PrimaryButton("Liberar agora", icon = Icons.Filled.CheckCircle, color = Orange, onClick = onFix)
+        Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(999.dp)).background(SurfaceSoft)) {
+            Box(Modifier.fillMaxWidth((released / 5f).coerceIn(.04f, 1f)).height(8.dp).clip(RoundedCornerShape(999.dp)).background(if (ready) Green else Navy))
+        }
+        if (!ready) Text("Falta: ${missing.joinToString(" • ")}", color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
+
+
 
 @Composable
 private fun PermissionSetupCard(title: String, message: String, ok: Boolean, icon: ImageVector, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(20.dp), clip = false, ambientColor = Color(0x10000000), spotColor = Color(0x0C000000))
-            .clip(RoundedCornerShape(20.dp))
+            .height(76.dp)
+            .shadow(2.dp, RoundedCornerShape(18.dp), clip = false, ambientColor = Color(0x10000000), spotColor = Color(0x0C000000))
+            .clip(RoundedCornerShape(18.dp))
             .background(Surface)
-            .border(1.dp, Border, RoundedCornerShape(20.dp))
+            .border(1.dp, if (ok) Green.copy(alpha = .18f) else Border, RoundedCornerShape(18.dp))
             .clickable { onClick() }
-            .padding(horizontal = 13.dp, vertical = 12.dp),
+            .padding(horizontal = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Box(Modifier.size(48.dp).clip(CircleShape).background(if (ok) GreenSoft else SurfaceSoft), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = if (ok) Green else Navy, modifier = Modifier.size(23.dp))
+        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(if (ok) GreenSoft else NavySoft), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = if (ok) Green else Navy, modifier = Modifier.size(24.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(message, color = Muted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(title, color = Ink, fontFamily = AppFont, fontSize = 15.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(message, color = Muted, fontFamily = AppFont, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         if (ok) {
-            Box(Modifier.size(34.dp).clip(CircleShape).background(Green), contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.CheckCircle, null, tint = Color.White, modifier = Modifier.size(19.dp))
-            }
+            StatusChip("OK", Green)
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Ativar", color = Navy, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Navy, modifier = Modifier.size(18.dp))
-            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted2, modifier = Modifier.size(21.dp))
         }
     }
 }
+
+
 
 @Composable
 private fun BrandHeader(title: String, subtitle: String, icon: ImageVector) {
@@ -740,26 +762,53 @@ private fun LoginScreen(
     var pix by remember { mutableStateOf("") }
     var bank by remember { mutableStateOf("") }
 
-    ScreenScroll {
-        LoginHeroHeader(mode = mode)
-        if (notice.isNotBlank()) InlineNoticeCard(notice, Green)
-        if (error.isNotBlank()) InlineNoticeCard(error, Red)
-        PremiumCard {
-            if (mode == "login") {
-                Field("CPF ou telefone", doc, { doc = onlyDigits(it).take(14) }, "Digite CPF ou telefone", keyboardType = KeyboardType.Number)
-                Field("Senha", password, { password = it }, "Senha do app", password = true)
-                PrimaryButton("Entrar", enabled = !loading, icon = Icons.Filled.CheckCircle) { onLogin(doc, password) { loading = it } }
-                SecondaryButton("Solicitar cadastro", icon = Icons.Filled.Person) { mode = "cadastro" }
-            } else {
+    if (mode == "login") {
+        Column(Modifier.fillMaxSize().background(Bg).verticalScroll(rememberScrollState())) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(238.dp)
+                    .clip(RoundedCornerShape(bottomStart = 34.dp, bottomEnd = 34.dp))
+                    .background(Brush.linearGradient(listOf(Color(0xFFFF3B1F), Navy, NavyDark))),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    RodriguesLogoMark(size = 112, pulse = false)
+                    Text("UP ENTREGADOR", color = Color(0xFFFFD166), fontFamily = AppFont, fontSize = 14.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp, vertical = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(13.dp)
+            ) {
+                Text("Bem-vindo(a)!", color = Ink, fontFamily = AppFont, fontSize = 27.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text("Acesse sua conta para continuar\nfazendo entregas.", color = Muted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
+                if (notice.isNotBlank()) InlineNoticeCard(notice, Green)
+                if (error.isNotBlank()) InlineNoticeCard(error, Red)
+                Spacer(Modifier.height(4.dp))
+                Field("", doc, { doc = onlyDigits(it).take(14) }, "CPF ou telefone", keyboardType = KeyboardType.Number)
+                Field("", password, { password = it }, "Senha", password = true)
+                PrimaryButton("Entrar", enabled = !loading, color = Navy, icon = null) { onLogin(doc, password) { loading = it } }
+                SecondaryButton("Solicitar cadastro", color = Ink) { mode = "cadastro" }
+                Text("Esqueci minha senha", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            }
+        }
+    } else {
+        ScreenScroll {
+            BrandHeader(title = "Solicitar cadastro", subtitle = "Envie seus dados para análise da operação.", icon = Icons.Filled.Person)
+            if (notice.isNotBlank()) InlineNoticeCard(notice, Green)
+            if (error.isNotBlank()) InlineNoticeCard(error, Red)
+            PremiumCard {
                 Field("Nome completo", name, { name = it }, "Seu nome")
                 Field("CPF", cpf, { cpf = onlyDigits(it).take(11) }, "Somente números", keyboardType = KeyboardType.Number)
                 Field("Telefone / WhatsApp", phone, { phone = onlyDigits(it).take(11) }, "67999999999", keyboardType = KeyboardType.Phone)
                 Field("E-mail", email, { email = it }, "seu@email.com", keyboardType = KeyboardType.Email)
                 Field("Cidade", city, { city = it }, "Campo Grande - MS")
                 Field("Senha", password, { password = it }, "Mínimo 6 caracteres", password = true)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    Field("Veículo", vehicle, { vehicle = it }, modifierWeightPlaceholder(), lines = 1)
-                }
+                Field("Veículo", vehicle, { vehicle = it }, "Moto")
                 Field("Placa", plate, { plate = it.uppercase(Locale.ROOT) }, "Opcional")
                 Field("Chave Pix", pix, { pix = it }, "Opcional")
                 Field("Banco", bank, { bank = it }, "Opcional")
@@ -769,6 +818,8 @@ private fun LoginScreen(
         }
     }
 }
+
+
 
 @Composable
 private fun RodriguesLogoMark(size: Int = 56, pulse: Boolean = false) {
@@ -1021,68 +1072,63 @@ private fun RoundIconButton(icon: ImageVector, onClick: () -> Unit, badge: Boole
 private fun ContractStatusPill(status: OperationalStatus, online: Boolean, onToggleOnline: (Boolean) -> Unit, onFixPermissions: () -> Unit) {
     val color = when (status.kind) {
         AvailabilityKind.Disponivel -> Navy
-        AvailabilityKind.EmEntrega -> Navy
-        AvailabilityKind.Restricao -> Red
+        AvailabilityKind.EmEntrega -> Color(0xFF111827)
+        AvailabilityKind.Restricao -> Orange
         AvailabilityKind.Indisponivel -> Navy
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(7.dp, RoundedCornerShape(28.dp), clip = false, ambientColor = color.copy(alpha = .22f), spotColor = color.copy(alpha = .14f))
-            .clip(RoundedCornerShape(28.dp))
-            .background(color)
+            .height(66.dp)
+            .shadow(8.dp, RoundedCornerShape(22.dp), clip = false, ambientColor = color.copy(alpha = .22f), spotColor = color.copy(alpha = .15f))
+            .clip(RoundedCornerShape(22.dp))
+            .background(Brush.horizontalGradient(listOf(color, if (status.kind == AvailabilityKind.EmEntrega) Color(0xFF2A3441) else Color(0xFFF43F1A))))
             .clickable { if (status.canGoOnline || online) onToggleOnline(!online) else onFixPermissions() }
-            .padding(horizontal = 18.dp, vertical = 15.dp)
+            .padding(horizontal = 17.dp)
     ) {
-        Box(Modifier.size(42.dp).clip(CircleShape).background(Color.White.copy(alpha = .18f)), contentAlignment = Alignment.Center) {
-            Icon(
-                when (status.kind) {
-                    AvailabilityKind.Restricao -> Icons.Filled.ErrorOutline
-                    AvailabilityKind.EmEntrega -> Icons.Filled.Route
-                    else -> Icons.Filled.CheckCircle
-                },
-                null,
-                tint = if (status.kind == AvailabilityKind.Disponivel) Green else Color.White,
-                modifier = Modifier.size(23.dp)
-            )
-        }
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                if (!status.canGoOnline && !online) "Liberar permissões" else status.label,
-                color = Color.White,
-                fontFamily = AppFont,
-                fontSize = 20.sp,
-                lineHeight = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            if (status.kind == AvailabilityKind.Restricao) Text(status.message, color = Color.White.copy(alpha = .88f), fontFamily = AppFont, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
-        Icon(if (online) Icons.Filled.Cancel else Icons.Filled.KeyboardArrowRight, null, tint = Color.White, modifier = Modifier.size(24.dp))
+        Text(
+            if (!status.canGoOnline && !online) "Liberar permissões" else status.label,
+            color = Color.White,
+            fontFamily = AppFont,
+            fontSize = 18.sp,
+            lineHeight = 21.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(checked = online || status.kind == AvailabilityKind.EmEntrega, onCheckedChange = { checked -> if (status.canGoOnline || online) onToggleOnline(checked) else onFixPermissions() })
     }
 }
+
+
 
 @Composable
 private fun ContractTodayCard(stats: DriverStats, hideValues: Boolean, onToggleValues: () -> Unit) {
     PremiumCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Ganhos de hoje", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), color = Ink, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
-            }
-            Box(Modifier.width(1.dp).height(48.dp).background(Border))
-            Spacer(Modifier.width(14.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.width(92.dp)) {
-                MetricLine(stats.ridesTodayCount.toString(), "Corridas")
-                MetricLine(stats.finishedTodayCount.toString(), "Finalizadas")
+                Text("Ganhos de hoje", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), color = Green, fontFamily = AppFont, fontSize = 30.sp, lineHeight = 33.sp, fontWeight = FontWeight.Bold)
             }
             Box(Modifier.size(38.dp).clip(CircleShape).background(SurfaceSoft).clickable { onToggleValues() }, contentAlignment = Alignment.Center) {
                 Icon(if (hideValues) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, null, tint = Muted, modifier = Modifier.size(20.dp))
             }
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f).clip(RoundedCornerShape(18.dp)).background(SurfaceSoft).padding(12.dp)) {
+                Text("Corridas", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(stats.ridesTodayCount.toString(), color = Ink, fontFamily = AppFont, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            }
+            Column(Modifier.weight(1f).clip(RoundedCornerShape(18.dp)).background(SurfaceSoft).padding(12.dp)) {
+                Text("Finalizadas", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(stats.finishedTodayCount.toString(), color = Ink, fontFamily = AppFont, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            }
+        }
     }
 }
+
+
 
 @Composable
 private fun MetricLine(value: String, label: String) {
@@ -1099,12 +1145,7 @@ private fun ContractOperationalInsights(stats: DriverStats, online: Boolean) {
     val demand = when (hour) {
         in 11..13, in 18..22 -> "Demanda alta"
         in 14..17 -> "Demanda média"
-        else -> if (online) "Aguardando pico" else "Fique online"
-    }
-    val demandColor = when (demand) {
-        "Demanda alta" -> Green
-        "Demanda média" -> Orange
-        else -> Navy
+        else -> if (online) "Região ativa" else "Fique online"
     }
     val target = 150.0
     val done = stats.totalToday.coerceAtLeast(0.0)
@@ -1114,18 +1155,20 @@ private fun ContractOperationalInsights(stats: DriverStats, online: Boolean) {
             title = demand,
             subtitle = if (online) "Região monitorada" else "Ative para receber",
             icon = Icons.Filled.MyLocation,
-            color = demandColor,
+            color = Orange,
             modifier = Modifier.weight(1f)
         )
         PremiumInsightTile(
             title = if (missing <= 0.0) "Meta batida" else "Faltam ${DriverRepository.formatCurrency(missing)}",
             subtitle = "Meta diária R$ 150",
             icon = Icons.Filled.Bolt,
-            color = if (missing <= 0.0) Green else Navy,
+            color = Green,
             modifier = Modifier.weight(1f)
         )
     }
 }
+
+
 
 @Composable
 private fun PremiumInsightTile(title: String, subtitle: String, icon: ImageVector, color: Color, modifier: Modifier) {
@@ -1212,32 +1255,30 @@ private fun defaultPremiumBanners(): List<AppCarouselBanner> = listOf(
 
 @Composable
 private fun ContractNewsBanner(banner: AppCarouselBanner?) {
-    val title = banner?.title?.takeIf { it.isNotBlank() } ?: "Novidades da operação"
-    val badge = banner?.badge?.takeIf { it.isNotBlank() } ?: "NOVIDADES"
-    val desc = banner?.description?.takeIf { it.isNotBlank() } ?: "Fique por dentro das melhorias e comunicados importantes."
-    val button = banner?.buttonText?.takeIf { it.isNotBlank() } ?: "Saiba mais"
+    val title = banner?.title?.takeIf { it.isNotBlank() } ?: "Indique e ganhe"
+    val badge = banner?.badge?.takeIf { it.isNotBlank() } ?: "BÔNUS"
+    val desc = banner?.description?.takeIf { it.isNotBlank() } ?: "Convide amigos e ganhe bônus por indicação aprovada."
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(166.dp)
-            .shadow(7.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Navy.copy(alpha = .16f), spotColor = Color(0x12000000))
-            .clip(RoundedCornerShape(24.dp))
-            .background(Brush.linearGradient(listOf(Navy, NavyDark)))
-            .padding(18.dp)
+            .height(142.dp)
+            .shadow(8.dp, RoundedCornerShape(22.dp), clip = false, ambientColor = Navy.copy(alpha = .18f), spotColor = Color(0x12000000))
+            .clip(RoundedCornerShape(22.dp))
+            .background(Brush.linearGradient(listOf(NavyDark, Navy, Color(0xFFFF3B1F))))
+            .padding(16.dp)
     ) {
-        Column(Modifier.align(Alignment.CenterStart).fillMaxWidth(.62f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatusChip(badge.uppercase(Locale.ROOT).take(14), Color.White)
-            Text(title, color = Color.White, fontFamily = AppFont, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+        Column(Modifier.align(Alignment.CenterStart).fillMaxWidth(.64f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            StatusChip(badge.uppercase(Locale.ROOT).take(12), Color.White)
+            Text(title, color = Color.White, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold)
             Text(desc, color = Color.White.copy(alpha = .88f), fontFamily = AppFont, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Box(Modifier.clip(RoundedCornerShape(13.dp)).background(Color.White).padding(horizontal = 13.dp, vertical = 8.dp)) {
-                Text(button, color = Navy, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
         }
-        Box(Modifier.align(Alignment.CenterEnd).size(105.dp).clip(RoundedCornerShape(26.dp)).background(Color.White.copy(alpha = .16f)), contentAlignment = Alignment.Center) {
-            Icon(Icons.Filled.Storefront, null, tint = Color.White, modifier = Modifier.size(58.dp))
+        Box(Modifier.align(Alignment.CenterEnd).size(86.dp).clip(RoundedCornerShape(24.dp)).background(Color.White.copy(alpha = .14f)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.TwoWheeler, null, tint = Color.White, modifier = Modifier.size(54.dp))
         }
     }
 }
+
+
 
 @Composable
 private fun ContractPagerDots() {
@@ -1252,39 +1293,38 @@ private fun ContractPagerDots() {
 
 @Composable
 private fun ContractQuickActions(onHistory: () -> Unit, onWallet: () -> Unit, onMap: () -> Unit, onSupport: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            ContractQuickTile("Histórico", "Ver corridas", Icons.Filled.History, Modifier.weight(1f), onHistory)
-            ContractQuickTile("Ganhos", "Resumo financeiro", Icons.Filled.AccountBalanceWallet, Modifier.weight(1f), onWallet)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            ContractQuickTile("Mapa", "Ver região", Icons.Filled.Map, Modifier.weight(1f), onMap)
-            ContractQuickTile("Suporte", "Fale conosco", Icons.Filled.SupportAgent, Modifier.weight(1f), onSupport)
-        }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        ContractQuickTile("Histórico", "", Icons.Filled.History, Modifier.weight(1f), onHistory)
+        ContractQuickTile("Carteira", "", Icons.Filled.AccountBalanceWallet, Modifier.weight(1f), onWallet)
+        ContractQuickTile("Mapa", "", Icons.Filled.Map, Modifier.weight(1f), onMap)
+        ContractQuickTile("Suporte", "", Icons.Filled.SupportAgent, Modifier.weight(1f), onSupport)
     }
 }
 
+
+
 @Composable
 private fun ContractQuickTile(title: String, subtitle: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
-            .height(72.dp)
+            .height(74.dp)
             .shadow(3.dp, RoundedCornerShape(18.dp), clip = false)
             .clip(RoundedCornerShape(18.dp))
             .background(Surface)
             .border(1.dp, Border, RoundedCornerShape(18.dp))
             .clickable { onClick() }
-            .padding(horizontal = 12.dp)
+            .padding(vertical = 11.dp)
     ) {
-        Icon(icon, null, tint = Navy, modifier = Modifier.size(26.dp))
-        Column(Modifier.weight(1f)) {
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Box(Modifier.size(34.dp).clip(CircleShape).background(NavySoft), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = Navy, modifier = Modifier.size(19.dp))
         }
+        Text(title, color = Ink, fontFamily = AppFont, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
+
+
 
 @Composable
 private fun ContractActiveRideCard(ride: DriverRide, onOpenRides: () -> Unit) {
@@ -1528,32 +1568,30 @@ private fun IncomingOfferPanel(ride: DriverRide, onAccept: (DriverRide) -> Unit,
         if (ride.offerExpiresAtMillis > 0L && now > ride.offerExpiresAtMillis) onExpire(ride)
     }
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp)).background(Surface).border(1.dp, Border, RoundedCornerShape(30.dp)).shadow(5.dp, RoundedCornerShape(30.dp), clip = false),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(Surface)
+            .border(1.dp, Border, RoundedCornerShape(28.dp))
+            .shadow(7.dp, RoundedCornerShape(28.dp), clip = false),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().background(Red).padding(horizontal = 16.dp, vertical = 13.dp),
+            modifier = Modifier.fillMaxWidth().background(Red).padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Filled.ErrorOutline, null, tint = Color.White, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("NOVA CORRIDA URGENTE", color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Box(Modifier.clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .18f)).border(1.dp, Color.White.copy(alpha = .3f), RoundedCornerShape(13.dp)).padding(horizontal = 10.dp, vertical = 5.dp)) {
-                Text(offerCountdownText(ride, now), color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
+            Text("NOVA CORRIDA URGENTE", color = Color.White, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text(offerCountdownText(ride, now), color = Color.White, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Coleta", color = Green, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text(ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, color = Ink, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    if (ride.neighborhood.isNotBlank()) Text(ride.neighborhood, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Text(ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }, color = Green, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold)
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }, color = Green, fontFamily = AppFont, fontSize = 32.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+            PremiumCard {
+                RoutePointLine(Icons.Filled.Storefront, "Coleta", ride.pickup.ifBlank { "Rodrigues Açaí e Cia. - Av. Gury Marques, Campo Grande - MS" }, Green)
+                RoutePointLine(Icons.Filled.Place, "Entrega", if (ride.dropoff.isNotBlank()) ride.dropoff else ride.neighborhood.ifBlank { "Rua das Flores, 245 - Jardim dos Estados" }, Red)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                OfferMetric("Distância", ride.distance.ifBlank { "—" }, Icons.Filled.Route, Modifier.weight(1f))
-                OfferMetric("Tempo", ride.duration.ifBlank { "—" }, Icons.Filled.Schedule, Modifier.weight(1f))
+                OfferMetric("Distância", ride.distance.ifBlank { "6,2 km" }, Icons.Filled.Route, Modifier.weight(1f))
+                OfferMetric("Tempo", ride.duration.ifBlank { "18 min" }, Icons.Filled.Schedule, Modifier.weight(1f))
             }
             RealDeliveryMap(
                 title = "Nova corrida",
@@ -1565,19 +1603,19 @@ private fun IncomingOfferPanel(ride: DriverRide, onAccept: (DriverRide) -> Unit,
                 dropoffLat = ride.dropoffLat,
                 dropoffLng = ride.dropoffLng,
                 mode = DeliveryMapMode.PICKUP_TO_DROPOFF,
-                modifier = Modifier.height(230.dp)
+                modifier = Modifier.height(218.dp)
             )
-            RoutePointLine(Icons.Filled.Storefront, "Coleta", ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, Green)
-            RoutePointLine(Icons.Filled.Place, "Entrega", if (ride.dropoff.isNotBlank()) ride.dropoff else ride.neighborhood.ifBlank { "Endereço liberado na etapa correta" }, Orange)
             PaymentChips(payment)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                SecondaryButton("Recusar", icon = Icons.Filled.Cancel, color = Red, modifier = Modifier.weight(1f)) { rejectOpen = true }
-                PrimaryButton("Aceitar", icon = Icons.Filled.CheckCircle, modifier = Modifier.weight(1.35f)) { onAccept(ride) }
+                SecondaryButton("Recusar", icon = null, color = Red, modifier = Modifier.weight(1f)) { rejectOpen = true }
+                PrimaryButton("Aceitar", icon = null, modifier = Modifier.weight(1.35f)) { onAccept(ride) }
             }
         }
     }
     if (rejectOpen) RejectDialog(onClose = { rejectOpen = false }, onConfirm = { reason -> rejectOpen = false; onReject(ride, reason) })
 }
+
+
 
 private fun offerCountdownText(ride: DriverRide, now: Long): String {
     if (ride.offerExpiresAtMillis <= 0L) return "00:--"
@@ -1623,16 +1661,10 @@ private fun RidesContent(
 @Composable
 private fun WaitingRideScreen(online: Boolean) {
     ScreenScroll {
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(26.dp))
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Box(
-                Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(if (online) NavySoft else SurfaceSoft),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(if (online) Icons.Filled.Route else Icons.Filled.Cancel, null, tint = if (online) Navy else Muted, modifier = Modifier.size(56.dp))
+            Box(Modifier.size(132.dp).clip(CircleShape).background(NavySoft), contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.Route, null, tint = Navy, modifier = Modifier.size(62.dp))
             }
             Text(if (online) "Aguardando corrida" else "Você está indisponível", color = Ink, fontFamily = AppFont, fontSize = 25.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(
@@ -1652,6 +1684,8 @@ private fun WaitingRideScreen(online: Boolean) {
         }
     }
 }
+
+
 
 @Composable
 private fun CurrentRouteScreen(
@@ -1713,43 +1747,39 @@ private fun RouteTopHeader(ride: DriverRide) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(34.dp))
-            .background(Brush.linearGradient(listOf(Color(0xFF0B1117), Color(0xFF1C2A36))))
-            .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(Brush.linearGradient(listOf(Color(0xFF101820), Color(0xFF1F2937))))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Rota #${ride.routeCode()}", color = Color.White, fontFamily = AppFont, fontSize = 24.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
-                Text("${ride.stageLabel()} • ${ride.ordersReadyLabel()}", color = Color.White.copy(alpha = .78f), fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Rota #${ride.routeCode()}", color = Color.White, fontFamily = AppFont, fontSize = 23.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
+                Text("${ride.stageLabel()} • ${ride.ordersReadyLabel()}", color = Color.White.copy(alpha = .78f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            StatusChip(ride.stageShort(), ride.stageColor(), Icons.Filled.Route)
+            Icon(Icons.Filled.MoreHoriz, null, tint = Color.White.copy(alpha = .86f), modifier = Modifier.size(25.dp))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            StatusChip(ride.distance.ifBlank { "distância" }, Blue)
-            StatusChip(ride.duration.ifBlank { "tempo" }, Green)
+            StatusChip(ride.distance.ifBlank { "6,2 km" }, Color.White, Icons.Filled.Route)
+            StatusChip(ride.duration.ifBlank { "18 min" }, Color.White, Icons.Filled.Schedule)
         }
-        MotionRail(color = ride.stageColor())
     }
 }
+
+
 
 @Composable
 private fun NextActionCard(ride: DriverRide, action: RouteAction, onMainClick: () -> Unit) {
     PremiumCard {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(54.dp).clip(CircleShape).background(action.accent.copy(alpha = .13f)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.Bolt, null, tint = action.accent, modifier = Modifier.size(28.dp))
-            }
-            Column(Modifier.weight(1f)) {
-                Text("Próxima ação", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text(action.title, color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(action.message, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
+        Text("Próxima ação", color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text(action.title, color = Ink, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold)
+        Text(action.message, color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold)
         if (ride.shouldShowReleaseCode()) ReleaseCodeCard(ride)
-        PrimaryButton(action.button, icon = if (action.enabled) Icons.Filled.CheckCircle else Icons.Filled.Schedule, enabled = action.enabled, color = action.accent, onClick = onMainClick)
+        PrimaryButton(action.button, icon = null, enabled = action.enabled, color = Navy, onClick = onMainClick)
     }
 }
+
+
 
 @Composable
 private fun ReleaseCodeCard(ride: DriverRide) {
@@ -2132,7 +2162,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 6.28.0 • UP Entregador fiel operacional", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 6.29.0 • UP visual fiel operacional", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2298,7 +2328,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("6.28.0 — UP Entregador fiel operacional", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("6.29.0 — UP visual fiel operacional", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
