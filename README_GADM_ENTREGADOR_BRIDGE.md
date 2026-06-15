@@ -4,7 +4,7 @@ Pacote nativo Android em Kotlin + Jetpack Compose para o entregador, pronto para
 
 ## Versão
 
-`6.29.0-up-visual-operacional-fiel`
+`6.28.0-up-fiel-operacional`
 
 ## O que este pacote entrega
 

@@ -156,7 +156,6 @@ fun UrgentRideScreen(
 
 
 @Composable
-private @Composable
 private fun UrgentTop(seconds: Int) {
     Row(
         modifier = Modifier

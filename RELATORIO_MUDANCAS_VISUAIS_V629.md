@@ -1,4 +1,4 @@
-# Relatório de mudanças — UP Entregador v6.29.0
+# Relatório de mudanças — UP Entregador v6.29.1
 
 Esta versão foi feita para aproximar o app real em Kotlin + Jetpack Compose do modelo visual operacional aprovado.
 
@@ -21,9 +21,9 @@ Esta versão foi feita para aproximar o app real em Kotlin + Jetpack Compose do 
 
 ## Mudanças técnicas
 
-- `versionCode`: 829.
-- `versionName`: `6.29.0-up-visual-operacional-fiel`.
-- `DriverRepository.APP_VERSION`: `6.29.0-up-visual-operacional-fiel`.
+- `versionCode`: 830.
+- `versionName`: `6.29.1-up-visual-operacional-fiel-buildfix`.
+- `DriverRepository.APP_VERSION`: `6.29.1-up-visual-operacional-fiel-buildfix`.
 - Escala de fonte fixa ajustada para `1.06f` em `RodriguesNativeTheme`, evitando fonte minúscula sem estourar layout.
 - Componentes globais em `EntregadorDesign.kt` receberam refinamento de tamanho, raio e botão.
 
