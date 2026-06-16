@@ -77,7 +77,7 @@ object AppSettings {
 
     fun isWelcomeDone(context: Context): Boolean {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_WELCOME_DONE, true)
+            .getBoolean(KEY_WELCOME_DONE, false)
     }
 
     fun setWelcomeDone(context: Context, value: Boolean) {

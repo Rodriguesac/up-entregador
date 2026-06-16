@@ -181,7 +181,7 @@ private fun UrgentHeader(seconds: Int) {
         }
         Column(Modifier.weight(1f)) {
             Text("NOVA CORRIDA", color = Color.White, fontFamily = Font, fontSize = 18.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
-            Text("Alerta urgente em tela cheia", color = Color.White.copy(alpha = .76f), fontFamily = Font, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text("Tela cheia urgente", color = Color.White.copy(alpha = .76f), fontFamily = Font, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.SemiBold)
             Text(AppVersion.LOGIN_LABEL, color = Color.White.copy(alpha = .60f), fontFamily = Font, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         }
         Column(horizontalAlignment = Alignment.End) {
@@ -223,8 +223,8 @@ private fun OfferMainCard(
                 OfferMetric("Loja → cliente", deliveryDistance.ifBlank { "ver mapa" }, Icons.Filled.Route, ElectricBlue, Modifier.weight(1f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                OfferMetric("Total", distance.ifBlank { "—" }, Icons.Filled.Route, Yellow, Modifier.weight(1f))
-                OfferMetric("Tempo", duration.ifBlank { "—" }, Icons.Filled.Schedule, Purple, Modifier.weight(1f))
+                OfferMetric("Total", distance.ifBlank { "Calculando" }, Icons.Filled.Route, Yellow, Modifier.weight(1f))
+                OfferMetric("Tempo", duration.ifBlank { "Calculando" }, Icons.Filled.Schedule, Purple, Modifier.weight(1f))
             }
             RouteLine(Icons.Filled.Storefront, "Coleta", pickup.ifBlank { "Rodrigues Açaí e Cia." }, Lime)
             RouteLine(Icons.Filled.Place, "Entrega", dropoff.ifBlank { "Endereço protegido até aceitar" }, ElectricBlue)

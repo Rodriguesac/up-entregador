@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.rodriguesacai.entregador.service.OnlineDriverService
 import com.rodriguesacai.entregador.ui.DriverHomeScreen
 
@@ -51,6 +52,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         themeMode = AppSettings.getThemeMode(this)
         setContent {

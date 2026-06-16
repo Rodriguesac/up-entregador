@@ -1,47 +1,23 @@
-## v6.33.0 — Fluxo Corrida + Tela Cheia Neon
+## v6.34.0 — Profissional Splash + Operação
 
-- Redesenhada a tela urgente de nova corrida para aparecer como oferta sobre qualquer app via full-screen intent.
-- Adicionado botão Ver detalhes no mapa dentro da oferta.
-- Tela de corrida em andamento ganhou mapa maior e card de Próxima Parada.
-- Adicionado card de entrega adicional para corrida agrupada quando chegar encaixe compatível.
-- Aplicada paleta neon clean oficial: fundo #08164A, verde #B7E51E, amarelo #E8E61A, azul #1E4FFF, roxo #2A1E8A e branco.
-- Atualizado versionCode para 860 e versionName para `6.33.0-operacao-completa-tela-cheia`.
+Entrega focada em implementação real, sem chamar simulação de recurso real.
 
-## v6.31.0 — Corrida e Entregas operacional
+### Alterações reais
+- Atualizado `versionCode` para 870 e `versionName` para `6.34.0-profissional-splash-operacao`.
+- Mantido `AppVersion.kt` como fonte única de versão visível no Login, Welcome e Menu Mais/Sobre.
+- Implementado Splash nativo real Android com `androidx.core:core-splashscreen`, tema `Theme.UP.Splash` e `installSplashScreen()` na `MainActivity`.
+- Adicionada tela Welcome/Boas-vindas em Compose com animação de montagem da marca UP: U, P, seta, trilho/brilho e botões Entrar/Criar cadastro.
+- Welcome aparece somente para usuário sem sessão e que ainda não concluiu boas-vindas; usuário logado vai direto para Home.
+- Tema padrão claro preservado e suporte escuro melhorado por cores dinâmicas em componentes principais.
+- Home em corrida/ocorrência reduz concorrência visual: cards de demanda/carrossel não aparecem durante corrida ativa.
+- Ocorrência usa tom amarelo/laranja, não verde.
+- Distância/tempo vazios passam a mostrar `Calculando rota...` ou `Calculando`, não traço solto.
+- Textos antigos `Rota #`, `Destravar rota` e `Mapa da rota` não aparecem no código principal.
+- Tela cheia urgente continua documentada como Full Screen Intent; não é declarada como overlay real porque não usa `SYSTEM_ALERT_WINDOW`.
 
-- Troca do título principal `Rota #...` por `Corrida`, `Corrida agrupada`, `1 entrega`, `2 entregas` etc.
-- Número do pedido/rota deixa de ser destaque principal e vira referência interna discreta.
-- Tela Corridas agora prioriza: missão, quantidade de entregas, próxima parada, mapa e financeiro.
-- Card de paradas mostra `Coleta na loja`, `Entrega 1 de N`, `Entrega 2 de N`.
-- Mapa continua existindo, mas como apoio visual da corrida, não como nome da operação.
-- Textos de suporte, operação e ocorrência ajustados para `corrida` em vez de `rota`.
-
-## v6.31.0 — ideal premium operacional
-
-Rodada visual mais forte baseada no conceito livre de app de entregador premium:
-- Home refeita para ter carrossel fixo em todos os estados.
-- Status principal redesenhado com card hero, ícone, título e subtítulo legíveis.
-- Home agora diferencia melhor: indisponível, disponível, permissões, nova oferta, corrida ativa, ocorrência e sem conexão.
-- Quando há corrida ativa, a tela deixa de priorizar permissões e passa a priorizar continuidade da rota.
-- Card de ganhos redesenhado com hierarquia mais clara.
-- Insights e atalhos com textos maiores e melhor contraste.
-- Card compacto de nova oferta na Home.
-- Card de corrida ativa com CTA “Continuar corrida” ou “Ver detalhes” em ocorrência.
-- Tipografia geral da Home ajustada para leitura em celular real sem truncar status.
-
-# v6.31.0 — build fix
-
-- Corrigido erro Kotlin em `UrgentRideScreen.kt`: anotação/modificador duplicado em `UrgentTop`.
-- Mantidas as mudanças visuais e operacionais da v6.31.0.
-- Atualizado `versionCode` para 860 e `versionName` para `6.33.0-operacao-completa-tela-cheia`.
-
-# Changelog — UP Entregador
-
-## 6.33.0-operacao-completa-tela-cheia
-
-- Branding do aplicativo alterado para **UP Entregador**.
-- Ícone novo do UP aplicado no launcher e no logo interno.
-- Login ajustado para hero vermelho com logo grande e campos simples.
-- Contrato visual atualizado para vermelho operacional, fundo claro e cards brancos.
-- Fluxo Compose preservado e alinhado às 8 telas operacionais: Login, Permissões, Início, Corridas aguardando, Nova corrida urgente, Corrida em andamento, Histórico e Carteira.
-- Workflow GitHub Actions incluído para gerar APK debug.
+### Validar no GitHub Actions
+- `compileDebugKotlin`
+- `assembleDebug`
+- Tema de Splash no Manifest/XML
+- Abertura do app sem tela preta
+- Login/Welcome mostrando `UP Entregador • v6.34.0`

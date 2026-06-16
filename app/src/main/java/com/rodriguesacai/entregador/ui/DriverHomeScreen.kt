@@ -141,25 +141,30 @@ private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, No
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
-private val Bg = Color(0xFFF7F9FF)
-private val Surface = Color(0xFFFFFFFF)
-private val SurfaceSoft = Color(0xFFEFF4FF)
-private val Border = Color(0xFFDDE6FF)
-private val Ink = Color(0xFF08164A)
-private val Muted = Color(0xFF4B587C)
-private val Muted2 = Color(0xFF647092)
-private val Navy = Color(0xFFB7E51E)
-private val NavyDark = Color(0xFF2A1E8A)
-private val NavySoft = Color(0xFFEFF8B8)
-private val Green = Color(0xFFB7E51E)
-private val GreenDark = Color(0xFF7FA40B)
-private val GreenSoft = Color(0xFFF3FFD0)
-private val Orange = Color(0xFFE8E61A)
-private val OrangeSoft = Color(0xFFFFFCE0)
-private val Red = Color(0xFFE53935)
-private val RedSoft = Color(0xFFFFEBEE)
-private val Blue = Color(0xFF1E4FFF)
-private val BlueSoft = Color(0xFFEAF0FF)
+
+private object ThemeRuntime {
+    var dark by mutableStateOf(false)
+}
+
+private val Bg: Color get() = if (ThemeRuntime.dark) Color(0xFF08164A) else Color(0xFFF7F9FF)
+private val Surface: Color get() = if (ThemeRuntime.dark) Color(0xFF101B55) else Color(0xFFFFFFFF)
+private val SurfaceSoft: Color get() = if (ThemeRuntime.dark) Color(0xFF16246B) else Color(0xFFEFF4FF)
+private val Border: Color get() = if (ThemeRuntime.dark) Color(0xFF2A3A82) else Color(0xFFDDE6FF)
+private val Ink: Color get() = if (ThemeRuntime.dark) Color(0xFFFFFFFF) else Color(0xFF08164A)
+private val Muted: Color get() = if (ThemeRuntime.dark) Color(0xFFC8D2FF) else Color(0xFF4B587C)
+private val Muted2: Color get() = if (ThemeRuntime.dark) Color(0xFF9EAADE) else Color(0xFF647092)
+private val Navy: Color get() = Color(0xFFB7E51E)
+private val NavyDark: Color get() = if (ThemeRuntime.dark) Color(0xFF1E4FFF) else Color(0xFF2A1E8A)
+private val NavySoft: Color get() = if (ThemeRuntime.dark) Color(0xFF25356F) else Color(0xFFEFF8B8)
+private val Green: Color get() = Color(0xFFB7E51E)
+private val GreenDark: Color get() = if (ThemeRuntime.dark) Color(0xFFE8E61A) else Color(0xFF7FA40B)
+private val GreenSoft: Color get() = if (ThemeRuntime.dark) Color(0xFF203C40) else Color(0xFFF3FFD0)
+private val Orange: Color get() = Color(0xFFE8E61A)
+private val OrangeSoft: Color get() = if (ThemeRuntime.dark) Color(0xFF3D3B16) else Color(0xFFFFFCE0)
+private val Red: Color get() = Color(0xFFE53935)
+private val RedSoft: Color get() = if (ThemeRuntime.dark) Color(0xFF3A1F2B) else Color(0xFFFFEBEE)
+private val Blue: Color get() = Color(0xFF1E4FFF)
+private val BlueSoft: Color get() = if (ThemeRuntime.dark) Color(0xFF182B78) else Color(0xFFEAF0FF)
 private val CardShape = RoundedCornerShape(26.dp)
 private val ButtonShape = RoundedCornerShape(18.dp)
 
@@ -223,6 +228,7 @@ fun DriverHomeScreen(
     var hideValues by remember { mutableStateOf(AppSettings.getHideValues(context)) }
     var themeMode by remember { mutableStateOf(AppSettings.getThemeMode(context)) }
     var welcomeDone by remember { mutableStateOf(AppSettings.isWelcomeDone(context)) }
+    ThemeRuntime.dark = themeMode == AppSettings.THEME_DARK
     var bootingSession by remember { mutableStateOf(profile != null) }
     var lastActiveId by remember { mutableStateOf("") }
 
@@ -294,15 +300,20 @@ fun DriverHomeScreen(
         }
     }
 
-    if (!welcomeDone) {
-        PermissionsOnboardingScreen(
-            permissionRefreshTick = permissionRefreshTick,
-            onRequestNotificationPermission = onRequestNotificationPermission,
-            onRequestLocationPermission = onRequestLocationPermission,
-            onRequestEssentialPermissions = onRequestEssentialPermissions,
-            onOpenFullScreenSettings = onOpenFullScreenSettings,
-            onOpenBatterySettings = onOpenBatterySettings,
-            onContinue = {
+    LaunchedEffect(profile?.id, welcomeDone) {
+        if (profile != null && !welcomeDone) {
+            AppSettings.setWelcomeDone(context, true)
+            welcomeDone = true
+        }
+    }
+
+    if (profile == null && !welcomeDone) {
+        WelcomeAnimatedScreen(
+            onEnter = {
+                AppSettings.setWelcomeDone(context, true)
+                welcomeDone = true
+            },
+            onCreateAccount = {
                 AppSettings.setWelcomeDone(context, true)
                 welcomeDone = true
             }
@@ -595,6 +606,56 @@ private fun InlineAppMessage(text: String, color: Color, onClose: () -> Unit) {
         Text("OK", color = color, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onClose() })
     }
 }
+
+@Composable
+private fun WelcomeAnimatedScreen(onEnter: () -> Unit, onCreateAccount: () -> Unit) {
+    var phase by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        phase = 1
+        delay(260)
+        phase = 2
+        delay(260)
+        phase = 3
+        delay(260)
+        phase = 4
+    }
+    val uScale by animateFloatAsState(targetValue = if (phase >= 1) 1f else .72f, animationSpec = tween(420), label = "welcomeU")
+    val pScale by animateFloatAsState(targetValue = if (phase >= 2) 1f else .72f, animationSpec = tween(420), label = "welcomeP")
+    val arrowOffset by animateFloatAsState(targetValue = if (phase >= 3) 0f else 22f, animationSpec = tween(480), label = "welcomeArrow")
+    val contentAlpha by animateFloatAsState(targetValue = if (phase >= 4) 1f else 0f, animationSpec = tween(520), label = "welcomeContent")
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFF08164A), Color(0xFF111F66), Color(0xFF2A1E8A))))
+            .padding(22.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(Modifier.size(172.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(150.dp).clip(RoundedCornerShape(42.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(42.dp)))
+                Text("U", color = Green, fontFamily = AppFont, fontSize = 92.sp, lineHeight = 96.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterStart).padding(start = 30.dp).scale(uScale))
+                Text("P", color = Color.White, fontFamily = AppFont, fontSize = 92.sp, lineHeight = 96.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 24.dp).scale(pScale))
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Orange, modifier = Modifier.align(Alignment.Center).size(44.dp).scale(if (phase >= 3) 1.1f else .7f).padding(top = arrowOffset.dp))
+                MotionRail(Green)
+            }
+            Spacer(Modifier.height(18.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.alpha(contentAlpha)) {
+                Text("UP Entregador", color = Color.White, fontFamily = AppFont, fontSize = 29.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                AppVersionBadge(onDark = true)
+                Text("Corridas, entregas e ganhos em uma operação profissional.", color = Color.White.copy(alpha = .78f), fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.height(12.dp))
+                PrimaryButton("Entrar", icon = Icons.Filled.CheckCircle, color = Green, onClick = onEnter)
+                SecondaryButton("Criar cadastro", icon = Icons.Filled.TwoWheeler, color = Color.White, onClick = onCreateAccount)
+                Text("Splash nativo + boas-vindas animada", color = Color.White.copy(alpha = .58f), fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun PermissionsOnboardingScreen(
@@ -1033,8 +1094,10 @@ private fun HomeContent(
         )
         ContractStatusPill(status = status, online = online, onToggleOnline = onToggleOnline, onFixPermissions = onFixPermissions)
         ContractTodayCard(stats = stats, hideValues = hideValues, onToggleValues = onToggleValues)
-        ContractOperationalInsights(stats = stats, online = online)
-        ContractSmartCarousel(appBanners)
+        if (activeRide == null) {
+            ContractOperationalInsights(stats = stats, online = online)
+            ContractSmartCarousel(appBanners)
+        }
         when {
             activeRide != null -> ContractActiveRideCard(activeRide, onOpenRides)
             pendingRide != null -> ContractPendingOfferCompactCard(pendingRide, onOpenRides)
@@ -1101,15 +1164,16 @@ private fun RoundIconButton(icon: ImageVector, onClick: () -> Unit, badge: Boole
 
 @Composable
 private fun ContractStatusPill(status: OperationalStatus, online: Boolean, onToggleOnline: (Boolean) -> Unit, onFixPermissions: () -> Unit) {
+    val isOccurrenceHero = status.label.contains("Ocorr", ignoreCase = true) || status.message.contains("gestor", ignoreCase = true)
     val color = when (status.kind) {
         AvailabilityKind.Disponivel -> Green
-        AvailabilityKind.EmEntrega -> Green
+        AvailabilityKind.EmEntrega -> if (isOccurrenceHero) Orange else Green
         AvailabilityKind.Restricao -> if (status.label.contains("Sem", true)) Color(0xFF50647A) else Red
         AvailabilityKind.Indisponivel -> Color(0xFF5B6778)
     }
     val endColor = when (status.kind) {
         AvailabilityKind.Disponivel -> Color(0xFF0E9F6E)
-        AvailabilityKind.EmEntrega -> Color(0xFF047857)
+        AvailabilityKind.EmEntrega -> if (isOccurrenceHero) Color(0xFFD97706) else Color(0xFF047857)
         AvailabilityKind.Restricao -> if (status.label.contains("Sem", true)) Color(0xFF334155) else Color(0xFFB91C1C)
         AvailabilityKind.Indisponivel -> Color(0xFF374151)
     }
@@ -1217,7 +1281,7 @@ private fun ContractOperationalInsights(stats: DriverStats, online: Boolean) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
         PremiumInsightTile(
             title = demand,
-            subtitle = if (online) "Região monitorada" else "Ative para receber",
+            subtitle = if (online) "Região monitorada" else "Fique disponível para receber",
             icon = Icons.Filled.MyLocation,
             color = Orange,
             modifier = Modifier.weight(1f)
@@ -1463,9 +1527,14 @@ private fun ContractActiveRideCard(ride: DriverRide, onOpenRides: () -> Unit) {
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallMetric("Distância", ride.distance.ifBlank { "—" }, Modifier.weight(1f))
-            SmallMetric("Tempo", ride.duration.ifBlank { "—" }, Modifier.weight(1f))
+        val hasRouteMetrics = ride.distance.isNotBlank() || ride.duration.isNotBlank()
+        if (hasRouteMetrics) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                SmallMetric("Distância", ride.distance.ifBlank { "Calculando" }, Modifier.weight(1f))
+                SmallMetric("Tempo", ride.duration.ifBlank { "Calculando" }, Modifier.weight(1f))
+            }
+        } else {
+            InlineNoticeCard("Calculando rota e tempo da corrida...", Blue)
         }
         PrimaryButton(if (isOccurrence) "Ver detalhes" else "Continuar corrida", icon = Icons.Filled.KeyboardArrowRight, color = accent, onClick = onOpenRides)
     }
@@ -1611,7 +1680,7 @@ private fun ActiveRouteShortcut(ride: DriverRide, onOpenRides: () -> Unit) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             StatusChip(payment.label, payment.color, if (payment.requiresMachine) Icons.Filled.CreditCard else Icons.Filled.Payments)
-            StatusChip(ride.distance.ifBlank { "distância" }, Blue)
+            StatusChip(ride.distance.ifBlank { "Calculando rota" }, Blue)
         }
     }
 }
