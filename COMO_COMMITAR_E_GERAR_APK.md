@@ -1,49 +1,17 @@
-# Como commitar e gerar o APK — UP Entregador
+# Como commitar e gerar APK — UP Entregador v6.32.0
 
-## 1. Subir no GitHub
-
-Copie todo o conteúdo deste pacote para o repositório do app entregador e faça commit.
-
-Sugestão de comandos:
+No Termux, depois de baixar o ZIP para `/sdcard/Download`:
 
 ```bash
+cd ~
+rm -rf up_v632
+unzip -o "/sdcard/Download/UP_Entregador_v6.32.0_fluxo_corrida_overlay_neon_commitavel.zip" -d up_v632
+cp -a ~/up_v632/. ~/up-entregador/
+cd ~/up-entregador
+git status
 git add .
-git commit -m "feat: aplica UP Entregador fiel operacional v6.28.0"
-git push
+git commit -m "feat: aplica fluxo de corrida e overlay neon v6.32.0"
+git push origin main
 ```
 
-## 2. Gerar APK pelo GitHub Actions
-
-Depois do push:
-
-1. Abra o repositório no GitHub.
-2. Vá em **Actions**.
-3. Abra **Android APK - UP Entregador**.
-4. Clique em **Run workflow** se não iniciar automaticamente.
-5. Ao finalizar, baixe o artefato **UP-Entregador-debug-apk**.
-
-## 3. Gerar APK localmente
-
-Se tiver Android SDK e Gradle instalados:
-
-```bash
-gradle :app:assembleDebug --stacktrace
-```
-
-O APK sai em:
-
-```text
-app/build/outputs/apk/debug/
-```
-
-## 4. O que validar no celular
-
-- O app deve aparecer como **UP Entregador**.
-- O ícone deve aparecer com o logo UP.
-- Login deve abrir com hero vermelho e campos CPF/telefone e senha.
-- Permissões devem abrir prompt nativo quando possível.
-- Home deve mostrar disponibilidade, ganhos, demanda, meta, carrossel e atalhos.
-- Corridas deve mostrar aguardando corrida quando disponível.
-- Nova corrida urgente deve mostrar contador, valor, mapa, aceitar e recusar.
-- Corrida em andamento deve mostrar mapa, paradas, pagamento, próxima ação e ocorrência.
-- Histórico e Carteira devem seguir o fluxo visual vermelho operacional.
+Depois do push, aguarde o GitHub Actions gerar o APK.

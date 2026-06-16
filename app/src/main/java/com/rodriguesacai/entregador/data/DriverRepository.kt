@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "6.29.1-up-visual-operacional-fiel-buildfix"
+    private const val APP_VERSION = "6.32.0-fluxo-corrida-overlay-neon"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -1341,7 +1341,7 @@ object DriverRepository {
     fun reportRideOccurrence(
         context: Context,
         rideId: String,
-        reason: String = "Problema na rota",
+        reason: String = "Problema na corrida",
         details: String = "Solicitado pelo app do entregador",
         onDone: () -> Unit = {},
         onError: (String) -> Unit = {}

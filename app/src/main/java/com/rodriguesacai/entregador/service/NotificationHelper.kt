@@ -37,7 +37,7 @@ object NotificationHelper {
             "Nova corrida urgente",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Alerta urgente de nova rota"
+            description = "Alerta urgente de nova corrida"
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             enableVibration(true)
             vibrationPattern = longArrayOf(0, 500, 200, 500, 200, 700)
@@ -171,8 +171,8 @@ object NotificationHelper {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_URGENT)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Nova corrida urgente disponível")
-            .setContentText(listOf(value, distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Toque para abrir a oferta" })
+            .setContentTitle("Nova corrida disponível")
+            .setContentText(listOf(value, distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Toque para abrir a corrida" })
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

@@ -4,7 +4,7 @@ Pacote nativo Android em Kotlin + Jetpack Compose para o entregador, pronto para
 
 ## Versão
 
-`6.28.0-up-fiel-operacional`
+`6.32.0-fluxo-corrida-overlay-neon`
 
 ## O que este pacote entrega
 

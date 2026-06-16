@@ -1,5 +1,6 @@
 package com.rodriguesacai.entregador
 
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -15,6 +16,10 @@ class UrgentRideActivity : ComponentActivity() {
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
         val rideId = intent.getStringExtra("rideId") ?: "sem-id"
         val value = intent.getStringExtra("value").orEmpty()
         val distance = intent.getStringExtra("distance").orEmpty()

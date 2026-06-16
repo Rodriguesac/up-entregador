@@ -36,30 +36,30 @@ fun RodriguesNativeTheme(
     )
 
     val dark = darkColorScheme(
-        primary = Color(0xFFEA1D2C),
+        primary = Color(0xFFB7E51E),
         onPrimary = Color.White,
-        secondary = Color(0xFF16A34A),
-        background = Color(0xFF050B12),
-        surface = Color(0xFF111827),
+        secondary = Color(0xFF1E4FFF),
+        background = Color(0xFF08164A),
+        surface = Color(0xFF101E5F),
         onSurface = Color.White,
         onBackground = Color.White,
-        outline = Color(0xFF334155)
+        outline = Color(0xFF2A1E8A)
     )
 
     val light = lightColorScheme(
-        primary = Color(0xFFEA1D2C),
+        primary = Color(0xFFB7E51E),
         onPrimary = Color.White,
-        secondary = Color(0xFF16A34A),
-        background = Color(0xFFF7F7F7),
+        secondary = Color(0xFF1E4FFF),
+        background = Color(0xFFF7F9FF),
         surface = Color(0xFFFFFFFF),
-        surfaceVariant = Color(0xFFF2F2F2),
-        onSurface = Color(0xFF1F1F1F),
-        onBackground = Color(0xFF1F1F1F),
-        outline = Color(0xFFE2E8F0)
+        surfaceVariant = Color(0xFFEFF4FF),
+        onSurface = Color(0xFF08164A),
+        onBackground = Color(0xFF08164A),
+        outline = Color(0xFFDDE6FF)
     )
 
     val density = LocalDensity.current
-    CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1.06f)) {
+    CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1.08f)) {
         MaterialTheme(colorScheme = if (darkTheme) dark else light, typography = typography, content = content)
     }
 }

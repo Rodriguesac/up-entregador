@@ -26,9 +26,9 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
             NotificationHelper.appNoticeNotification(
                 context = this,
                 noticeId = rideId ?: System.currentTimeMillis().toString(),
-                title = "Atualização de rota",
-                message = "Existe uma rota ativa. Abra o app para conferir se houve pedido adicionado ou alteração do gestor.",
-                category = "Rota"
+                title = "Atualização da corrida",
+                message = "Existe uma corrida ativa. Abra o app para conferir se houve entrega adicionada ou alteração do gestor.",
+                category = "Corrida"
             )
             return
         }

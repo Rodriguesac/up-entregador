@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 830
-        versionName = "6.29.1-up-visual-operacional-fiel-buildfix"
+        versionCode = 850
+        versionName = "6.32.0-fluxo-corrida-overlay-neon"
     }
 
     buildFeatures { compose = true }

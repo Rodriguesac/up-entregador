@@ -21,21 +21,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object EntregadorColors {
-    val Background = Color(0xFFF7F7F7)
+    val Background = Color(0xFFF7F9FF)
     val Surface = Color(0xFFFFFFFF)
-    val SurfaceSoft = Color(0xFFF2F2F2)
-    val Border = Color(0xFFE6E6E6)
-    val Text = Color(0xFF1F1F1F)
-    val Muted = Color(0xFF667085)
-    val MutedLight = Color(0xFF98A2B3)
-    val Navy = Color(0xFFEA1D2C)
-    val NavyDark = Color(0xFF9B111E)
-    val NavySoft = Color(0xFFFFEBEE)
-    val Green = Color(0xFF0E9F6E)
-    val GreenDark = Color(0xFF047857)
-    val Orange = Color(0xFFD97706)
-    val Red = Color(0xFFEA1D2C)
-    val Blue = Color(0xFFEA1D2C)
+    val SurfaceSoft = Color(0xFFEFF4FF)
+    val Border = Color(0xFFDDE6FF)
+    val Text = Color(0xFF08164A)
+    val Muted = Color(0xFF4B587C)
+    val MutedLight = Color(0xFF647092)
+    val Navy = Color(0xFFB7E51E)
+    val NavyDark = Color(0xFF2A1E8A)
+    val NavySoft = Color(0xFFEFF8B8)
+    val Green = Color(0xFFB7E51E)
+    val GreenDark = Color(0xFF8CB80F)
+    val Orange = Color(0xFFE8E61A)
+    val Red = Color(0xFFB7E51E)
+    val Blue = Color(0xFF1E4FFF)
 }
 
 object EntregadorShape {
