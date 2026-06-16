@@ -89,7 +89,9 @@ object NotificationHelper {
         distance: String = "",
         duration: String = "",
         pickup: String = "",
-        dropoff: String = ""
+        dropoff: String = "",
+        pickupDistance: String = "",
+        deliveryDistance: String = ""
     ) {
         urgentRideNotification(
             context = context,
@@ -98,7 +100,9 @@ object NotificationHelper {
             distance = distance,
             duration = duration,
             pickup = pickup,
-            dropoff = dropoff
+            dropoff = dropoff,
+            pickupDistance = pickupDistance,
+            deliveryDistance = deliveryDistance
         )
     }
 
@@ -139,6 +143,8 @@ object NotificationHelper {
         duration: String,
         pickup: String,
         dropoff: String,
+        pickupDistance: String = "",
+        deliveryDistance: String = "",
         paymentMethod: String = "",
         paymentStatus: String = "",
         amountToCollect: String = "",
@@ -156,6 +162,8 @@ object NotificationHelper {
             putExtra("duration", duration)
             putExtra("pickup", pickup)
             putExtra("dropoff", dropoff)
+            putExtra("pickupDistance", pickupDistance)
+            putExtra("deliveryDistance", deliveryDistance)
             putExtra("paymentMethod", paymentMethod)
             putExtra("paymentStatus", paymentStatus)
             putExtra("amountToCollect", amountToCollect)

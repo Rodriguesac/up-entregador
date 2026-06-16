@@ -1,4 +1,4 @@
-# Relatório v6.32.0 — Fluxo Corrida + Overlay Neon
+# Relatório v6.33.0 — Fluxo Corrida + Tela Cheia Neon
 
 Esta versão aplica a arquitetura operacional definida para o UP Entregador:
 
@@ -31,4 +31,4 @@ Esta versão aplica a arquitetura operacional definida para o UP Entregador:
 
 ## Versão
 - versionCode: 850
-- versionName: 6.32.0-fluxo-corrida-overlay-neon
+- versionName: 6.33.0-operacao-completa-tela-cheia

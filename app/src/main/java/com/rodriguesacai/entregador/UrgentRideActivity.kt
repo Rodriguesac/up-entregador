@@ -26,6 +26,8 @@ class UrgentRideActivity : ComponentActivity() {
         val duration = intent.getStringExtra("duration").orEmpty()
         val pickup = intent.getStringExtra("pickup").orEmpty()
         val dropoff = intent.getStringExtra("dropoff").orEmpty()
+        val pickupDistance = intent.getStringExtra("pickupDistance").orEmpty()
+        val deliveryDistance = intent.getStringExtra("deliveryDistance").orEmpty()
         val paymentMethod = intent.getStringExtra("paymentMethod").orEmpty()
         val paymentStatus = intent.getStringExtra("paymentStatus").orEmpty()
         val amountToCollect = intent.getStringExtra("amountToCollect").orEmpty()
@@ -40,6 +42,8 @@ class UrgentRideActivity : ComponentActivity() {
                     duration = duration,
                     pickup = pickup,
                     dropoff = dropoff,
+                    pickupDistance = pickupDistance,
+                    deliveryDistance = deliveryDistance,
                     paymentMethod = paymentMethod,
                     paymentStatus = paymentStatus,
                     amountToCollect = amountToCollect,

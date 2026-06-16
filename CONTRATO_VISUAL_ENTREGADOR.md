@@ -1,6 +1,6 @@
 # Contrato visual e operacional — UP Entregador
 
-Este pacote é a versão **6.32.0-fluxo-corrida-overlay-neon** do app nativo Android do entregador, em Kotlin + Jetpack Compose.
+Este pacote é a versão **6.33.0-operacao-completa-tela-cheia** do app nativo Android do entregador, em Kotlin + Jetpack Compose.
 
 ## Regra visual oficial
 - Produto: **UP Entregador**.
@@ -33,5 +33,5 @@ Este pacote é a versão **6.32.0-fluxo-corrida-overlay-neon** do app nativo And
 - Ícone real do UP adicionado como launcher e logo interno.
 - Login redesenhado com hero vermelho e logo UP.
 - Contrato visual atualizado para vermelho operacional, não verde/navy antigo.
-- Versão atualizada para `6.32.0-fluxo-corrida-overlay-neon`.
+- Versão atualizada para `6.33.0-operacao-completa-tela-cheia`.
 - Workflow de GitHub Actions incluído para gerar APK debug ao commitar.

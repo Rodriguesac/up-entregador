@@ -15,4 +15,4 @@ Esta versão organiza a nomenclatura operacional do app do entregador:
 4. Tela de Corridas agora mostra `Paradas da corrida`.
 5. Mapa foi mantido, mas renomeado para `Mapa da corrida`.
 6. Suporte/ocorrência/preferências usam linguagem de corrida.
-7. Versão Android atualizada para `6.32.0-fluxo-corrida-overlay-neon`.
+7. Versão Android atualizada para `6.33.0-operacao-completa-tela-cheia`.

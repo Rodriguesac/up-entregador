@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rodriguesacai.entregador.AppVersion
 import com.rodriguesacai.entregador.R
 import com.rodriguesacai.entregador.RodriguesFonts
 import kotlinx.coroutines.delay
@@ -89,6 +90,8 @@ fun UrgentRideScreen(
     duration: String,
     pickup: String,
     dropoff: String,
+    pickupDistance: String = "",
+    deliveryDistance: String = "",
     paymentMethod: String = "",
     paymentStatus: String = "",
     amountToCollect: String = "",
@@ -127,6 +130,8 @@ fun UrgentRideScreen(
                 value = value,
                 distance = distance,
                 duration = duration,
+                pickupDistance = pickupDistance,
+                deliveryDistance = deliveryDistance,
                 pickup = pickup,
                 dropoff = dropoff,
                 details = details,
@@ -176,7 +181,8 @@ private fun UrgentHeader(seconds: Int) {
         }
         Column(Modifier.weight(1f)) {
             Text("NOVA CORRIDA", color = Color.White, fontFamily = Font, fontSize = 18.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
-            Text("Apareceu sobre o app aberto", color = Color.White.copy(alpha = .76f), fontFamily = Font, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text("Alerta urgente em tela cheia", color = Color.White.copy(alpha = .76f), fontFamily = Font, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(AppVersion.LOGIN_LABEL, color = Color.White.copy(alpha = .60f), fontFamily = Font, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         }
         Column(horizontalAlignment = Alignment.End) {
             Text("ACEITAR EM", color = Yellow, fontFamily = Font, fontSize = 9.sp, fontWeight = FontWeight.Bold)
@@ -190,6 +196,8 @@ private fun OfferMainCard(
     value: String,
     distance: String,
     duration: String,
+    pickupDistance: String,
+    deliveryDistance: String,
     pickup: String,
     dropoff: String,
     details: Boolean,
@@ -205,11 +213,18 @@ private fun OfferMainCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                Text("1 ENTREGA", color = Purple, fontFamily = Font, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(SurfaceSoft).padding(horizontal = 12.dp, vertical = 6.dp))
+            }
             Text("VALOR DA CORRIDA", color = Muted, fontFamily = Font, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(value.ifBlank { "R$ 12,50" }, color = Ink, fontFamily = Font, fontSize = 42.sp, lineHeight = 44.sp, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                OfferMetric("Até loja", distance.ifBlank { "2,1 km" }, Icons.Filled.Storefront, Lime, Modifier.weight(1f))
-                OfferMetric("Loja → cliente", duration.ifBlank { "18 min" }, Icons.Filled.Route, ElectricBlue, Modifier.weight(1f))
+                OfferMetric("Até loja", pickupDistance.ifBlank { distance.ifBlank { "calcular" } }, Icons.Filled.Storefront, Lime, Modifier.weight(1f))
+                OfferMetric("Loja → cliente", deliveryDistance.ifBlank { "ver mapa" }, Icons.Filled.Route, ElectricBlue, Modifier.weight(1f))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                OfferMetric("Total", distance.ifBlank { "—" }, Icons.Filled.Route, Yellow, Modifier.weight(1f))
+                OfferMetric("Tempo", duration.ifBlank { "—" }, Icons.Filled.Schedule, Purple, Modifier.weight(1f))
             }
             RouteLine(Icons.Filled.Storefront, "Coleta", pickup.ifBlank { "Rodrigues Açaí e Cia." }, Lime)
             RouteLine(Icons.Filled.Place, "Entrega", dropoff.ifBlank { "Endereço protegido até aceitar" }, ElectricBlue)

@@ -22,8 +22,8 @@ Esta versão foi feita para aproximar o app real em Kotlin + Jetpack Compose do 
 ## Mudanças técnicas
 
 - `versionCode`: 840.
-- `versionName`: `6.32.0-fluxo-corrida-overlay-neon`.
-- `DriverRepository.APP_VERSION`: `6.32.0-fluxo-corrida-overlay-neon`.
+- `versionName`: `6.33.0-operacao-completa-tela-cheia`.
+- `DriverRepository.APP_VERSION`: `6.33.0-operacao-completa-tela-cheia`.
 - Escala de fonte fixa ajustada para `1.06f` em `RodriguesNativeTheme`, evitando fonte minúscula sem estourar layout.
 - Componentes globais em `EntregadorDesign.kt` receberam refinamento de tamanho, raio e botão.
 

@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 850
-        versionName = "6.32.0-fluxo-corrida-overlay-neon"
+        versionCode = 860
+        versionName = "6.33.0-operacao-completa-tela-cheia"
     }
 
     buildFeatures { compose = true }

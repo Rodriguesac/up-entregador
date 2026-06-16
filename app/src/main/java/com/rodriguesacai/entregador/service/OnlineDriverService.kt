@@ -71,6 +71,8 @@ class OnlineDriverService : Service() {
                         duration = ride.duration,
                         pickup = ride.pickup,
                         dropoff = ride.dropoff,
+                        pickupDistance = ride.pickupDistance,
+                        deliveryDistance = ride.deliveryDistance,
                         paymentMethod = ride.paymentMethod,
                         paymentStatus = ride.paymentStatus,
                         amountToCollect = DriverRepository.formatCurrency(ride.amountToCollectNumber),

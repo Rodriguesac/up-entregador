@@ -41,6 +41,8 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
             duration = data["duration"] ?: data["tempo"] ?: data["tempoMin"] ?: "",
             pickup = data["pickup"] ?: data["pickupAddress"] ?: data["lojaEndereco"] ?: data["nomeLoja"] ?: "",
             dropoff = data["dropoff"] ?: data["dropoffAddress"] ?: data["enderecoEntrega"] ?: data["enderecoCompleto"] ?: "",
+            pickupDistance = data["pickupDistance"] ?: data["distanciaAteLoja"] ?: data["kmAteLoja"] ?: data["distanciaColeta"] ?: "",
+            deliveryDistance = data["deliveryDistance"] ?: data["distanciaLojaCliente"] ?: data["kmLojaCliente"] ?: data["distanciaEntrega"] ?: "",
             paymentMethod = data["formaPagamento"] ?: data["paymentMethod"] ?: data["metodoPagamento"] ?: "",
             paymentStatus = data["statusPagamento"] ?: data["paymentStatus"] ?: "",
             amountToCollect = data["valorReceberCliente"] ?: data["amountToCollect"] ?: data["totalPedido"] ?: data["valorPedido"] ?: "",

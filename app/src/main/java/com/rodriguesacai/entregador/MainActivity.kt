@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
     private var pendingOnlineStart: Boolean = false
     private var runningPermissionWizard: Boolean = false
     private var permissionRefreshTick by mutableStateOf(0)
+    private var themeMode by mutableStateOf(AppSettings.THEME_LIGHT)
 
     private val notificationLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -51,8 +52,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        themeMode = AppSettings.getThemeMode(this)
         setContent {
-            RodriguesNativeTheme(darkTheme = AppSettings.isDarkTheme(this)) {
+            RodriguesNativeTheme(darkTheme = themeMode == AppSettings.THEME_DARK) {
                 DriverHomeScreen(
                     permissionRefreshTick = permissionRefreshTick,
                     onGoOnline = { requestLocationAndStartOnline() },
@@ -64,7 +66,11 @@ class MainActivity : ComponentActivity() {
                     onOpenBatterySettings = { requestBatteryOptimizationDialog() },
                     onRequestNotificationPermission = { askNotificationPermissionOnly() },
                     onRequestLocationPermission = { requestLocationOnly() },
-                    onRequestEssentialPermissions = { startPermissionWizard() }
+                    onRequestEssentialPermissions = { startPermissionWizard() },
+                    onThemeModeChanged = { mode ->
+                        themeMode = mode
+                        AppSettings.setThemeMode(this, mode)
+                    }
                 )
             }
         }

@@ -1,11 +1,11 @@
-## v6.32.0 — Fluxo Corrida + Overlay Neon
+## v6.33.0 — Fluxo Corrida + Tela Cheia Neon
 
 - Redesenhada a tela urgente de nova corrida para aparecer como oferta sobre qualquer app via full-screen intent.
 - Adicionado botão Ver detalhes no mapa dentro da oferta.
 - Tela de corrida em andamento ganhou mapa maior e card de Próxima Parada.
 - Adicionado card de entrega adicional para corrida agrupada quando chegar encaixe compatível.
 - Aplicada paleta neon clean oficial: fundo #08164A, verde #B7E51E, amarelo #E8E61A, azul #1E4FFF, roxo #2A1E8A e branco.
-- Atualizado versionCode para 850 e versionName para `6.32.0-fluxo-corrida-overlay-neon`.
+- Atualizado versionCode para 860 e versionName para `6.33.0-operacao-completa-tela-cheia`.
 
 ## v6.31.0 — Corrida e Entregas operacional
 
@@ -33,11 +33,11 @@ Rodada visual mais forte baseada no conceito livre de app de entregador premium:
 
 - Corrigido erro Kotlin em `UrgentRideScreen.kt`: anotação/modificador duplicado em `UrgentTop`.
 - Mantidas as mudanças visuais e operacionais da v6.31.0.
-- Atualizado `versionCode` para 840 e `versionName` para `6.32.0-fluxo-corrida-overlay-neon`.
+- Atualizado `versionCode` para 860 e `versionName` para `6.33.0-operacao-completa-tela-cheia`.
 
 # Changelog — UP Entregador
 
-## 6.32.0-fluxo-corrida-overlay-neon
+## 6.33.0-operacao-completa-tela-cheia
 
 - Branding do aplicativo alterado para **UP Entregador**.
 - Ícone novo do UP aplicado no launcher e no logo interno.

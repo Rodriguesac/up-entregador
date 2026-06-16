@@ -34,7 +34,7 @@ object EntregadorColors {
     val Green = Color(0xFFB7E51E)
     val GreenDark = Color(0xFF8CB80F)
     val Orange = Color(0xFFE8E61A)
-    val Red = Color(0xFFB7E51E)
+    val Red = Color(0xFFE53935)
     val Blue = Color(0xFF1E4FFF)
 }
 
@@ -65,7 +65,7 @@ fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled
         shape = EntregadorShape.Button,
         colors = ButtonDefaults.buttonColors(
             containerColor = EntregadorColors.Navy,
-            contentColor = Color.White,
+            contentColor = EntregadorColors.Text,
             disabledContainerColor = Color(0xFFE6EBEF),
             disabledContentColor = EntregadorColors.MutedLight
         ),

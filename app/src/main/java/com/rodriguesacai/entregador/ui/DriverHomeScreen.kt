@@ -114,6 +114,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.rodriguesacai.entregador.AppSettings
+import com.rodriguesacai.entregador.AppVersion
 import com.rodriguesacai.entregador.PermissionStatus
 import com.rodriguesacai.entregador.PermissionStatusReader
 import com.rodriguesacai.entregador.R
@@ -202,7 +203,8 @@ fun DriverHomeScreen(
     onOpenBatterySettings: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
     onRequestLocationPermission: () -> Unit,
-    onRequestEssentialPermissions: () -> Unit
+    onRequestEssentialPermissions: () -> Unit,
+    onThemeModeChanged: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     var profile by remember { mutableStateOf(DriverRepository.currentSession(context)) }
@@ -272,6 +274,8 @@ fun DriverHomeScreen(
                 duration = ride.duration,
                 pickup = ride.pickup,
                 dropoff = ride.dropoff,
+                pickupDistance = ride.pickupDistance,
+                deliveryDistance = ride.deliveryDistance,
                 paymentMethod = ride.paymentMethod,
                 paymentStatus = ride.paymentStatus,
                 amountToCollect = DriverRepository.formatCurrency(ride.amountToCollectNumber).takeIf { ride.amountToCollectNumber > 0.0 } ?: "",
@@ -424,7 +428,7 @@ fun DriverHomeScreen(
                         themeMode = themeMode,
                         hideValues = hideValues,
                         notices = appNotices,
-                        onThemeChanged = { themeMode = it; AppSettings.setThemeMode(context, it) },
+                        onThemeChanged = { themeMode = it; onThemeModeChanged(it) },
                         onToggleValues = { hideValues = !hideValues; AppSettings.setHideValues(context, hideValues) },
                         onProfileChanged = { profile = DriverRepository.currentSession(context) ?: profile },
                         onOpenNotificationSettings = onOpenNotificationSettings,
@@ -608,6 +612,7 @@ private fun PermissionsOnboardingScreen(
 
     ScreenScroll {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            AppVersionBadge(onDark = false)
             Text("Permissões do app", color = Ink, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
             Text(
                 "Precisamos de algumas permissões para você receber corridas com segurança e eficiência.",
@@ -714,6 +719,25 @@ private fun BrandHeader(title: String, subtitle: String, icon: ImageVector) {
 }
 
 @Composable
+private fun AppVersionBadge(onDark: Boolean = false) {
+    val bg = if (onDark) Color.White.copy(alpha = .12f) else NavySoft
+    val fg = if (onDark) Color.White else Ink
+    Text(
+        AppVersion.LOGIN_LABEL,
+        color = fg,
+        fontFamily = AppFont,
+        fontSize = 11.sp,
+        lineHeight = 13.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(bg)
+            .border(1.dp, if (onDark) Color.White.copy(alpha = .20f) else Border, RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    )
+}
+
+@Composable
 private fun LoginHeroHeader(mode: String) {
     if (mode == "login") {
         Column(
@@ -732,6 +756,7 @@ private fun LoginHeroHeader(mode: String) {
                 contentScale = ContentScale.Fit
             )
             Text("UP Entregador", color = Color.White, fontFamily = AppFont, fontSize = 17.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            AppVersionBadge(onDark = true)
         }
         Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Bem-vindo(a)!", color = Ink, fontFamily = AppFont, fontSize = 25.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
@@ -770,12 +795,13 @@ private fun LoginScreen(
                     .fillMaxWidth()
                     .height(238.dp)
                     .clip(RoundedCornerShape(bottomStart = 34.dp, bottomEnd = 34.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFFFF3B1F), Navy, NavyDark))),
+                    .background(Brush.linearGradient(listOf(Color(0xFF08164A), Color(0xFF2A1E8A), Color(0xFF1E4FFF)))),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     RodriguesLogoMark(size = 112, pulse = false)
-                    Text("UP ENTREGADOR", color = Color(0xFFFFD166), fontFamily = AppFont, fontSize = 14.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
+                    Text("UP ENTREGADOR", color = Color.White, fontFamily = AppFont, fontSize = 14.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
+                    AppVersionBadge(onDark = true)
                 }
             }
             Column(
@@ -795,6 +821,7 @@ private fun LoginScreen(
                 PrimaryButton("Entrar", enabled = !loading, color = Navy, icon = null) { onLogin(doc, password) { loading = it } }
                 SecondaryButton("Solicitar cadastro", color = Ink) { mode = "cadastro" }
                 Text("Esqueci minha senha", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text(AppVersion.LABEL, color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             }
         }
     } else {
@@ -815,6 +842,7 @@ private fun LoginScreen(
                 Field("Banco", bank, { bank = it }, "Opcional")
                 PrimaryButton("Enviar cadastro", enabled = !loading, icon = Icons.Filled.CheckCircle) { onRegister(DriverRegistrationRequest(name, cpf, phone, password, vehicle, plate, pix, bank, email, city)) { loading = it } }
                 SecondaryButton("Voltar ao login", icon = Icons.Filled.ArrowBack) { mode = "login" }
+                Text(AppVersion.LABEL, color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             }
         }
     }
@@ -2069,7 +2097,7 @@ private fun OrdersCompactSection(ride: DriverRide, expanded: Boolean, onToggle: 
 private fun RouteOrderLine(order: RouteOrder, fallbackPayment: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(SurfaceSoft).padding(12.dp)) {
         Column(Modifier.weight(1f)) {
-            Text("#${order.code.ifBlank { order.id.takeLast(4).uppercase(Locale.ROOT) }} • ${order.customerName.ifBlank { "Cliente" }}", color = Ink, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Ref. #${order.code.ifBlank { order.id.takeLast(4).uppercase(Locale.ROOT) }} • ${order.customerName.ifBlank { "Cliente" }}", color = Ink, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(order.paymentSummary.ifBlank { fallbackPayment }, color = Muted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         StatusChip(if (order.terminal) "Cancelado" else if (order.ready) "Pronto" else "Preparo", if (order.terminal) Red else if (order.ready) Green else Orange)
@@ -2269,7 +2297,7 @@ private fun HistoryCard(item: DriverHistory) {
             Spacer(Modifier.weight(1f))
             Text(item.value.ifBlank { "—" }, color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
-        Text("#${item.rideId.takeLast(6).uppercase(Locale.ROOT)} • ${item.createdLabel}", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text("Ref. #${item.rideId.takeLast(6).uppercase(Locale.ROOT)} • ${item.createdLabel}", color = Ink, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Text(historySubtitle(item), color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -2356,12 +2384,25 @@ private fun MoreContent(
             PremiumCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
+                        Text("Tema do app", color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Claro como padrão, escuro neon quando ativado", color = Muted, fontFamily = AppFont, fontSize = 12.sp)
+                    }
+                    Switch(
+                        checked = themeMode == AppSettings.THEME_DARK,
+                        onCheckedChange = { checked -> onThemeChanged(if (checked) AppSettings.THEME_DARK else AppSettings.THEME_LIGHT) }
+                    )
+                }
+                StatusChip(AppSettings.themeLabel(themeMode), if (themeMode == AppSettings.THEME_DARK) Blue else Green)
+            }
+            PremiumCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
                         Text("Ocultar valores", color = Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         Text("Mostra ou esconde ganhos e repasses", color = Muted, fontFamily = AppFont, fontSize = 12.sp)
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 6.32.0 • Fluxo corrida e overlay", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(AppVersion.LABEL, color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2527,7 +2568,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("6.32.0 — fluxo corrida e overlay", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(AppVersion.LABEL, color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
