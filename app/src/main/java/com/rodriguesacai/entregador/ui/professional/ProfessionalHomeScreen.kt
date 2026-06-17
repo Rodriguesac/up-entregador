@@ -135,7 +135,7 @@ private fun HeaderSection(state: ProfessionalHomeUiState) {
 
                 Spacer(Modifier.width(12.dp))
 
-                Column {
+                ProfessionalColumn {
                     Text(
                         text = "Olá, ${state.nomeEntregador}",
                         color = Color.White,
@@ -385,7 +385,7 @@ private fun SmallInfoCard(modifier: Modifier, icon: String, title: String, subti
         ) {
             CircleIcon(text = icon, small = true)
             Spacer(Modifier.width(12.dp))
-            Column {
+            ProfessionalColumn {
                 Text(title, color = RodriguesColors.TextPrimary, fontWeight = FontWeight.Black, fontSize = 14.sp)
                 Text(subtitle, color = RodriguesColors.TextSecondary, fontSize = 12.sp, lineHeight = 15.sp)
             }
@@ -547,7 +547,7 @@ private fun RideMetric(icon: String, label: String, value: String) {
     Row(verticalAlignment = Alignment.Top) {
         Text(text = icon, fontSize = 15.sp)
         Spacer(Modifier.width(7.dp))
-        Column {
+        ProfessionalColumn {
             Text(label, color = RodriguesColors.TextSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             Text(value, color = RodriguesColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Black, maxLines = 2)
         }
@@ -623,7 +623,7 @@ private fun RodriguesBottomNavigation(selectedTab: String, onNavigate: (String) 
 @Composable
 private fun WhiteCard(
     padding: androidx.compose.ui.unit.Dp = 18.dp,
-    content: @Composable Column.() -> Unit
+    content: @Composable () -> Unit
 ) {
     Card(
         modifier = Modifier
