@@ -1,6 +1,7 @@
 package com.rodriguesacai.entregador.data
 
 import android.content.Context
+import com.rodriguesacai.entregador.AppVersion
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -17,7 +18,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "1.0"
+    private val APP_VERSION = AppVersion.NAME
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -38,7 +39,12 @@ object DriverRepository {
     private const val REAL_DRIVER_COLLECTION = "entregadores"
     private val DRIVER_COLLECTIONS = listOf("entregadores", "drivers", "motoboys", "deliveryDrivers", "couriers")
     private val MISSION_COLLECTIONS = listOf("rides", "corridas", "rotas_entrega", "pedidos")
-    private val CAROUSEL_COLLECTIONS = listOf("app_carousel_banners", "carrosselApp", "bannersApp", "appBanners", "bannersEntregador", "carrossel_entregador", "entregadorBanners")
+    private val CAROUSEL_COLLECTIONS = listOf(
+        "app_carousel_banners", "carrosselApp", "bannersApp", "appBanners", "bannersEntregador",
+        "carrossel_entregador", "entregadorBanners", "gadm_app_carousel", "gadmBanners",
+        "banners_gadm", "gestor_banners", "carrosselGestor", "configAppBanners",
+        "mobile_banners", "entregador_carrossel", "carrosselMobile"
+    )
     private val NOTICE_COLLECTIONS = listOf("app_notifications", "notificacoesEntregador", "avisosEntregador", "appAvisos", "operacaoAvisos")
     private val MACHINE_COLLECTIONS = listOf("maquininhas", "maquininhasEntrega", "cardMachines")
 
@@ -1206,7 +1212,7 @@ object DriverRepository {
                         )
                     )
                     db.collection(profile.collectionName).document(profile.id).set(
-                        mapOf("status" to "Em rota", "online" to true, "ultimaAceitacaoEm" to Timestamp.now()),
+                        mapOf("status" to "Em entrega", "online" to true, "ultimaAceitacaoEm" to Timestamp.now()),
                         SetOptions.merge()
                     )
                     db.collection(profile.collectionName).document(profile.id).set(
@@ -1341,7 +1347,7 @@ object DriverRepository {
     fun reportRideOccurrence(
         context: Context,
         rideId: String,
-        reason: String = "Problema na rota",
+        reason: String = "Problema na corrida",
         details: String = "Solicitado pelo app do entregador",
         onDone: () -> Unit = {},
         onError: (String) -> Unit = {}
@@ -1444,7 +1450,7 @@ object DriverRepository {
                 val releaseText = listOf(ride.pickupReleaseStatus, ride.rawStatus, ride.status).joinToString(" ").upperOrTrim()
                 val releaseLooksAllowed = releaseText.contains("LIBER") || releaseText.contains("SAIU") || releaseText.contains("COM_ENTREGADOR")
                 if (!ride.pickupReleaseAllowed && !releaseLooksAllowed) {
-                    onError("A rota ainda precisa ser liberada pelo gestor antes da saída.")
+                    onError("A corrida ainda precisa ser liberada pelo gestor antes da saída.")
                     return@findMissionDocument
                 }
             }
@@ -1593,7 +1599,7 @@ object DriverRepository {
 
         val payload = linkedMapOf<String, Any?>(
             "online" to true,
-            "status" to "Em rota",
+            "status" to "Em entrega",
             "statusOnline" to "Online",
             "statusOperacional" to statusOperacional,
             "corridaAtualId" to ride.id,
@@ -2120,6 +2126,10 @@ object DriverRepository {
             description = anyString("description", "descricao", "descrição", "subtitle", "subtitulo", "texto", "mensagem"),
             buttonText = anyString("buttonText", "ctaText", "textoBotao", "textoBotão", "cta", "callToAction"),
             imageUrl = imageUrl,
+            backgroundColor = anyString("backgroundColor", "bgColor", "corFundo", "fundo", "background", "cardColor"),
+            accentColor = anyString("accentColor", "corDestaque", "corPrimaria", "primaryColor", "accent", "corBotao"),
+            textColor = anyString("textColor", "corTexto", "foreground", "titleColor"),
+            iconName = anyString("icon", "icone", "iconName", "tipoIcone"),
             active = active,
             order = anyDouble("order", "ordem", "position", "posicao", "posição")?.toInt() ?: 999,
             actionType = anyString("actionType", "tipoAcao", "tipoAção", "acao", "ação").ifBlank { "none" },
@@ -2272,7 +2282,7 @@ object DriverRepository {
             s.contains("EXPIR") -> "Expirada"
             s in setOf("ACEITA", "ACEITO", "ACCEPTED", "A_CAMINHO_LOJA") -> "Aceita"
             s in setOf("COLETANDO", "EM_COLETA", "PICKUP") -> "Na coleta"
-            s in setOf("EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "DELIVERING") -> "Em rota"
+            s in setOf("EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "DELIVERING") -> "Em entrega"
             s.contains("CONCL") || s.contains("ENTREG") || s.contains("FINALIZ") || s == "FINISHED" -> "Finalizada"
             else -> replace('_', ' ').lowercase(Locale.ROOT).replaceFirstChar { it.uppercase() }
         }
@@ -2509,6 +2519,10 @@ data class AppCarouselBanner(
     val description: String = "",
     val buttonText: String = "",
     val imageUrl: String = "",
+    val backgroundColor: String = "",
+    val accentColor: String = "",
+    val textColor: String = "",
+    val iconName: String = "",
     val active: Boolean = true,
     val order: Int = 999,
     val actionType: String = "none",
@@ -2573,6 +2587,8 @@ data class DriverRide(
     val valueNumber: Double,
     val distance: String,
     val duration: String,
+    val pickupDistance: String = "",
+    val deliveryDistance: String = "",
     val pickup: String,
     val dropoff: String,
     val neighborhood: String,
@@ -2652,7 +2668,7 @@ data class DriverRide(
         return when {
             offerInactive -> "Oferta inativa ou substituída pelo gestor."
             hasExpired() -> "Oferta expirada."
-            hasActiveMission && !(isRouteAddition && routeId.isNotBlank() && routeId == activeRouteId) -> "Você já está com uma rota ativa. Nova corrida solta foi bloqueada."
+            hasActiveMission && !(isRouteAddition && routeId.isNotBlank() && routeId == activeRouteId) -> "Você já está com uma corrida ativa. Nova corrida solta foi bloqueada."
             preferences.onlyOnlinePaid && paymentKind() != "ONLINE" -> "Sua preferência está como somente pedidos pagos online."
             paymentKind() == "DINHEIRO" && preferences.blockCashAtNight && preferences.isRestrictedHour() -> "Dinheiro bloqueado no seu horário de restrição."
             paymentKind() == "DINHEIRO" && changeForNumber > 0.0 && (!preferences.hasCashChange || preferences.changeAvailableNumber + 0.001 < changeForNumber) -> "Pedido exige troco maior que o valor informado disponível."
@@ -3068,6 +3084,14 @@ private fun DocumentSnapshot.toDriverRide(collectionName: String): DriverRide? {
         "tempoTotalMin", "tempoMin", "tempoEstimado", "tempo", "tempoEstimadoMin", "calculo.tempoTotalMin", "calculo.tempoMin",
         "logistica.tempoEstimadoMin", "entrega.tempoEstimadoMin", "rota.tempoEstimadoMin", "tempoEntregaMin"
     ) ?: 0.0
+    val kmAteLoja = anyDouble(
+        "kmAteLoja", "distanciaAteLoja", "distanciaAteColeta", "distanciaColetaKm", "pickupDistanceKm",
+        "logistica.kmAteLoja", "logistica.distanciaAteLoja", "calculo.kmAteLoja"
+    ) ?: 0.0
+    val kmLojaCliente = anyDouble(
+        "kmLojaCliente", "distanciaLojaCliente", "distanciaColetaEntrega", "distanciaEntregaKm", "dropoffDistanceKm",
+        "logistica.kmLojaCliente", "logistica.distanciaLojaCliente", "calculo.kmLojaCliente"
+    ) ?: 0.0
     val pickupLat = anyCoordinate("latLoja", "lojaLat", "latitudeLoja", "pickupLat", "pickupLatitude", "coletaLat", "latColeta", "origemLat")
     val pickupLng = anyCoordinate("lngLoja", "lojaLng", "longitudeLoja", "pickupLng", "pickupLongitude", "coletaLng", "lngColeta", "origemLng", "lonLoja")
     val dropoffLat = anyCoordinate("latEntrega", "entregaLat", "clienteLat", "dropoffLat", "dropoffLatitude", "destinationLat", "destinoLat") ?: nestedCoordinate("endereco", "lat", "latitude")
@@ -3094,8 +3118,10 @@ private fun DocumentSnapshot.toDriverRide(collectionName: String): DriverRide? {
         rawStatus = rawStatus,
         value = DriverRepository.formatCurrency(number),
         valueNumber = number,
-        distance = if (km > 0.0) "${String.format(Locale("pt", "BR"), "%.1f", km)} km" else anyString("distance"),
-        duration = if (minutes > 0.0) "${minutes.toInt()} min" else anyString("duration", "estimatedTime"),
+        distance = if (km > 0.0) "${String.format(Locale("pt", "BR"), "%.1f", km)} km" else anyString("distance", "distancia"),
+        duration = if (minutes > 0.0) "${minutes.toInt()} min" else anyString("duration", "estimatedTime", "tempo"),
+        pickupDistance = if (kmAteLoja > 0.0) "${String.format(Locale("pt", "BR"), "%.1f", kmAteLoja)} km" else anyString("pickupDistance", "distanciaAteLoja", "kmAteLoja", "distanciaColeta"),
+        deliveryDistance = if (kmLojaCliente > 0.0) "${String.format(Locale("pt", "BR"), "%.1f", kmLojaCliente)} km" else anyString("deliveryDistance", "distanciaLojaCliente", "kmLojaCliente", "distanciaEntrega"),
         pickup = pickup,
         dropoff = dropoff,
         neighborhood = anyString("bairro", "bairroEntrega", "regiao", "neighborhood"),

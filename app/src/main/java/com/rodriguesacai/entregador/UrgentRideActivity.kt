@@ -1,5 +1,6 @@
 package com.rodriguesacai.entregador
 
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -15,12 +16,18 @@ class UrgentRideActivity : ComponentActivity() {
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
         val rideId = intent.getStringExtra("rideId") ?: "sem-id"
         val value = intent.getStringExtra("value").orEmpty()
         val distance = intent.getStringExtra("distance").orEmpty()
         val duration = intent.getStringExtra("duration").orEmpty()
         val pickup = intent.getStringExtra("pickup").orEmpty()
         val dropoff = intent.getStringExtra("dropoff").orEmpty()
+        val pickupDistance = intent.getStringExtra("pickupDistance").orEmpty()
+        val deliveryDistance = intent.getStringExtra("deliveryDistance").orEmpty()
         val paymentMethod = intent.getStringExtra("paymentMethod").orEmpty()
         val paymentStatus = intent.getStringExtra("paymentStatus").orEmpty()
         val amountToCollect = intent.getStringExtra("amountToCollect").orEmpty()
@@ -35,6 +42,8 @@ class UrgentRideActivity : ComponentActivity() {
                     duration = duration,
                     pickup = pickup,
                     dropoff = dropoff,
+                    pickupDistance = pickupDistance,
+                    deliveryDistance = deliveryDistance,
                     paymentMethod = paymentMethod,
                     paymentStatus = paymentStatus,
                     amountToCollect = amountToCollect,

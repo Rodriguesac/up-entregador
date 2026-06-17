@@ -1,0 +1,63 @@
+name: Gerar APK Rodrigues Entregador V6.21.3
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Gerar APK Debug V6.21.3
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar SDK Android
+        shell: bash
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Setup Gradle 8.14.3
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
+
+      - name: Conferir projeto V6.21.3
+        shell: bash
+        run: |
+          ls -la
+          test -f settings.gradle.kts
+          test -f build.gradle.kts
+          test -f app/build.gradle.kts
+          test -f app/google-services.json
+          grep -R "versionCode\|versionName" app/build.gradle.kts
+          test -f app/src/main/res/drawable/ic_rodrigues_logo.xml
+          test -f app/src/main/res/raw/nova_corrida.wav
+          test -f app/src/main/res/raw/sucesso.wav
+
+      - name: Gerar APK Debug
+        shell: bash
+        run: |
+          gradle --no-daemon clean :app:assembleDebug --stacktrace
+
+      - name: Upload APK V6.21.3
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rodrigues-Entregador-V6-21-3-Contrato-Visual-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

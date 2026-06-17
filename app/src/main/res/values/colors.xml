@@ -1,4 +1,8 @@
 <resources>
-    <color name="status_bar_dark">#081827</color>
-    <color name="accent_purple">#0F2742</color>
+    <color name="status_bar_dark">#08164A</color>
+    <color name="accent_purple">#2A1E8A</color>
+    <color name="up_splash_background">#08164A</color>
+    <color name="up_splash_icon_background">#08164A</color>
+    <color name="up_neon_lime">#B7E51E</color>
+    <color name="up_electric_blue">#1E4FFF</color>
 </resources>

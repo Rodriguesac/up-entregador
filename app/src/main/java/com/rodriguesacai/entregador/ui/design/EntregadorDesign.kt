@@ -21,25 +21,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object EntregadorColors {
-    val Background = Color(0xFFF7F7F7)
+    val Background = Color(0xFFF7F9FF)
     val Surface = Color(0xFFFFFFFF)
-    val SurfaceSoft = Color(0xFFF2F2F2)
-    val Border = Color(0xFFE6E6E6)
-    val Text = Color(0xFF1F1F1F)
-    val Muted = Color(0xFF667085)
-    val MutedLight = Color(0xFF98A2B3)
-    val Navy = Color(0xFFEA1D2C)
-    val NavyDark = Color(0xFF9B111E)
-    val NavySoft = Color(0xFFFFEBEE)
-    val Green = Color(0xFF0E9F6E)
-    val GreenDark = Color(0xFF047857)
-    val Orange = Color(0xFFD97706)
-    val Red = Color(0xFFEA1D2C)
-    val Blue = Color(0xFFEA1D2C)
+    val SurfaceSoft = Color(0xFFEFF4FF)
+    val Border = Color(0xFFDDE6FF)
+    val Text = Color(0xFF08164A)
+    val Muted = Color(0xFF4B587C)
+    val MutedLight = Color(0xFF647092)
+    val Navy = Color(0xFFB7E51E)
+    val NavyDark = Color(0xFF2A1E8A)
+    val NavySoft = Color(0xFFEAF4FF)
+    val Green = Color(0xFFB7E51E)
+    val GreenDark = Color(0xFF8CB80F)
+    val Orange = Color(0xFFFFB020)
+    val Red = Color(0xFFE53935)
+    val Blue = Color(0xFF1E4FFF)
 }
 
 object EntregadorShape {
-    val Card = RoundedCornerShape(26.dp)
+    val Card = RoundedCornerShape(24.dp)
     val Button = RoundedCornerShape(18.dp)
     val Chip = RoundedCornerShape(999.dp)
 }
@@ -52,20 +52,20 @@ fun EntregadorCard(modifier: Modifier = Modifier, content: @Composable ColumnSco
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = modifier.fillMaxWidth().border(1.dp, EntregadorColors.Border, EntregadorShape.Card)
     ) {
-        Column(Modifier.padding(14.dp), content = content)
+        Column(Modifier.padding(16.dp), content = content)
     }
 }
 
 @Composable
-fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit = { Text(text, fontWeight = FontWeight.Bold, fontSize = 15.sp) }) {
+fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit = { Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp) }) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.fillMaxWidth().height(52.dp),
+        modifier = modifier.fillMaxWidth().height(56.dp),
         shape = EntregadorShape.Button,
         colors = ButtonDefaults.buttonColors(
             containerColor = EntregadorColors.Navy,
-            contentColor = Color.White,
+            contentColor = EntregadorColors.Text,
             disabledContainerColor = Color(0xFFE6EBEF),
             disabledContentColor = EntregadorColors.MutedLight
         ),
@@ -76,6 +76,6 @@ fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled
 
 @Composable
 fun EntregadorTitle(title: String, subtitle: String = "") {
-    Text(title, color = EntregadorColors.Text, fontSize = 24.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
-    if (subtitle.isNotBlank()) Text(subtitle, color = EntregadorColors.Muted, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
+    Text(title, color = EntregadorColors.Text, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold)
+    if (subtitle.isNotBlank()) Text(subtitle, color = EntregadorColors.Muted, fontSize = 15.sp, lineHeight = 21.sp, fontWeight = FontWeight.SemiBold)
 }

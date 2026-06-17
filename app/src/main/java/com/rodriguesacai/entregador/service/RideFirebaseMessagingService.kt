@@ -26,9 +26,9 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
             NotificationHelper.appNoticeNotification(
                 context = this,
                 noticeId = rideId ?: System.currentTimeMillis().toString(),
-                title = "Atualização de rota",
-                message = "Existe uma rota ativa. Abra o app para conferir se houve pedido adicionado ou alteração do gestor.",
-                category = "Rota"
+                title = "Atualização da corrida",
+                message = "Existe uma corrida ativa. Abra o app para conferir se houve entrega adicionada ou alteração do gestor.",
+                category = "Corrida"
             )
             return
         }
@@ -41,6 +41,8 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
             duration = data["duration"] ?: data["tempo"] ?: data["tempoMin"] ?: "",
             pickup = data["pickup"] ?: data["pickupAddress"] ?: data["lojaEndereco"] ?: data["nomeLoja"] ?: "",
             dropoff = data["dropoff"] ?: data["dropoffAddress"] ?: data["enderecoEntrega"] ?: data["enderecoCompleto"] ?: "",
+            pickupDistance = data["pickupDistance"] ?: data["distanciaAteLoja"] ?: data["kmAteLoja"] ?: data["distanciaColeta"] ?: "",
+            deliveryDistance = data["deliveryDistance"] ?: data["distanciaLojaCliente"] ?: data["kmLojaCliente"] ?: data["distanciaEntrega"] ?: "",
             paymentMethod = data["formaPagamento"] ?: data["paymentMethod"] ?: data["metodoPagamento"] ?: "",
             paymentStatus = data["statusPagamento"] ?: data["paymentStatus"] ?: "",
             amountToCollect = data["valorReceberCliente"] ?: data["amountToCollect"] ?: data["totalPedido"] ?: data["valorPedido"] ?: "",
