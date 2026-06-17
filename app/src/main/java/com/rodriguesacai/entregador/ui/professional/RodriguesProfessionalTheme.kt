@@ -1,5 +1,8 @@
 package com.rodriguesacai.entregador.ui.professional
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 object RodriguesColors {
@@ -20,4 +23,26 @@ object RodriguesColors {
     val Danger = Color(0xFFE5484D)
     val Success = Color(0xFF20B15A)
     val Warning = Color(0xFFFFB020)
+}
+
+private val RodriguesProfessionalColorScheme = lightColorScheme(
+    primary = RodriguesColors.Lime500,
+    onPrimary = RodriguesColors.Navy900,
+    secondary = RodriguesColors.Blue500,
+    onSecondary = Color.White,
+    background = RodriguesColors.Navy950,
+    onBackground = Color.White,
+    surface = RodriguesColors.Surface,
+    onSurface = RodriguesColors.TextPrimary,
+    error = RodriguesColors.Danger
+)
+
+@Composable
+fun RodriguesProfessionalTheme(
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colorScheme = RodriguesProfessionalColorScheme,
+        content = content
+    )
 }
