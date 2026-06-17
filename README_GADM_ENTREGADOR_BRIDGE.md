@@ -1,55 +1,32 @@
-# UP Entregador — pacote compatível com GADM
+# Rodrigues UP Entregas — pacote compatível com GADM
 
-Pacote nativo Android em Kotlin + Jetpack Compose para o entregador, pronto para commitar no GitHub e gerar APK pelo workflow.
+Este pacote foi ajustado para conversar melhor com o GADM.
+
+## Ajustes principais
+
+- App Entregador passa a escutar também `corridas`, além de `rides`, `rotas_entrega` e `pedidos`.
+- Aceita ofertas criadas pelo GADM com `status = OFERTA`, `status = OFERTA_RECEBIDA`, `statusCorrida = OFERTA_RECEBIDA`, `statusOfertaEntregador = OFERTA`, `liberadoParaEntregador = true` e `ofertaLiberada = true`.
+- Ao aceitar, recusar, expirar, coletar, sair para entrega ou finalizar, o app sincroniza espelhos em `pedidos`, `corridas` e `rides` quando existir referência.
+- Notificação de nova corrida leva forma de pagamento, valor a cobrar, troco e maquininha para a tela urgente.
+- Fonte/tamanho: escala geral aumentada para 1.10 no tema nativo e fonte oficial ajustada para legibilidade.
 
 ## Versão
 
-`6.33.0-operacao-completa-tela-cheia`
-
-## O que este pacote entrega
-
-- App com identidade **UP Entregador**.
-- Ícone do app incluído em `res/drawable/up_app_icon.png` e `mipmap-*`.
-- Manifest atualizado com nome **UP Entregador** e launcher icon novo.
-- Visual vermelho operacional com cards brancos, tipografia legível e fundo claro.
-- Telas reais em Compose para:
-  - Login / cadastro.
-  - Permissões do app.
-  - Início operacional.
-  - Corridas aguardando.
-  - Nova corrida urgente.
-  - Corrida em andamento.
-  - Histórico.
-  - Carteira.
-  - Mais / Perfil / Pix-Banco / Operação / Suporte.
-- Integração mantida com GADM/Firebase.
-
-## Compatibilidade operacional com GADM
-
-O app escuta ofertas também em `corridas`, além de `rides`, `rotas_entrega` e `pedidos`.
-
-Aceita ofertas criadas pelo GADM com campos como:
-
-- `status = OFERTA`
-- `status = OFERTA_RECEBIDA`
-- `statusCorrida = OFERTA_RECEBIDA`
-- `statusOfertaEntregador = OFERTA`
-- `liberadoParaEntregador = true`
-- `ofertaLiberada = true`
-
-Ao aceitar, recusar, expirar, coletar, sair para entrega, registrar ocorrência ou finalizar, o app sincroniza espelhos em `pedidos`, `corridas` e `rides` quando existir referência.
-
-## Financeiro
-
-A taxa de entrega cobrada do cliente não é usada automaticamente como repasse do entregador. O app mostra valor de corrida/repasse somente quando vier de campos próprios, como `valorCorrida`, `valorRepasseEntregador`, `repassePiloto` e equivalentes já tratados no repositório.
-
-## Como gerar APK pelo GitHub
-
-1. Suba estes arquivos no repositório.
-2. No GitHub, abra a aba **Actions**.
-3. Rode o workflow **Android APK - UP Entregador**.
-4. Baixe o artefato `UP-Entregador-debug-apk`.
+`1.0`
 
 ## Observação
 
-O pacote foi preparado para commit. Em ambiente local, é necessário Android SDK/Gradle configurado para rodar `assembleDebug`.
+Depois de subir no GitHub, gere um APK novo pelo workflow e instale no aparelho do entregador. O GADM precisa continuar criando a missão em `rides`/`corridas`/`pedidos` conforme o ZIP 19.
+
+
+## v1.0
+
+Correção financeira: taxa de entrega cobrada do cliente não é usada como repasse do entregador. O app só mostra valor da corrida quando vier de campos de repasse/corrida (`valorCorrida`, `valorRepasseEntregador`, `repassePiloto`, etc.).
+
+
+## v1.0
+- Visual redesenhado com base em app de entregador: vermelho operacional, cards brancos, fundo claro e mapa mais limpo.
+- Corrigido aviso de saída bloqueada quando a rota já está liberada.
+- `NA_COLETA`/`COLETANDO` permanece missão ativa e não libera o entregador indevidamente.
+- Ganhos do dia somam missões do dia com repasse, mesmo antes do fechamento final.
+- Distância e tempo buscam campos de `logistica`, `entrega`, `rota` e `calculo`.

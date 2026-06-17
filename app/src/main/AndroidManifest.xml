@@ -15,8 +15,8 @@
     <application
         android:name=".RodriguesApp"
         android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
-        android:label="UP Entregador"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:label="Rodrigues Entregador"
         android:theme="@style/AppTheme">
 
         <activity
@@ -29,8 +29,7 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.UP.Splash">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

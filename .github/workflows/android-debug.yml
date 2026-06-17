@@ -1,15 +1,16 @@
-name: Android APK - UP Entregador
+name: Build Android Debug APK
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build-debug-apk:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
@@ -18,13 +19,8 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.14.2
 
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
@@ -32,5 +28,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: UP-Entregador-debug-apk
+          name: Rodrigues-UP-Entregas-v1.0-debug-apk
           path: app/build/outputs/apk/debug/*.apk
