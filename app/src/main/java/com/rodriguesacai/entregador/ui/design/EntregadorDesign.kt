@@ -30,10 +30,10 @@ object EntregadorColors {
     val MutedLight = Color(0xFF647092)
     val Navy = Color(0xFFB7E51E)
     val NavyDark = Color(0xFF2A1E8A)
-    val NavySoft = Color(0xFFEFF8B8)
+    val NavySoft = Color(0xFFEAF4FF)
     val Green = Color(0xFFB7E51E)
     val GreenDark = Color(0xFF8CB80F)
-    val Orange = Color(0xFFE8E61A)
+    val Orange = Color(0xFFFFB020)
     val Red = Color(0xFFE53935)
     val Blue = Color(0xFF1E4FFF)
 }
@@ -52,12 +52,12 @@ fun EntregadorCard(modifier: Modifier = Modifier, content: @Composable ColumnSco
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = modifier.fillMaxWidth().border(1.dp, EntregadorColors.Border, EntregadorShape.Card)
     ) {
-        Column(Modifier.padding(14.dp), content = content)
+        Column(Modifier.padding(16.dp), content = content)
     }
 }
 
 @Composable
-fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit = { Text(text, fontWeight = FontWeight.Bold, fontSize = 15.sp) }) {
+fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit = { Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp) }) {
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -76,6 +76,6 @@ fun EntregadorPrimaryButton(text: String, modifier: Modifier = Modifier, enabled
 
 @Composable
 fun EntregadorTitle(title: String, subtitle: String = "") {
-    Text(title, color = EntregadorColors.Text, fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
-    if (subtitle.isNotBlank()) Text(subtitle, color = EntregadorColors.Muted, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
+    Text(title, color = EntregadorColors.Text, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold)
+    if (subtitle.isNotBlank()) Text(subtitle, color = EntregadorColors.Muted, fontSize = 15.sp, lineHeight = 21.sp, fontWeight = FontWeight.SemiBold)
 }

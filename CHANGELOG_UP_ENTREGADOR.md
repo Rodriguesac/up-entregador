@@ -1,3 +1,12 @@
+## v6.35.0 — Montserrat + Carrossel GADM
+
+- Versão atualizada para `6.35.0-montserrat-carrossel-gadm`.
+- Fonte oficial configurada como Montserrat via Google Fonts Provider.
+- Textos principais e componentes comuns aumentados proporcionalmente.
+- Carrossel agora lê mais coleções compatíveis com GADM/Gestor e aceita imagem, cores, modo arte pronta e CTA.
+- Visual ajustado com menos amarelo e mais azul/verde premium.
+- Mapa e componentes auxiliares alinhados à paleta oficial.
+
 ## v6.34.0 — Profissional Splash + Operação
 
 Entrega focada em implementação real, sem chamar simulação de recurso real.

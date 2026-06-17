@@ -39,7 +39,12 @@ object DriverRepository {
     private const val REAL_DRIVER_COLLECTION = "entregadores"
     private val DRIVER_COLLECTIONS = listOf("entregadores", "drivers", "motoboys", "deliveryDrivers", "couriers")
     private val MISSION_COLLECTIONS = listOf("rides", "corridas", "rotas_entrega", "pedidos")
-    private val CAROUSEL_COLLECTIONS = listOf("app_carousel_banners", "carrosselApp", "bannersApp", "appBanners", "bannersEntregador", "carrossel_entregador", "entregadorBanners")
+    private val CAROUSEL_COLLECTIONS = listOf(
+        "app_carousel_banners", "carrosselApp", "bannersApp", "appBanners", "bannersEntregador",
+        "carrossel_entregador", "entregadorBanners", "gadm_app_carousel", "gadmBanners",
+        "banners_gadm", "gestor_banners", "carrosselGestor", "configAppBanners",
+        "mobile_banners", "entregador_carrossel", "carrosselMobile"
+    )
     private val NOTICE_COLLECTIONS = listOf("app_notifications", "notificacoesEntregador", "avisosEntregador", "appAvisos", "operacaoAvisos")
     private val MACHINE_COLLECTIONS = listOf("maquininhas", "maquininhasEntrega", "cardMachines")
 
@@ -2121,6 +2126,10 @@ object DriverRepository {
             description = anyString("description", "descricao", "descrição", "subtitle", "subtitulo", "texto", "mensagem"),
             buttonText = anyString("buttonText", "ctaText", "textoBotao", "textoBotão", "cta", "callToAction"),
             imageUrl = imageUrl,
+            backgroundColor = anyString("backgroundColor", "bgColor", "corFundo", "fundo", "background", "cardColor"),
+            accentColor = anyString("accentColor", "corDestaque", "corPrimaria", "primaryColor", "accent", "corBotao"),
+            textColor = anyString("textColor", "corTexto", "foreground", "titleColor"),
+            iconName = anyString("icon", "icone", "iconName", "tipoIcone"),
             active = active,
             order = anyDouble("order", "ordem", "position", "posicao", "posição")?.toInt() ?: 999,
             actionType = anyString("actionType", "tipoAcao", "tipoAção", "acao", "ação").ifBlank { "none" },
@@ -2510,6 +2519,10 @@ data class AppCarouselBanner(
     val description: String = "",
     val buttonText: String = "",
     val imageUrl: String = "",
+    val backgroundColor: String = "",
+    val accentColor: String = "",
+    val textColor: String = "",
+    val iconName: String = "",
     val active: Boolean = true,
     val order: Int = 999,
     val actionType: String = "none",

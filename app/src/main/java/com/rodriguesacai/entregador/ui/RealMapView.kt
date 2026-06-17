@@ -64,9 +64,9 @@ private const val TOMTOM_API_KEY = "tmsKTjnNOPUHNDHOYh2m12VrmwejmK8t"
 private const val ROUTE_REFRESH_MS = 30_000L
 
 private val MapPanel = Color.White
-private val MapGreen = Color(0xFF16A34A)
-private val MapOrange = Color(0xFFF59E0B)
-private val MapBlue = Color(0xFFEA1D2C)
+private val MapGreen = Color(0xFFB7E51E)
+private val MapOrange = Color(0xFFFFB020)
+private val MapBlue = Color(0xFF1E4FFF)
 
 private val PremiumMapTiles = XYTileSource(
     "RodriguesCourierCleanMap",

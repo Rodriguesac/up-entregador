@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 870
-        versionName = "6.34.0-profissional-splash-operacao"
+        versionCode = 880
+        versionName = "6.35.0-montserrat-carrossel-gadm"
     }
 
     buildFeatures { compose = true }
