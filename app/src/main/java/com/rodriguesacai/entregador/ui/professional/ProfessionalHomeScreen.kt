@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -216,7 +215,7 @@ private fun MainStatusCard(
         ) {
             CircleIcon(text = if (corrida?.status == CorridaUiStatus.OFERTA_RECEBIDA) "⚡" else "📦")
             Spacer(Modifier.width(14.dp))
-            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+            ProfessionalColumn(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     color = RodriguesColors.TextPrimary,
@@ -284,7 +283,7 @@ private fun PerformanceCard(resumo: ResumoGanhosUiModel) {
 
 @Composable
 private fun StatColumn(icon: String, label: String, value: String, modifier: Modifier = Modifier) {
-    androidx.compose.foundation.layout.Column(modifier = modifier) {
+    ProfessionalColumn(modifier = modifier) {
         Box(
             modifier = Modifier
                 .size(38.dp)
@@ -352,7 +351,7 @@ private fun QuickCards(state: ProfessionalHomeUiState) {
             ) {
                 CircleIcon(text = "🎯", small = true, color = RodriguesColors.Blue100)
                 Spacer(Modifier.width(12.dp))
-                androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+                ProfessionalColumn(modifier = Modifier.weight(1f)) {
                     Text("Meta diária", color = RodriguesColors.TextPrimary, fontWeight = FontWeight.Black, fontSize = 14.sp)
                     Text(money(resumo.metaDiaria), color = RodriguesColors.Blue500, fontWeight = FontWeight.Black, fontSize = 17.sp)
                     Spacer(Modifier.height(6.dp))
@@ -413,12 +412,12 @@ private fun WalletCard(resumo: ResumoGanhosUiModel) {
         ) {
             CircleIcon(text = "💳", color = Color.White.copy(alpha = 0.12f))
             Spacer(Modifier.width(14.dp))
-            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+            ProfessionalColumn(modifier = Modifier.weight(1f)) {
                 Text("Carteira", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp)
                 Text(money(resumo.saldoCarteira), color = RodriguesColors.Lime400, fontWeight = FontWeight.Black, fontSize = 24.sp)
                 Text("Saldo disponível via Pix", color = Color.White.copy(alpha = 0.68f), fontSize = 12.sp)
             }
-            androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.End) {
+            ProfessionalColumn(horizontalAlignment = Alignment.End) {
                 Text("Próximo repasse", color = Color.White.copy(alpha = 0.66f), fontSize = 12.sp)
                 Text(resumo.proximoRepasse, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
@@ -435,9 +434,9 @@ private fun ActiveRideCard(
     onRejectRide: () -> Unit
 ) {
     WhiteCard(padding = 0.dp) {
-        androidx.compose.foundation.layout.Column(modifier = Modifier.padding(18.dp)) {
+        ProfessionalColumn(modifier = Modifier.padding(18.dp)) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+                ProfessionalColumn(modifier = Modifier.weight(1f)) {
                     StopRow(
                         icon = "🏪",
                         tag = "COLETA",
@@ -457,7 +456,7 @@ private fun ActiveRideCard(
                     )
                 }
                 Spacer(Modifier.width(12.dp))
-                androidx.compose.foundation.layout.Column(
+                ProfessionalColumn(
                     modifier = Modifier
                         .width(128.dp)
                         .border(1.dp, RodriguesColors.Border, RoundedCornerShape(18.dp))
@@ -512,7 +511,7 @@ private fun StopRow(icon: String, tag: String, title: String, subtitle: String, 
     Row(verticalAlignment = Alignment.Top) {
         CircleIcon(text = icon, small = true)
         Spacer(Modifier.width(12.dp))
-        androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+        ProfessionalColumn(modifier = Modifier.weight(1f)) {
             Surface(color = tagColor, shape = RoundedCornerShape(100.dp)) {
                 Text(
                     text = tag,
@@ -558,7 +557,7 @@ private fun RideMetric(icon: String, label: String, value: String) {
 @Composable
 private fun AvailableCard() {
     WhiteCard {
-        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        ProfessionalColumn(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             CircleIcon(text = "🛵", color = RodriguesColors.Lime100)
             Spacer(Modifier.height(12.dp))
             Text("Você está disponível", color = RodriguesColors.TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Black)
@@ -634,7 +633,7 @@ private fun WhiteCard(
         colors = CardDefaults.cardColors(containerColor = RodriguesColors.Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
-        androidx.compose.foundation.layout.Column(
+        ProfessionalColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(padding),
@@ -666,4 +665,44 @@ private fun oneDecimal(value: Double): String =
 @Composable
 private fun ProfessionalHomeScreenPreview() {
     ProfessionalHomeScreen(state = ProfessionalHomeUiState.preview())
+}
+
+@Composable
+private fun ProfessionalColumn(
+    modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    content: @Composable () -> Unit
+) {
+    androidx.compose.ui.layout.Layout(
+        modifier = modifier,
+        content = content
+    ) { measurables, constraints ->
+        val placeables = measurables.map { measurable ->
+            measurable.measure(
+                constraints.copy(minHeight = 0)
+            )
+        }
+
+        val measuredWidth = placeables.maxOfOrNull { it.width } ?: constraints.minWidth
+        val width = measuredWidth.coerceIn(constraints.minWidth, constraints.maxWidth)
+
+        val measuredHeight = placeables.sumOf { it.height }
+        val height = measuredHeight.coerceIn(constraints.minHeight, constraints.maxHeight)
+
+        layout(width, height) {
+            var y = 0
+
+            placeables.forEach { placeable ->
+                val x = horizontalAlignment.align(
+                    size = placeable.width,
+                    space = width,
+                    layoutDirection = layoutDirection
+                )
+
+                placeable.placeRelative(x, y)
+                y += placeable.height
+            }
+        }
+    }
 }
