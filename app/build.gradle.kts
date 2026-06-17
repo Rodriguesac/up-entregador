@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 880
-        versionName = "6.35.0-montserrat-carrossel-gadm"
+        versionCode = 881
+        versionName = "6.35.1-apk-debug-nomeado"
     }
 
     buildFeatures { compose = true }

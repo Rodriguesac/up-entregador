@@ -29,8 +29,28 @@ jobs:
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Extract app version
+        id: version
+        shell: bash
+        run: |
+          VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | head -n 1 | sed 's/.*versionName = "\(.*\)".*/\1/')
+          VERSION_CODE=$(grep 'versionCode' app/build.gradle.kts | head -n 1 | sed 's/.*versionCode = //')
+          SAFE_VERSION=$(echo "$VERSION_NAME" | tr -c 'A-Za-z0-9._-' '_')
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "safe_version=$SAFE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Versão detectada: $VERSION_NAME ($VERSION_CODE)"
+
+      - name: Rename debug APK with version
+        shell: bash
+        run: |
+          mkdir -p release-apk
+          cp app/build/outputs/apk/debug/app-debug.apk "release-apk/UP_Entregador_v${{ steps.version.outputs.safe_version }}_debug.apk"
+          ls -lh release-apk
+
+      - name: Upload APK artifact with version
         uses: actions/upload-artifact@v4
         with:
-          name: UP-Entregador-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: UP_Entregador_v${{ steps.version.outputs.safe_version }}_APK
+          path: release-apk/*.apk
+          if-no-files-found: error

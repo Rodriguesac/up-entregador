@@ -1,3 +1,10 @@
+## v6.35.1 — APK debug nomeado com versão
+
+- Atualizado versionCode para 881 e versionName para `6.35.1-apk-debug-nomeado`.
+- GitHub Actions agora renomeia o APK debug para `UP_Entregador_v<versionName>_debug.apk`.
+- Artifact do Actions agora sai como `UP_Entregador_v<versionName>_APK`.
+- Mantém Montserrat, carrossel GADM e ajustes visuais da v6.35.0.
+
 ## v6.35.0 — Montserrat + Carrossel GADM
 
 - Versão atualizada para `6.35.0-montserrat-carrossel-gadm`.
