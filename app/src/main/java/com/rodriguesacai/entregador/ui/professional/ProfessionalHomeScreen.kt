@@ -661,11 +661,7 @@ private fun money(value: Double): String =
 private fun oneDecimal(value: Double): String =
     String.format(Locale("pt", "BR"), "%.1f", value).replace('.', ',')
 
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-private fun ProfessionalHomeScreenPreview() {
-    ProfessionalHomeScreen(state = ProfessionalHomeUiState.preview())
-}
+
 
 @Composable
 private fun ProfessionalColumn(
@@ -679,9 +675,7 @@ private fun ProfessionalColumn(
         content = content
     ) { measurables, constraints ->
         val placeables = measurables.map { measurable ->
-            measurable.measure(
-                constraints.copy(minHeight = 0)
-            )
+            measurable.measure(constraints.copy(minHeight = 0))
         }
 
         val measuredWidth = placeables.maxOfOrNull { it.width } ?: constraints.minWidth
@@ -692,17 +686,21 @@ private fun ProfessionalColumn(
 
         layout(width, height) {
             var y = 0
-
             placeables.forEach { placeable ->
                 val x = horizontalAlignment.align(
                     size = placeable.width,
                     space = width,
                     layoutDirection = layoutDirection
                 )
-
                 placeable.placeRelative(x, y)
                 y += placeable.height
             }
         }
     }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun ProfessionalHomeScreenPreview() {
+    ProfessionalHomeScreen(state = ProfessionalHomeUiState.preview())
 }
