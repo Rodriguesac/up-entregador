@@ -19,7 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.rodriguesacai.entregador.service.OnlineDriverService
-import com.rodriguesacai.entregador.ui.DriverHomeScreen
+import com.rodriguesacai.entregador.ui.UpEntregadorShell
 
 class MainActivity : ComponentActivity() {
     private var pendingOnlineStart: Boolean = false
@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
         themeMode = AppSettings.getThemeMode(this)
         setContent {
             RodriguesNativeTheme(darkTheme = themeMode == AppSettings.THEME_DARK) {
-                DriverHomeScreen(
+                UpEntregadorShell(
                     permissionRefreshTick = permissionRefreshTick,
                     onGoOnline = { requestLocationAndStartOnline() },
                     onGoOffline = { stopService(Intent(this, OnlineDriverService::class.java)) },

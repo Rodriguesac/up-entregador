@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 881
-        versionName = "6.35.1-apk-debug-nomeado"
+        versionCode = 1000
+        versionName = "1.0-up-entregas-cpf-cadastro"
     }
 
     buildFeatures { compose = true }
