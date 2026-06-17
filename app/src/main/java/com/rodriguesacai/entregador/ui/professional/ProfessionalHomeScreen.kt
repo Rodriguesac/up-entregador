@@ -216,7 +216,7 @@ private fun MainStatusCard(
         ) {
             CircleIcon(text = if (corrida?.status == CorridaUiStatus.OFERTA_RECEBIDA) "⚡" else "📦")
             Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     color = RodriguesColors.TextPrimary,
@@ -284,7 +284,7 @@ private fun PerformanceCard(resumo: ResumoGanhosUiModel) {
 
 @Composable
 private fun StatColumn(icon: String, label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+    androidx.compose.foundation.layout.Column(modifier = modifier) {
         Box(
             modifier = Modifier
                 .size(38.dp)
@@ -352,7 +352,7 @@ private fun QuickCards(state: ProfessionalHomeUiState) {
             ) {
                 CircleIcon(text = "🎯", small = true, color = RodriguesColors.Blue100)
                 Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
+                androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                     Text("Meta diária", color = RodriguesColors.TextPrimary, fontWeight = FontWeight.Black, fontSize = 14.sp)
                     Text(money(resumo.metaDiaria), color = RodriguesColors.Blue500, fontWeight = FontWeight.Black, fontSize = 17.sp)
                     Spacer(Modifier.height(6.dp))
@@ -413,12 +413,12 @@ private fun WalletCard(resumo: ResumoGanhosUiModel) {
         ) {
             CircleIcon(text = "💳", color = Color.White.copy(alpha = 0.12f))
             Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                 Text("Carteira", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp)
                 Text(money(resumo.saldoCarteira), color = RodriguesColors.Lime400, fontWeight = FontWeight.Black, fontSize = 24.sp)
                 Text("Saldo disponível via Pix", color = Color.White.copy(alpha = 0.68f), fontSize = 12.sp)
             }
-            Column(horizontalAlignment = Alignment.End) {
+            androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.End) {
                 Text("Próximo repasse", color = Color.White.copy(alpha = 0.66f), fontSize = 12.sp)
                 Text(resumo.proximoRepasse, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
@@ -435,9 +435,9 @@ private fun ActiveRideCard(
     onRejectRide: () -> Unit
 ) {
     WhiteCard(padding = 0.dp) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        androidx.compose.foundation.layout.Column(modifier = Modifier.padding(18.dp)) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.weight(1f)) {
+                androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                     StopRow(
                         icon = "🏪",
                         tag = "COLETA",
@@ -457,7 +457,7 @@ private fun ActiveRideCard(
                     )
                 }
                 Spacer(Modifier.width(12.dp))
-                Column(
+                androidx.compose.foundation.layout.Column(
                     modifier = Modifier
                         .width(128.dp)
                         .border(1.dp, RodriguesColors.Border, RoundedCornerShape(18.dp))
@@ -512,7 +512,7 @@ private fun StopRow(icon: String, tag: String, title: String, subtitle: String, 
     Row(verticalAlignment = Alignment.Top) {
         CircleIcon(text = icon, small = true)
         Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
             Surface(color = tagColor, shape = RoundedCornerShape(100.dp)) {
                 Text(
                     text = tag,
@@ -558,7 +558,7 @@ private fun RideMetric(icon: String, label: String, value: String) {
 @Composable
 private fun AvailableCard() {
     WhiteCard {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             CircleIcon(text = "🛵", color = RodriguesColors.Lime100)
             Spacer(Modifier.height(12.dp))
             Text("Você está disponível", color = RodriguesColors.TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Black)
@@ -634,7 +634,7 @@ private fun WhiteCard(
         colors = CardDefaults.cardColors(containerColor = RodriguesColors.Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
-        Column(
+        androidx.compose.foundation.layout.Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(padding),
