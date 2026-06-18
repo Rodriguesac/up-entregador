@@ -225,7 +225,7 @@ fun DriverHomeScreen(
     var welcomeDone by remember { mutableStateOf(AppSettings.isWelcomeDone(context)) }
     var startRegister by remember { mutableStateOf(false) }
     var showStartupSplash by remember { mutableStateOf(true) }
-    var dismissedModalNoticeId by remember { mutableStateOf("") }
+    var dismissedNoticeIds by remember { mutableStateOf(setOf<String>()) }
     var bootingSession by remember { mutableStateOf(profile != null) }
     var lastActiveId by remember { mutableStateOf("") }
 
@@ -480,13 +480,21 @@ fun DriverHomeScreen(
                     )
                 }
             }
-            val modalNotice = appNotices.firstOrNull { it.isVisible() && !it.read && it.id != dismissedModalNoticeId }
+            val modalNotice = appNotices.firstOrNull { noticeItem ->
+                val modalKey = noticeItem.modalKey()
+                noticeItem.isVisible() && !noticeItem.read && modalKey !in dismissedNoticeIds
+            }
             if (modalNotice != null) {
+                fun closeModalAndMarkRead() {
+                    dismissedNoticeIds = dismissedNoticeIds + modalNotice.modalKey()
+                    DriverRepository.markNotificationRead(context, modalNotice)
+                }
                 AppNoticeModal(
                     notice = modalNotice,
-                    onClose = {
-                        dismissedModalNoticeId = modalNotice.id
-                        DriverRepository.markNotificationRead(context, modalNotice)
+                    onClose = { closeModalAndMarkRead() },
+                    onAction = {
+                        closeModalAndMarkRead()
+                        tab = modalNotice.resolveTargetTab()
                     }
                 )
             }
@@ -516,7 +524,7 @@ private fun UpStartupSplash() {
                 contentScale = ContentScale.Fit
             )
             LoadingDots()
-            Text("UP Entregas v1.1", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("UP Entregas v1.1.1", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -612,8 +620,43 @@ private fun AnalysisPendingScreen(profile: DriverProfile, onLogout: () -> Unit) 
     }
 }
 
+private fun AppNotice.modalKey(): String = "${collectionName}_${id}"
+
+private fun AppNotice.hasAppCommand(): Boolean {
+    val target = actionTarget.trim()
+    val type = actionType.trim()
+    return target.isNotBlank() || type.equals("open", ignoreCase = true) || type.equals("abrir", ignoreCase = true)
+}
+
+private fun AppNotice.resolveTargetTab(): AppTab {
+    val target = "${actionType} ${actionTarget} ${category}"
+        .trim()
+        .lowercase(Locale.ROOT)
+        .replace("á", "a")
+        .replace("à", "a")
+        .replace("ã", "a")
+        .replace("â", "a")
+        .replace("é", "e")
+        .replace("ê", "e")
+        .replace("í", "i")
+        .replace("ó", "o")
+        .replace("ô", "o")
+        .replace("õ", "o")
+        .replace("ú", "u")
+        .replace("ç", "c")
+    return when {
+        target.contains("corrida") || target.contains("rota") || target.contains("coleta") || target.contains("entrega") -> AppTab.Corridas
+        target.contains("carteira") || target.contains("repasse") || target.contains("financeiro") || target.contains("ganho") || target.contains("pix") || target.contains("banco") -> AppTab.Ganhos
+        target.contains("historico") || target.contains("histórico") -> AppTab.Historico
+        target.contains("notific") || target.contains("comunic") -> AppTab.Notificacoes
+        target.contains("maquin") || target.contains("perfil") || target.contains("dados") || target.contains("cadastro") || target.contains("document") || target.contains("preferencia") || target.contains("preferência") -> AppTab.Conta
+        else -> AppTab.Conta
+    }
+}
+
 @Composable
-private fun AppNoticeModal(notice: AppNotice, onClose: () -> Unit) {
+private fun AppNoticeModal(notice: AppNotice, onClose: () -> Unit, onAction: () -> Unit) {
+    val hasCommand = notice.hasAppCommand()
     AlertDialog(
         onDismissRequest = onClose,
         title = { Text(notice.title.ifBlank { "Comunicado UP Entregas" }, color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Bold) },
@@ -621,9 +664,23 @@ private fun AppNoticeModal(notice: AppNotice, onClose: () -> Unit) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 StatusChip(notice.category.ifBlank { "Aviso" }, YellowDark, Icons.Filled.NotificationsActive)
                 Text(notice.message.ifBlank { "Nova informação da operação." }, color = Muted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp)
+                if (hasCommand) {
+                    Text("Toque em abrir para ir direto para a área indicada pelo GADM.", color = Muted2, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 17.sp)
+                }
             }
         },
-        confirmButton = { TextButton(onClick = onClose) { Text("Entendi", color = Navy, fontFamily = AppFont, fontWeight = FontWeight.Bold) } },
+        confirmButton = {
+            if (hasCommand) {
+                TextButton(onClick = onAction) { Text("Abrir", color = Navy, fontFamily = AppFont, fontWeight = FontWeight.Bold) }
+            } else {
+                TextButton(onClick = onClose) { Text("Entendi", color = Navy, fontFamily = AppFont, fontWeight = FontWeight.Bold) }
+            }
+        },
+        dismissButton = {
+            if (hasCommand) {
+                TextButton(onClick = onClose) { Text("Agora não", color = Muted, fontFamily = AppFont, fontWeight = FontWeight.Bold) }
+            }
+        },
         containerColor = Color.White,
         shape = RoundedCornerShape(28.dp)
     )
@@ -926,7 +983,7 @@ private fun LoginScreen(
                 }
             }
             SecondaryButton("Novo por aqui? Criar cadastro", icon = Icons.Filled.Person, color = Navy) { mode = "cadastro" }
-            Text("UP Entregas v1.1", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text("UP Entregas v1.1.1", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -2483,7 +2540,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 1.1 • GADM Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 1.1.1 • GADM Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2649,7 +2706,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("1.1 — GADM Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("1.1.1 — GADM Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

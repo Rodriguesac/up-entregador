@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "1.1"
+    private const val APP_VERSION = "1.1.1"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -2345,6 +2345,15 @@ object DriverRepository {
     private fun maskCpf(digits: String): String {
         if (digits.length != 11) return digits
         return "${digits.substring(0, 3)}.${digits.substring(3, 6)}.${digits.substring(6, 9)}-${digits.substring(9)}"
+    }
+
+    private fun maskPhone(digits: String): String {
+        val d = digits.filter { it.isDigit() }
+        return when {
+            d.length >= 11 -> "(${d.substring(0, 2)}) ${d.substring(2, 7)}-${d.substring(7, 11)}"
+            d.length == 10 -> "(${d.substring(0, 2)}) ${d.substring(2, 6)}-${d.substring(6, 10)}"
+            else -> d
+        }
     }
 }
 
