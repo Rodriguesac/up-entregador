@@ -161,6 +161,15 @@ private val Red = Color(0xFFDC2626)
 private val RedSoft = Color(0xFFFFEBEE)
 private val Blue = Navy
 private val BlueSoft = NavySoft
+private val HomeBgTop = Color(0xFF03152F)
+private val HomeBgBottom = Color(0xFF020816)
+private val HomeCard = Color(0xFF061B3C)
+private val HomeCard2 = Color(0xFF08224A)
+private val HomeBorder = Color(0xFF123B77)
+private val HomeLime = Color(0xFFB7FF16)
+private val HomeBlue = Color(0xFF0A7DFF)
+private val HomeText = Color(0xFFF8FBFF)
+private val HomeMuted = Color(0xFF93A3BD)
 private val CardShape = RoundedCornerShape(26.dp)
 private val ButtonShape = RoundedCornerShape(18.dp)
 
@@ -524,7 +533,7 @@ private fun UpStartupSplash() {
                 contentScale = ContentScale.Fit
             )
             LoadingDots()
-            Text("UP Entregas v1.1.1", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("UP Entregas v1.1.2", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -689,9 +698,9 @@ private fun AppNoticeModal(notice: AppNotice, onClose: () -> Unit, onAction: () 
 @Composable
 private fun PremiumBottomBar(tab: AppTab, onTab: (AppTab) -> Unit) {
     NavigationBar(
-        containerColor = Color.White,
+        containerColor = HomeBgTop,
         tonalElevation = 0.dp,
-        modifier = Modifier.border(1.dp, Border)
+        modifier = Modifier.border(1.dp, HomeBorder)
     ) {
         BottomItem(AppTab.Inicio, tab, "Início", Icons.Filled.Home, onTab)
         BottomItem(AppTab.Corridas, tab, "Corridas", Icons.Filled.Route, onTab)
@@ -711,18 +720,46 @@ private fun RowScope.BottomItem(item: AppTab, selected: AppTab, label: String, i
         icon = {
             Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
                 Icon(icon, label, modifier = Modifier.size(23.dp).scale(scale))
-                if (isSelected) Box(Modifier.align(Alignment.BottomCenter).size(5.dp).clip(CircleShape).background(Navy))
+                if (isSelected) Box(Modifier.align(Alignment.BottomCenter).size(6.dp).clip(CircleShape).background(HomeLime))
             }
         },
         label = { Text(label, fontSize = 10.sp, fontFamily = AppFont, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold) },
         colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = Navy,
-            selectedTextColor = Navy,
-            indicatorColor = NavySoft,
-            unselectedIconColor = Muted2,
-            unselectedTextColor = Muted2
+            selectedIconColor = HomeLime,
+            selectedTextColor = HomeLime,
+            indicatorColor = HomeLime.copy(alpha = .12f),
+            unselectedIconColor = HomeMuted,
+            unselectedTextColor = HomeMuted
         )
     )
+}
+
+@Composable
+private fun HomeScreenScroll(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(HomeBgTop, HomeBgBottom)))
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+        content = content
+    )
+}
+
+@Composable
+private fun HomePanel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(12.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = HomeBlue.copy(alpha = .10f), spotColor = Color.Black.copy(alpha = .30f))
+            .border(1.dp, HomeBorder, RoundedCornerShape(24.dp)),
+        colors = CardDefaults.cardColors(containerColor = HomeCard),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+    }
 }
 
 @Composable
@@ -983,7 +1020,7 @@ private fun LoginScreen(
                 }
             }
             SecondaryButton("Novo por aqui? Criar cadastro", icon = Icons.Filled.Person, color = Navy) { mode = "cadastro" }
-            Text("UP Entregas v1.1.1", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text("UP Entregas v1.1.2", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -1351,7 +1388,7 @@ private fun HomeContent(
     val context = LocalContext.current
     val permissions = PermissionStatusReader.read(context)
     val status = operationalStatus(online, activeRide, permissions, context)
-    ScreenScroll {
+    HomeScreenScroll {
         ContractHomeHeader(
             profile = profile,
             status = status,
@@ -1359,14 +1396,13 @@ private fun HomeContent(
             onOpenNotifications = onOpenNotifications,
             onOpenSupport = onOpenSupport
         )
-        ContractStatusPill(status = status, online = online, onToggleOnline = onToggleOnline, onFixPermissions = onFixPermissions)
         ContractTodayCard(stats = stats, hideValues = hideValues, onToggleValues = onToggleValues)
-        ContractOperationalInsights(stats = stats, online = online)
         when {
             activeRide != null -> ContractActiveRideCard(activeRide, onOpenRides)
             pendingRide != null -> IncomingOfferPanel(pendingRide, onAccept = onAccept, onReject = onReject, onExpire = onExpire)
             else -> ContractSmartCarousel(appBanners)
         }
+        HomeGpsCard(context = context, permissions = permissions, onFix = onFixPermissions)
         ContractQuickActions(onOpenHistory, onOpenWallet, onOpenMap, onOpenSupport)
         if (!permissions.ready) ContractPermissionMini(permissions, context, onFixPermissions)
     }
@@ -1382,46 +1418,78 @@ private fun ContractHomeHeader(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 12.dp)
     ) {
-        Avatar(profile.name, profile.photoUrl, 58)
+        HomeAvatar(profile.name, profile.photoUrl, 78)
         Column(Modifier.weight(1f)) {
-            Text("Olá, ${profile.firstName()}", color = Ink, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                when (status.kind) {
-                    AvailabilityKind.Disponivel -> "Pronto para receber corridas"
-                    AvailabilityKind.EmEntrega -> "Corrida em andamento"
-                    AvailabilityKind.Restricao -> "Ajuste permissões para operar"
-                    AvailabilityKind.Indisponivel -> "Toque em disponível para rodar"
-                },
-                color = Muted,
+                "Olá, ${profile.firstName()}",
+                color = HomeText,
                 fontFamily = AppFont,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 25.sp,
+                lineHeight = 28.sp,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.size(10.dp).clip(CircleShape).background(HomeLime))
+                Text(
+                    when (status.kind) {
+                        AvailabilityKind.EmEntrega -> "Em corrida"
+                        AvailabilityKind.Disponivel -> "Disponível"
+                        AvailabilityKind.Restricao -> "Ajuste pendente"
+                        AvailabilityKind.Indisponivel -> "Offline"
+                    },
+                    color = if (status.kind == AvailabilityKind.EmEntrega || status.kind == AvailabilityKind.Disponivel) HomeLime else HomeMuted,
+                    fontFamily = AppFont,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-        RoundIconButton(Icons.Filled.Notifications, onOpenNotifications, badge = unread > 0)
-        RoundIconButton(Icons.Filled.ChatBubbleOutline, onOpenSupport)
+        HomeTopButton(Icons.Filled.Notifications, onOpenNotifications, badge = unread > 0)
+        HomeTopButton(Icons.Filled.ChatBubbleOutline, onOpenSupport)
     }
 }
 
 @Composable
 private fun RoundIconButton(icon: ImageVector, onClick: () -> Unit, badge: Boolean = false) {
+    HomeTopButton(icon, onClick, badge)
+}
+
+@Composable
+private fun HomeTopButton(icon: ImageVector, onClick: () -> Unit, badge: Boolean = false) {
     Box(
         Modifier
-            .size(46.dp)
-            .shadow(2.dp, CircleShape, clip = false)
-            .clip(CircleShape)
-            .background(Surface)
-            .border(1.dp, Border, CircleShape)
+            .size(58.dp)
+            .shadow(10.dp, RoundedCornerShape(18.dp), clip = false, ambientColor = HomeBlue.copy(alpha = .18f), spotColor = Color.Black.copy(alpha = .35f))
+            .clip(RoundedCornerShape(18.dp))
+            .background(HomeCard)
+            .border(1.dp, HomeBorder, RoundedCornerShape(18.dp))
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, null, tint = Navy, modifier = Modifier.size(22.dp))
-        if (badge) Box(Modifier.align(Alignment.TopEnd).size(12.dp).clip(CircleShape).background(Green).border(2.dp, Color.White, CircleShape))
+        Icon(icon, null, tint = HomeText, modifier = Modifier.size(27.dp))
+        if (badge) Box(Modifier.align(Alignment.TopEnd).padding(10.dp).size(9.dp).clip(CircleShape).background(HomeLime))
+    }
+}
+
+@Composable
+private fun HomeAvatar(name: String, photoUrl: String, size: Int) {
+    Box(
+        modifier = Modifier
+            .size(size.dp)
+            .shadow(12.dp, CircleShape, clip = false, ambientColor = HomeLime.copy(alpha = .20f), spotColor = Color.Black.copy(alpha = .50f))
+            .border(2.dp, HomeLime, CircleShape)
+            .padding(5.dp)
+            .clip(CircleShape)
+            .background(Brush.radialGradient(listOf(HomeCard2, HomeBgTop))),
+        contentAlignment = Alignment.Center
+    ) {
+        if (photoUrl.isNotBlank()) AsyncImage(model = photoUrl, contentDescription = name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
+        else Text(name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D", color = HomeText, fontFamily = AppFont, fontSize = (size / 2.4).sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -1473,33 +1541,45 @@ private fun ContractStatusPill(status: OperationalStatus, online: Boolean, onTog
 
 @Composable
 private fun ContractTodayCard(stats: DriverStats, hideValues: Boolean, onToggleValues: () -> Unit) {
-    PremiumCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    HomePanel {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Box(Modifier.size(62.dp).clip(CircleShape).background(HomeBlue.copy(alpha = .22f)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.AccountBalanceWallet, null, tint = HomeBlue, modifier = Modifier.size(32.dp))
+            }
+            Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
-                Text("Ganhos de hoje", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                Text(if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday), color = Ink, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
+                Text("Ganhos de hoje", color = HomeMuted, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    if (hideValues) "••••" else DriverRepository.formatCurrency(stats.totalToday),
+                    color = HomeText,
+                    fontFamily = AppFont,
+                    fontSize = 31.sp,
+                    lineHeight = 34.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Box(Modifier.width(1.dp).height(48.dp).background(Border))
-            Spacer(Modifier.width(14.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.width(92.dp)) {
-                MetricLine(stats.ridesTodayCount.toString(), "Corridas")
-                MetricLine(stats.finishedTodayCount.toString(), "Finalizadas")
-            }
-            Box(Modifier.size(38.dp).clip(CircleShape).background(SurfaceSoft).clickable { onToggleValues() }, contentAlignment = Alignment.Center) {
-                Icon(if (hideValues) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, null, tint = Muted, modifier = Modifier.size(20.dp))
+            Box(Modifier.width(1.dp).height(72.dp).background(HomeBorder))
+            Spacer(Modifier.width(18.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(13.dp), modifier = Modifier.width(110.dp)) {
+                HomeMetricLine(stats.ridesTodayCount.toString(), "Corridas")
+                HomeMetricLine(stats.finishedTodayCount.toString(), "Finalizadas")
             }
         }
     }
 }
 
 @Composable
-private fun MetricLine(value: String, label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(value, color = Navy, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(23.dp))
-        Text(label, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+private fun HomeMetricLine(value: String, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(value, color = HomeBlue, fontFamily = AppFont, fontSize = 24.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(32.dp), textAlign = TextAlign.Center)
+        Text(label, color = HomeMuted, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
+@Composable
+private fun MetricLine(value: String, label: String) {
+    HomeMetricLine(value, label)
+}
 
 @Composable
 private fun ContractOperationalInsights(stats: DriverStats, online: Boolean) {
@@ -1676,36 +1756,107 @@ private fun ContractQuickActions(onHistory: () -> Unit, onWallet: () -> Unit, on
 private fun ContractQuickTile(title: String, subtitle: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
         modifier = modifier
-            .height(72.dp)
-            .shadow(3.dp, RoundedCornerShape(18.dp), clip = false)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Surface)
-            .border(1.dp, Border, RoundedCornerShape(18.dp))
+            .height(92.dp)
+            .shadow(10.dp, RoundedCornerShape(22.dp), clip = false, ambientColor = HomeBlue.copy(alpha = .08f), spotColor = Color.Black.copy(alpha = .28f))
+            .clip(RoundedCornerShape(22.dp))
+            .background(HomeCard)
+            .border(1.dp, HomeBorder, RoundedCornerShape(22.dp))
             .clickable { onClick() }
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 16.dp)
     ) {
-        Icon(icon, null, tint = Navy, modifier = Modifier.size(26.dp))
-        Column(Modifier.weight(1f)) {
-            Text(title, color = Ink, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(subtitle, color = Muted, fontFamily = AppFont, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Box(Modifier.size(48.dp).clip(CircleShape).background(HomeBlue.copy(alpha = .15f)), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = HomeBlue, modifier = Modifier.size(29.dp))
         }
+        Column(Modifier.weight(1f)) {
+            Text(title, color = HomeText, fontFamily = AppFont, fontSize = 19.sp, lineHeight = 22.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(subtitle, color = HomeMuted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Icon(Icons.Filled.KeyboardArrowRight, null, tint = HomeMuted, modifier = Modifier.size(28.dp))
     }
 }
 
 @Composable
 private fun ContractActiveRideCard(ride: DriverRide, onOpenRides: () -> Unit) {
-    PremiumCard(modifier = Modifier.clickable { onOpenRides() }) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(50.dp).clip(CircleShape).background(GreenSoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Route, null, tint = Green, modifier = Modifier.size(26.dp)) }
-            Column(Modifier.weight(1f)) {
-                Text("Corrida ativa", color = Green, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text("#${ride.routeCode()} • ${ride.stageLabel()}", color = Ink, fontFamily = AppFont, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(ride.dropoff.ifBlank { ride.neighborhood.ifBlank { "Toque para continuar" } }, color = Muted, fontFamily = AppFont, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    val valueLabel = ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(16.dp, RoundedCornerShape(26.dp), clip = false, ambientColor = HomeLime.copy(alpha = .18f), spotColor = Color.Black.copy(alpha = .40f))
+            .clip(RoundedCornerShape(26.dp))
+            .background(Brush.linearGradient(listOf(HomeCard2, HomeBgTop)))
+            .border(1.5.dp, HomeLime, RoundedCornerShape(26.dp))
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Box(Modifier.clip(RoundedCornerShape(999.dp)).background(HomeLime.copy(alpha = .12f)).border(1.dp, HomeLime.copy(alpha = .45f), RoundedCornerShape(999.dp)).padding(horizontal = 12.dp, vertical = 5.dp)) {
+                Text("CORRIDA ATIVA", color = HomeLime, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
-            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Muted)
+            Box(Modifier.clip(RoundedCornerShape(14.dp)).border(1.dp, HomeLime, RoundedCornerShape(14.dp)).clickable { onOpenRides() }.padding(horizontal = 18.dp, vertical = 9.dp)) {
+                Text("Ver detalhes", color = HomeLime, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
         }
+        Text("#${ride.routeCode()} • ${ride.stageLabel()}", color = HomeText, fontFamily = AppFont, fontSize = 27.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            if (ride.isOccurrence()) "Aguardando resolução do gestor" else ride.dropoff.ifBlank { ride.neighborhood.ifBlank { "Toque para continuar" } },
+            color = HomeMuted,
+            fontFamily = AppFont,
+            fontSize = 17.sp,
+            lineHeight = 21.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+            repeat(18) { Box(Modifier.weight(1f).height(1.dp).background(HomeBorder.copy(alpha = .75f))) }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
+                Text("Ganho da corrida", color = HomeMuted, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text(valueLabel, color = HomeLime, fontFamily = AppFont, fontSize = 38.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold)
+            }
+            Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.TwoWheeler, null, tint = HomeBlue.copy(alpha = .65f), modifier = Modifier.size(58.dp))
+                Icon(Icons.Filled.Place, null, tint = HomeBlue.copy(alpha = .75f), modifier = Modifier.align(Alignment.TopEnd).size(30.dp))
+            }
+        }
+        Button(
+            onClick = onOpenRides,
+            shape = RoundedCornerShape(15.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = HomeLime, contentColor = Color(0xFF06111F)),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+            modifier = Modifier.fillMaxWidth().height(58.dp)
+        ) {
+            Text("CONTINUAR CORRIDA", fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun HomeGpsCard(context: Context, permissions: PermissionStatus, onFix: () -> Unit) {
+    val gpsOk = isGpsEnabled(context) && permissions.location
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(86.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(HomeCard)
+            .border(1.dp, HomeBorder, RoundedCornerShape(22.dp))
+            .clickable { if (!gpsOk) onFix() }
+            .padding(horizontal = 18.dp),
+        horizontalArrangement = Arrangement.spacedBy(15.dp)
+    ) {
+        Box(Modifier.size(54.dp).clip(CircleShape).background(HomeBlue.copy(alpha = .18f)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.MyLocation, null, tint = HomeBlue, modifier = Modifier.size(30.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(if (gpsOk) "GPS ativo" else "GPS pendente", color = HomeText, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold)
+            Text(if (gpsOk) "Localização em tempo real" else "Toque para liberar localização", color = HomeMuted, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        }
+        Icon(Icons.Filled.KeyboardArrowRight, null, tint = HomeMuted, modifier = Modifier.size(30.dp))
     }
 }
 
@@ -2540,7 +2691,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 1.1.1 • GADM Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 1.1.2 • GADM Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2706,7 +2857,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("1.1.1 — GADM Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("1.1.2 — GADM Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
