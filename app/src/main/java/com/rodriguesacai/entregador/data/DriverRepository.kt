@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "1.0"
+    private const val APP_VERSION = "1.1"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -136,10 +136,11 @@ object DriverRepository {
             "nomeCompleto" to request.name.trim(),
             "cpf" to maskCpf(cpfDigits),
             "cpfLimpo" to cpfDigits,
-            "telefone" to request.phone.trim(),
+            "telefone" to maskPhone(phoneDigits),
             "telefoneLimpo" to phoneDigits,
-            "whatsapp" to request.phone.trim(),
-            "whatsappConfirmado" to true,
+            "whatsapp" to if (request.phoneIsWhatsapp) maskPhone(phoneDigits) else "",
+            "whatsappConfirmado" to request.phoneIsWhatsapp,
+            "telefoneEhWhatsapp" to request.phoneIsWhatsapp,
             "email" to request.email.trim(),
             "cidade" to request.city.trim().ifBlank { "Campo Grande - MS" },
             "city" to request.city.trim().ifBlank { "Campo Grande - MS" },
@@ -2390,6 +2391,7 @@ data class DriverRegistrationRequest(
     val name: String,
     val cpf: String,
     val phone: String,
+    val phoneIsWhatsapp: Boolean = false,
     val password: String,
     val vehicle: String = "Moto",
     val plate: String = "",

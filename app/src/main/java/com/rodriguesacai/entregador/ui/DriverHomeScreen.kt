@@ -480,7 +480,7 @@ fun DriverHomeScreen(
                     )
                 }
             }
-            val modalNotice = appNotices.firstOrNull { it.isVisible() && !it.read && it.id != dismissedModalNoticeId && (it.category.equals("MODAL", true) || it.category.equals("HOME_MODAL", true)) }
+            val modalNotice = appNotices.firstOrNull { it.isVisible() && !it.read && it.id != dismissedModalNoticeId }
             if (modalNotice != null) {
                 AppNoticeModal(
                     notice = modalNotice,
@@ -516,7 +516,7 @@ private fun UpStartupSplash() {
                 contentScale = ContentScale.Fit
             )
             LoadingDots()
-            Text(AppVersion.LOGIN_LABEL, color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("UP Entregas v1.1", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -609,92 +609,6 @@ private fun AnalysisPendingScreen(profile: DriverProfile, onLogout: () -> Unit) 
             Spacer(Modifier.height(18.dp))
             SecondaryButton("Sair desta conta", icon = Icons.Filled.ArrowBack, color = Color.White, onClick = onLogout)
         }
-    }
-}
-
-
-// V1_1_CADASTRO_LIVRE_HELPERS
-private fun maskCpfPreview(value: String): String {
-    val d = onlyDigits(value).take(11)
-    return when {
-        d.length <= 3 -> d
-        d.length <= 6 -> "${d.take(3)}.${d.drop(3)}"
-        d.length <= 9 -> "${d.take(3)}.${d.drop(3).take(3)}.${d.drop(6)}"
-        else -> "${d.take(3)}.${d.drop(3).take(3)}.${d.drop(6).take(3)}-${d.drop(9)}"
-    }
-}
-
-private fun maskPhonePreview(value: String): String {
-    val d = onlyDigits(value).take(11)
-    return when {
-        d.length <= 2 -> d
-        d.length <= 6 -> "(${d.take(2)}) ${d.drop(2)}"
-        d.length <= 10 -> "(${d.take(2)}) ${d.drop(2).take(4)}-${d.drop(6)}"
-        else -> "(${d.take(2)}) ${d.drop(2).take(5)}-${d.drop(7)}"
-    }
-}
-
-private fun maskDatePreview(value: String): String {
-    val d = onlyDigits(value).take(8)
-    return when {
-        d.length <= 2 -> d
-        d.length <= 4 -> "${d.take(2)}/${d.drop(2)}"
-        else -> "${d.take(2)}/${d.drop(2).take(2)}/${d.drop(4)}"
-    }
-}
-
-@Composable
-private fun FreeInputPreview(label: String, value: String) {
-    if (value.isBlank()) return
-    Text(
-        text = "$label: $value",
-        color = White.copy(alpha = 0.72f),
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(start = 6.dp, top = 4.dp)
-    )
-}
-
-@Composable
-private fun WhatsAppChoice(value: Boolean?, onChange: (Boolean) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "Esse número é WhatsApp?",
-            color = White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Black,
-            modifier = Modifier.padding(start = 6.dp, top = 8.dp)
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ChoiceBox(label = "Sim", selected = value == true) { onChange(true) }
-            ChoiceBox(label = "Não", selected = value == false) { onChange(false) }
-        }
-    }
-}
-
-@Composable
-private fun ChoiceBox(label: String, selected: Boolean, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(if (selected) Green.copy(alpha = 0.20f) else White.copy(alpha = 0.08f))
-            .border(1.dp, if (selected) Green else White.copy(alpha = 0.20f), RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(18.dp)
-                .clip(RoundedCornerShape(5.dp))
-                .border(2.dp, if (selected) Green else White.copy(alpha = 0.45f), RoundedCornerShape(5.dp))
-                .background(if (selected) Green else Color.Transparent),
-            contentAlignment = Alignment.Center
-        ) {
-            if (selected) Text("✓", color = Navy, fontSize = 12.sp, fontWeight = FontWeight.Black)
-        }
-        Text(label, color = White, fontSize = 12.sp, fontWeight = FontWeight.Black)
     }
 }
 
@@ -996,7 +910,8 @@ private fun LoginScreen(
         if (error.isNotBlank()) InlineNoticeCard(error, Red)
         if (localMessage.isNotBlank()) InlineNoticeCard(localMessage, Red)
         PremiumCard {
-            Field("CPF", cpfLogin, { cpfLogin = it.take(20) }, "000.000.000-00", keyboardType = KeyboardType.Number)
+            Field("CPF", cpfLogin, { cpfLogin = onlyDigits(it).take(11) }, "Digite somente números", keyboardType = KeyboardType.Number)
+            if (cpfLogin.isNotBlank()) InlineNoticeCard("CPF: ${maskCpfInput(cpfLogin)}", Navy)
             Field("Senha", passwordLogin, { passwordLogin = onlyDigits(it).take(12) }, "Mínimo 7 dígitos", password = true, keyboardType = KeyboardType.NumberPassword)
             PrimaryButton("Entrar", enabled = !loading, icon = Icons.Filled.CheckCircle, color = Yellow) {
                 val cpfDigits = onlyDigits(cpfLogin)
@@ -1011,7 +926,7 @@ private fun LoginScreen(
                 }
             }
             SecondaryButton("Novo por aqui? Criar cadastro", icon = Icons.Filled.Person, color = Navy) { mode = "cadastro" }
-            Text(AppVersion.LOGIN_LABEL, color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text("UP Entregas v1.1", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -1028,7 +943,7 @@ private fun RegisterStepperScreen(
     var localError by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
-    var phoneWhatsapp by remember { mutableStateOf<Boolean?>(null) }
+    var phoneIsWhatsapp by remember { mutableStateOf<Boolean?>(null) }
     var cpf by remember { mutableStateOf("") }
     var birth by remember { mutableStateOf("") }
     var vehicle by remember { mutableStateOf("Moto") }
@@ -1043,11 +958,7 @@ private fun RegisterStepperScreen(
         localError = ""
         return when (step) {
             0 -> if (isValidFullName(name)) true else { localError = "Digite nome completo com pelo menos dois nomes."; false }
-            1 -> when {
-            onlyDigits(phone).length < 10 -> { localError = "Informe um telefone válido."; false }
-            phoneWhatsapp == null -> { localError = "Marque se esse número é WhatsApp: Sim ou Não."; false }
-            else -> true
-        }
+            1 -> if (onlyDigits(phone).length >= 10 && phoneIsWhatsapp != null) true else { localError = "Informe um telefone válido e marque se é WhatsApp."; false }
             2 -> if (isValidCpf(onlyDigits(cpf))) true else { localError = "CPF inválido. Confira os números."; false }
             3 -> if (onlyDigits(birth).length == 8) true else { localError = "Informe a data de nascimento."; false }
             4 -> true
@@ -1079,23 +990,25 @@ private fun RegisterStepperScreen(
             when (step) {
                 0 -> {
                     StepTitle("Como podemos te chamar?", "Digite seu nome completo.")
-                    Field("Nome completo", name, { name = it.filter { ch -> ch.isLetter() || ch.isWhitespace() }.replace(Regex("\\\s+"), " ").take(70) }, "Ex: Diego Alves")
+                    Field("Nome completo", name, { name = it.filter { ch -> ch.isLetter() || ch.isWhitespace() }.replace(Regex("\\s+"), " ").take(70) }, "Ex: Diego Alves")
                 }
                 1 -> {
-                    StepTitle("Qual seu telefone?", "Use o número que também é WhatsApp.")
-                    Field("Telefone", phone, { phone = it.take(25) }, "Digite livre, ex: 67999999999", keyboardType = KeyboardType.Phone)
-                    FreeInputPreview("Prévia do telefone", maskPhonePreview(phone))
-                    WhatsAppChoice(phoneWhatsapp) { phoneWhatsapp = it }
-                    Spacer(Modifier.height(2.dp))
+                    StepTitle("Qual seu telefone?", "Digite só números. Depois confirme se esse número é WhatsApp.")
+                    Field("Telefone", phone, { phone = onlyDigits(it).take(11) }, "DDD + número", keyboardType = KeyboardType.Phone)
+                    if (phone.isNotBlank()) InlineNoticeCard("Formato: ${maskPhoneInput(phone)}", Navy)
+                    Text("Esse número é WhatsApp?", color = Ink, fontFamily = AppFont, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    WhatsAppOption("Sim", phoneIsWhatsapp == true) { phoneIsWhatsapp = true }
+                    WhatsAppOption("Não", phoneIsWhatsapp == false) { phoneIsWhatsapp = false }
                 }
                 2 -> {
-                    StepTitle("Qual seu CPF?", "Vamos validar o CPF antes de avançar.")
-                    Field("CPF", cpf, { cpf = it.take(20) }, "Digite livre, ex: 12345678900", keyboardType = KeyboardType.Number)
-                    FreeInputPreview("Prévia do CPF", maskCpfPreview(cpf))
+                    StepTitle("Qual seu CPF?", "Digite só números. Vamos validar o CPF antes de avançar.")
+                    Field("CPF", cpf, { cpf = onlyDigits(it).take(11) }, "Digite somente números", keyboardType = KeyboardType.Number)
+                    if (cpf.isNotBlank()) InlineNoticeCard("CPF: ${maskCpfInput(cpf)}", Navy)
                 }
                 3 -> {
-                    StepTitle("Data de nascimento", "Informe no formato dia, mês e ano.")
-                    Field("Nascimento", birth, { birth = it.take(12) }, "DD/MM/AAAA", keyboardType = KeyboardType.Number)
+                    StepTitle("Data de nascimento", "Digite só números no formato dia, mês e ano.")
+                    Field("Nascimento", birth, { birth = onlyDigits(it).take(8) }, "DDMMAAAA", keyboardType = KeyboardType.Number)
+                    if (birth.isNotBlank()) InlineNoticeCard("Data: ${maskDateInput(birth)}", Navy)
                 }
                 4 -> {
                     StepTitle("Qual veículo você vai usar?", "Escolha a modalidade principal.")
@@ -1116,7 +1029,7 @@ private fun RegisterStepperScreen(
                     Field("CNH", cnh, { cnh = it.filter { ch -> ch.isLetterOrDigit() }.take(20) }, "Número da CNH", keyboardType = KeyboardType.Text)
                 }
                 8 -> {
-                    StepTitle("Selfie", "Na v1.0 a selfie fica marcada para conferência da operação.")
+                    StepTitle("Selfie", "Na v1.1 a selfie fica marcada para conferência da operação.")
                     InlineNoticeCard("Seu cadastro será enviado com selfie pendente para análise do GADM.", Navy)
                 }
                 9 -> {
@@ -1139,6 +1052,7 @@ private fun RegisterStepperScreen(
                             name = name.trim(),
                             cpf = onlyDigits(cpf),
                             phone = phone,
+                            phoneIsWhatsapp = phoneIsWhatsapp == true,
                             password = onlyDigits(password),
                             vehicle = vehicle,
                             plate = plate,
@@ -1146,7 +1060,7 @@ private fun RegisterStepperScreen(
                             bankName = "",
                             email = "",
                             city = "Campo Grande - MS",
-                            birthDate = birth,
+                            birthDate = maskDateInput(birth),
                             vehicleModel = model.trim(),
                             cnh = cnh.trim(),
                             selfieStatus = "PENDENTE_ANALISE",
@@ -1177,6 +1091,24 @@ private fun VehicleOption(label: String, selected: String, onClick: () -> Unit) 
         Icon(Icons.Filled.TwoWheeler, null, tint = if (active) Navy else Muted, modifier = Modifier.size(22.dp))
         Text(label, color = if (active) Navy else Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         if (active) Icon(Icons.Filled.CheckCircle, null, tint = YellowDark, modifier = Modifier.size(20.dp))
+    }
+}
+
+
+@Composable
+private fun WhatsAppOption(label: String, active: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(if (active) Green.copy(alpha = .12f) else SurfaceSoft).border(1.dp, if (active) Green else Border, RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier.size(22.dp).clip(RoundedCornerShape(6.dp)).border(2.dp, if (active) Green else Muted2, RoundedCornerShape(6.dp)).background(if (active) Green else Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            if (active) Icon(Icons.Filled.CheckCircle, null, tint = Color.White, modifier = Modifier.size(15.dp))
+        }
+        Text(label, color = if (active) Green else Ink, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
     }
 }
 
@@ -2551,7 +2483,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 1.0 • GADM Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão 1.1 • GADM Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2717,7 +2649,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("1.0 — GADM Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("1.1 — GADM Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -2921,17 +2853,41 @@ private fun historySubtitle(item: DriverHistory): String {
     val parts = listOf(item.pickup, item.neighborhood.ifBlank { item.dropoff }, item.reason, item.paymentMethod)
         .map { it.trim() }
         .filter { it.isNotBlank() }
-        .filterNot { it.contains("android_native", true) || it.matches(Regex(""".*v\\d+_\\d+.*""", RegexOption.IGNORE_CASE)) }
+        .filterNot { it.contains("android_native", true) || it.matches(Regex(""".*v\d+_\d+.*""", RegexOption.IGNORE_CASE)) }
         .distinct()
     return parts.take(2).joinToString(" → ").ifBlank { "Registro operacional da corrida" }
 }
 
 private fun onlyDigits(value: String): String = value.filter { it.isDigit() }
-private fun maskCpfInput(value: String): String = value.take(20)
-private fun maskPhoneInput(value: String): String = value.take(25)
-private fun maskDateInput(value: String): String = value.take(12)
+private fun maskCpfInput(value: String): String {
+    val d = onlyDigits(value).take(11)
+    return buildString {
+        for (i in d.indices) {
+            append(d[i])
+            if (i == 2 || i == 5) append('.')
+            if (i == 8) append('-')
+        }
+    }
+}
+private fun maskPhoneInput(value: String): String {
+    val d = onlyDigits(value).take(11)
+    return when {
+        d.length <= 2 -> d
+        d.length <= 6 -> "(${d.take(2)}) ${d.drop(2)}"
+        d.length <= 10 -> "(${d.take(2)}) ${d.substring(2, 6)}-${d.drop(6)}"
+        else -> "(${d.take(2)}) ${d.substring(2, 7)}-${d.drop(7)}"
+    }
+}
+private fun maskDateInput(value: String): String {
+    val d = onlyDigits(value).take(8)
+    return when {
+        d.length <= 2 -> d
+        d.length <= 4 -> "${d.take(2)}/${d.drop(2)}"
+        else -> "${d.take(2)}/${d.substring(2,4)}/${d.drop(4)}"
+    }
+}
 private fun isValidFullName(value: String): Boolean {
-    val clean = value.trim().replace(Regex("\\\s+"), " ")
+    val clean = value.trim().replace(Regex("\\s+"), " ")
     if (clean.any { it.isDigit() }) return false
     val parts = clean.split(" ").filter { it.isNotBlank() }
     return parts.size >= 2 && parts.all { part -> part.count { it.isLetter() } >= 2 }

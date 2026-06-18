@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 882
-        versionName = "1.1-cadastro-livre-home-gadm"
+        versionCode = 101
+        versionName = "1.1"
     }
 
     buildFeatures { compose = true }

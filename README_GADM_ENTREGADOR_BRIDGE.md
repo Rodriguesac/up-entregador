@@ -1,4 +1,4 @@
-# Ponte GADM ↔ UP Entregas v1.0
+# Ponte GADM ↔ UP Entregas v1.1
 
 Este app usa o Firebase do ecossistema Rodrigues/UP para conversar com o GADM.
 
@@ -63,3 +63,11 @@ Campos de repasse aceitos:
 - `calculo.valorTotalMotoboy`
 
 Taxa de entrega do cliente não é usada como repasse do entregador.
+
+
+## v1.1
+- Cadastro sem máscara durante digitação para CPF, telefone e data de nascimento.
+- CPF validado por cálculo real antes de avançar.
+- Telefone digitado livre e formatado como prévia abaixo do campo.
+- Pergunta obrigatória: Esse número é WhatsApp? Sim/Não.
+- Login CPF + senha numérica com teclado padrão Android.

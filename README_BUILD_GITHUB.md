@@ -1,4 +1,4 @@
-# UP Entregas v1.0 — Build GitHub
+# UP Entregas v1.1 — Build GitHub
 
 Pacote completo para substituir o repositório do app do entregador.
 
@@ -32,8 +32,16 @@ unzip /sdcard/Download/UP_Entregas_v1_0_REAL_GitHub_Build.zip -d .
 
 git status
 git add .
-git commit -m "Versao 1.0 real UP Entregas"
+git commit -m "Versao 1.1 real UP Entregas"
 git push origin main
 ```
 
 Depois o GitHub Actions gera o APK debug.
+
+
+## v1.1
+- Cadastro sem máscara durante digitação para CPF, telefone e data de nascimento.
+- CPF validado por cálculo real antes de avançar.
+- Telefone digitado livre e formatado como prévia abaixo do campo.
+- Pergunta obrigatória: Esse número é WhatsApp? Sim/Não.
+- Login CPF + senha numérica com teclado padrão Android.

@@ -1,4 +1,4 @@
-# Contrato Visual e Funcional — UP Entregas v1.0
+# Contrato Visual e Funcional — UP Entregas v1.1
 
 ## Identidade
 
@@ -71,3 +71,11 @@ Quando o GADM aprovar:
 - `aprovado = true`
 
 O app libera a Home automaticamente.
+
+
+## v1.1
+- Cadastro sem máscara durante digitação para CPF, telefone e data de nascimento.
+- CPF validado por cálculo real antes de avançar.
+- Telefone digitado livre e formatado como prévia abaixo do campo.
+- Pergunta obrigatória: Esse número é WhatsApp? Sim/Não.
+- Login CPF + senha numérica com teclado padrão Android.
