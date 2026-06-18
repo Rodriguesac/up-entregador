@@ -37,7 +37,7 @@ object NotificationHelper {
             "Nova corrida urgente",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Alerta urgente de nova corrida"
+            description = "Alerta urgente de nova rota"
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             enableVibration(true)
             vibrationPattern = longArrayOf(0, 500, 200, 500, 200, 700)
@@ -72,7 +72,7 @@ object NotificationHelper {
         )
         return NotificationCompat.Builder(context, CHANNEL_ONLINE)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("UP Entregador")
+            .setContentTitle("Rodrigues Entregador")
             .setContentText("Online e aguardando novas corridas.")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -89,9 +89,7 @@ object NotificationHelper {
         distance: String = "",
         duration: String = "",
         pickup: String = "",
-        dropoff: String = "",
-        pickupDistance: String = "",
-        deliveryDistance: String = ""
+        dropoff: String = ""
     ) {
         urgentRideNotification(
             context = context,
@@ -100,9 +98,7 @@ object NotificationHelper {
             distance = distance,
             duration = duration,
             pickup = pickup,
-            dropoff = dropoff,
-            pickupDistance = pickupDistance,
-            deliveryDistance = deliveryDistance
+            dropoff = dropoff
         )
     }
 
@@ -143,8 +139,6 @@ object NotificationHelper {
         duration: String,
         pickup: String,
         dropoff: String,
-        pickupDistance: String = "",
-        deliveryDistance: String = "",
         paymentMethod: String = "",
         paymentStatus: String = "",
         amountToCollect: String = "",
@@ -162,8 +156,6 @@ object NotificationHelper {
             putExtra("duration", duration)
             putExtra("pickup", pickup)
             putExtra("dropoff", dropoff)
-            putExtra("pickupDistance", pickupDistance)
-            putExtra("deliveryDistance", deliveryDistance)
             putExtra("paymentMethod", paymentMethod)
             putExtra("paymentStatus", paymentStatus)
             putExtra("amountToCollect", amountToCollect)
@@ -179,8 +171,8 @@ object NotificationHelper {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_URGENT)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Nova corrida disponível")
-            .setContentText(listOf(value, distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Toque para abrir a corrida" })
+            .setContentTitle("Nova corrida urgente disponível")
+            .setContentText(listOf(value, distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Toque para abrir a oferta" })
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

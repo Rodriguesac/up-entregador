@@ -17,15 +17,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.rodriguesacai.entregador.service.OnlineDriverService
-import com.rodriguesacai.entregador.ui.UpEntregadorShell
+import com.rodriguesacai.entregador.ui.DriverHomeScreen
 
 class MainActivity : ComponentActivity() {
     private var pendingOnlineStart: Boolean = false
     private var runningPermissionWizard: Boolean = false
     private var permissionRefreshTick by mutableStateOf(0)
-    private var themeMode by mutableStateOf(AppSettings.THEME_LIGHT)
 
     private val notificationLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -52,12 +50,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
         super.onCreate(savedInstanceState)
-        themeMode = AppSettings.getThemeMode(this)
         setContent {
-            RodriguesNativeTheme(darkTheme = themeMode == AppSettings.THEME_DARK) {
-                UpEntregadorShell(
+            RodriguesNativeTheme(darkTheme = AppSettings.isDarkTheme(this)) {
+                DriverHomeScreen(
                     permissionRefreshTick = permissionRefreshTick,
                     onGoOnline = { requestLocationAndStartOnline() },
                     onGoOffline = { stopService(Intent(this, OnlineDriverService::class.java)) },
@@ -68,11 +64,7 @@ class MainActivity : ComponentActivity() {
                     onOpenBatterySettings = { requestBatteryOptimizationDialog() },
                     onRequestNotificationPermission = { askNotificationPermissionOnly() },
                     onRequestLocationPermission = { requestLocationOnly() },
-                    onRequestEssentialPermissions = { startPermissionWizard() },
-                    onThemeModeChanged = { mode ->
-                        themeMode = mode
-                        AppSettings.setThemeMode(this, mode)
-                    }
+                    onRequestEssentialPermissions = { startPermissionWizard() }
                 )
             }
         }

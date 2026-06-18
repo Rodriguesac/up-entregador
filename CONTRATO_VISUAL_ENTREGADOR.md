@@ -1,37 +1,73 @@
-# Contrato visual e operacional — UP Entregador
+# Contrato Visual e Funcional — UP Entregas v1.0
 
-Este pacote é a versão **6.33.0-operacao-completa-tela-cheia** do app nativo Android do entregador, em Kotlin + Jetpack Compose.
+## Identidade
 
-## Regra visual oficial
-- Produto: **UP Entregador**.
-- Cor principal: vermelho operacional `#EA1D2C`, com gradiente vermelho/laranja em áreas fortes.
-- Verde fica reservado para status positivo, disponível, concluído e valores recebidos.
-- Laranja fica reservado para atenção, pico, pendências e ocorrências.
-- Fundo claro, cards brancos, cantos arredondados, sombras discretas e texto grande/legível.
-- Bottom navigation oficial: **Início, Corridas, Carteira, Histórico, Mais**.
-- Telas devem ser possíveis em Compose real, sem mockup impossível, sem textos técnicos para o entregador.
+- Nome do app: UP Entregas.
+- Logo oficial: UP branco com asas amarelas e texto ENTREGAS amarelo.
+- Paleta oficial:
+  - Azul bandeira / azul forte: #002776
+  - Azul escuro: #001B52
+  - Amarelo ouro: #FFCC29
+  - Branco: #FFFFFF
+  - Cinza de fundo: #F4F7FB
 
-## Fluxo operacional oficial
-1. Login / Solicitar cadastro / Cadastro em análise / Criar senha.
-2. Permissões do app: notificações, localização, alerta urgente, bateria e Internet/GPS.
-3. Home operacional: disponibilidade, ganhos de hoje, corridas, finalizadas, demanda, meta, carrossel e atalhos.
-4. Corridas: aguardando corrida quando disponível.
-5. Nova corrida urgente: contador, valor, coleta, entrega, distância, tempo, mapa, pagamento, aceitar/recusar.
-6. Corrida em andamento: rota ativa, mapa, paradas, pagamento, navegação, próxima ação e ocorrência.
-7. Histórico: filtros e lista de concluídas, recusadas, ocorrências e expiradas.
-8. Carteira: saldo, pendente, total a receber, resumo financeiro, Pix/Banco e últimos repasses.
-9. Perfil/Mais: dados, Pix/Banco, preferências de operação, permissões, suporte/destravar e sair.
+## Fluxo inicial
 
-## Integração GADM
-- O app continua escutando ofertas e rotas do GADM nas estruturas já compatíveis: `rides`, `corridas`, `rotas_entrega` e `pedidos`.
-- A oferta deve chegar como missão liberada ao entregador e aparecer na tela urgente.
-- Aceitar, recusar, expirar, coletar, sair para entrega, ocorrência e finalizar sincronizam espelhos quando há referência.
-- A taxa de entrega cobrada do cliente continua separada do repasse do entregador. O app mostra repasse/corrida apenas quando vier dos campos próprios de entregador.
+1. Abriu o app.
+2. Splash azul com logo central ocupando aproximadamente 35% da largura da tela.
+3. Três pontos carregando abaixo da logo.
+4. Verifica sessão local/Firebase.
+5. Se não fez boas-vindas: mostra tela de boas-vindas.
+6. Se não logado: mostra login/cadastro.
+7. Se cadastrado e pendente: mostra “Em análise”.
+8. Se aprovado no GADM: libera Home.
 
-## Ajustes desta entrega
-- Branding alterado para **UP Entregador**.
-- Ícone real do UP adicionado como launcher e logo interno.
-- Login redesenhado com hero vermelho e logo UP.
-- Contrato visual atualizado para vermelho operacional, não verde/navy antigo.
-- Versão atualizada para `6.33.0-operacao-completa-tela-cheia`.
-- Workflow de GitHub Actions incluído para gerar APK debug ao commitar.
+## Login
+
+- Apenas CPF + senha.
+- CPF com máscara 000.000.000-00.
+- CPF com validação matemática real.
+- Senha numérica, mínimo 7 dígitos.
+- Teclado padrão numérico do Android.
+
+## Cadastro tela a tela
+
+1. Nome completo.
+2. Telefone / WhatsApp.
+3. CPF.
+4. Data de nascimento.
+5. Veículo: Moto / Carro / Bicicleta.
+6. Placa.
+7. Marca e modelo.
+8. CNH.
+9. Selfie pendente para análise.
+10. Comprovante pendente para análise.
+11. Chave Pix.
+12. Senha numérica.
+
+## Validações
+
+- Nome: mínimo 2 nomes, cada nome com pelo menos 2 letras, sem números.
+- CPF: cálculo real dos dígitos verificadores.
+- Telefone: máscara (67) 99999-9999.
+- Senha: numérica, mínimo 7 dígitos.
+
+## GADM
+
+O cadastro grava em:
+
+- `entregadores/{cpf}`
+- `solicitacoesEntregadores/{cpf}`
+
+Status inicial:
+
+- `statusCadastro = PENDENTE`
+- `statusAprovacao = PENDENTE`
+- `aprovado = false`
+
+Quando o GADM aprovar:
+
+- `statusAprovacao = APROVADO`
+- `aprovado = true`
+
+O app libera a Home automaticamente.
