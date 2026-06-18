@@ -2861,7 +2861,7 @@ private fun maskDateInput(value: String): String {
     }
 }
 private fun isValidFullName(value: String): Boolean {
-    val clean = value.trim().replace(Regex("\s+"), " ")
+    val clean = value.trim().replace(Regex("\\s+"), " ")
     if (clean.any { it.isDigit() }) return false
     val parts = clean.split(" ").filter { it.isNotBlank() }
     return parts.size >= 2 && parts.all { part -> part.count { it.isLetter() } >= 2 }
