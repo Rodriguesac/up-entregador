@@ -533,7 +533,7 @@ private fun UpStartupSplash() {
                 contentScale = ContentScale.Fit
             )
             LoadingDots()
-            Text("UP Entregas v1.1.3", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("UP Entregas v1.2.0", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -1020,7 +1020,7 @@ private fun LoginScreen(
                 }
             }
             SecondaryButton("Novo por aqui? Criar cadastro", icon = Icons.Filled.Person, color = Navy) { mode = "cadastro" }
-            Text("UP Entregas v1.1.3", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text("UP Entregas v1.2.0", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -1560,9 +1560,9 @@ private fun ContractTodayCard(stats: DriverStats, hideValues: Boolean, onToggleV
             }
             Box(Modifier.width(1.dp).height(72.dp).background(HomeBorder))
             Spacer(Modifier.width(18.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(13.dp), modifier = Modifier.width(110.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(13.dp), modifier = Modifier.width(128.dp)) {
                 HomeMetricLine(stats.ridesTodayCount.toString(), "Corridas")
-                HomeMetricLine(stats.finishedTodayCount.toString(), "Finalizadas")
+                HomeMetricLine(stats.finishedTodayCount.toString(), "Finaliz.")
             }
         }
     }
@@ -1572,7 +1572,7 @@ private fun ContractTodayCard(stats: DriverStats, hideValues: Boolean, onToggleV
 private fun HomeMetricLine(value: String, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(value, color = HomeBlue, fontFamily = AppFont, fontSize = 24.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(32.dp), textAlign = TextAlign.Center)
-        Text(label, color = HomeMuted, fontFamily = AppFont, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(label, color = HomeMuted, fontFamily = AppFont, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

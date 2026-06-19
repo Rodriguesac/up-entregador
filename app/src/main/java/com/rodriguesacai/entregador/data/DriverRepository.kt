@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "1.1.3"
+    private const val APP_VERSION = "1.2.0"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -1987,7 +1987,7 @@ object DriverRepository {
                 "updatedAt" to now,
                 "criadoEm" to now,
                 "createdAt" to now,
-                "origem" to "android_native_gadm_bridge_v6_25",
+                "origem" to "android_native_gadm_bridge_v1_2_0",
                 "eventosStatus" to FieldValue.arrayUnion(
                     mapOf(
                         "status" to action,
@@ -2828,7 +2828,7 @@ private val TERMINAL_MISSION_STATUSES = setOf(
     "CANCELADO_LOJA", "CANCELADA_LOJA", "CANCELADO_CLIENTE", "CANCELADA_CLIENTE",
     "PEDIDO_CANCELADO", "ROTA_CANCELADA", "DESPACHO_CANCELADO",
     "FINALIZADO", "FINALIZADA", "CONCLUIDA", "CONCLUÍDA", "CONCLUÍDO", "CONCLUIDO",
-    "ENTREGUE", "DELIVERED", "FINISHED", "ARQUIVADO", "ARQUIVADA", "ENCERRADO", "ENCERRADA"
+    "ENTREGUE", "DELIVERED", "FINISHED", "ARQUIVADO", "ARQUIVADA", "ENCERRADO", "ENCERRADA", "RESOLVIDA", "RESOLVIDO", "OCORRENCIA_RESOLVIDA", "OCORRÊNCIA_RESOLVIDA", "LIBERADO", "LIBERADA"
 )
 private val PICKUP_RELEASED_STATUSES = setOf("LIBERADA_PARA_SAIDA", "SAIDA_LIBERADA", "RETIRADA_LIBERADA", "COM_ENTREGADOR", "A_CAMINHO_CLIENTE", "EM_ROTA", "SAIU_ENTREGA")
 private val ROUTE_LOCKED_STATUSES = setOf("COM_ENTREGADOR", "A_CAMINHO_CLIENTE", "EM_ROTA", "SAIU_ENTREGA", "ENTREGADOR_NO_LOCAL", "ENTREGUE", "FINALIZADA")
