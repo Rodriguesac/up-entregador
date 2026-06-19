@@ -17,7 +17,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "1.1.2"
+    private const val APP_VERSION = "1.1.3"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -719,13 +719,12 @@ object DriverRepository {
                 .firstOrNull { it.status in listOf("accepted", "pickup", "delivering", "arrived_client", "occurrence") }
             if (active != null) {
                 rememberActiveRide(context, active)
-            } else if (!hasLocalActiveMission(context)) {
+            } else {
+                // Se nenhum documento realmente ativo foi encontrado, limpa o cache local.
+                // Isso evita que uma ocorrência antiga continue bloqueando o entregador
+                // depois que o GADM/Firestore já liberou ou cancelou a missão.
                 forgetActiveRide(context)
             }
-            // Não destrava o entregador automaticamente quando uma leitura vem vazia.
-            // Durante troca de status (ex.: Cheguei na coleta) o Firestore pode entregar
-            // um snapshot intermediário; destravar aqui fazia a corrida sumir e o app
-            // parecer livre mesmo com missão em andamento.
             onRide(active)
         }
 
@@ -1302,8 +1301,21 @@ object DriverRepository {
                 update["statusEntregador"] = "REJEITADA"
                 update["statusMotoboy"] = "REJEITADA"
             } else {
+                update["status"] = "AGUARDANDO_DESPACHO"
+                update["statusEntrega"] = "AGUARDANDO_DESPACHO"
+                update["statusEntregador"] = "REJEITADA"
+                update["statusMotoboy"] = "REJEITADA"
+                update["statusCorrida"] = "REJEITADA"
                 update["entregadorAtualOferta"] = null
                 update["motoboyAtualOferta"] = null
+                update["targetDriverId"] = null
+                update["ofertaAtiva"] = false
+                update["ativa"] = false
+                update["active"] = false
+                update["corridaAtiva"] = false
+                update["ocorrenciaAtiva"] = false
+                update["bloqueadoPorOcorrencia"] = false
+                update["pendenteGestor"] = false
             }
             doc.reference.set(update, SetOptions.merge())
                 .addOnSuccessListener {
@@ -1322,6 +1334,9 @@ object DriverRepository {
                             "ofertaAtiva" to false
                         )
                     )
+                    if (context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_ACTIVE_MISSION, "").orEmpty() == rideId) {
+                        forgetActiveRide(context)
+                    }
                     addHistory(profile, rideId, if (reason.isBlank()) "REJEITADA" else "REJEITADA: $reason", ride?.valueNumber ?: 0.0, collectionName, ride)
                     onDone()
                 }
@@ -1743,6 +1758,7 @@ object DriverRepository {
         )
         db.collection(profile.collectionName).document(profile.id).set(payload, SetOptions.merge())
             .addOnSuccessListener {
+                clearKnownActiveMissionDocs(profile, missionId, routeId, orderId, reason)
                 if (missionId.isNotBlank() || routeId.isNotBlank() || orderId.isNotBlank()) {
                     db.collection("appEventosOperacao").add(
                         mapOf(
@@ -1766,6 +1782,56 @@ object DriverRepository {
     }
 
 
+    private fun clearMissionDocument(refCollection: String, missionId: String, profile: DriverProfile, reason: String) {
+        if (missionId.isBlank()) return
+        val now = Timestamp.now()
+        db.collection(refCollection).document(missionId).set(
+            mapOf(
+                "status" to "CANCELADA",
+                "statusPedido" to "CANCELADO",
+                "statusEntrega" to "CANCELADO",
+                "statusCorrida" to "CANCELADA",
+                "statusEntregador" to "CANCELADA",
+                "statusMotoboy" to "CANCELADA",
+                "statusOfertaEntregador" to "CANCELADA",
+                "statusOferta" to "CANCELADA",
+                "statusOcorrencia" to "RESOLVIDA",
+                "ocorrenciaAtiva" to false,
+                "bloqueadoPorOcorrencia" to false,
+                "pendenteGestor" to false,
+                "corridaAtiva" to false,
+                "emCorrida" to false,
+                "ativa" to false,
+                "ativo" to false,
+                "active" to false,
+                "ofertaAtiva" to false,
+                "liberadoParaEntregador" to false,
+                "entregadorAtualOferta" to null,
+                "motoboyAtualOferta" to null,
+                "targetDriverId" to null,
+                "pedidoAtualId" to null,
+                "corridaAtualId" to null,
+                "rotaAtualId" to null,
+                "resolvidoPeloApp" to true,
+                "resolvidoPor" to profile.id,
+                "motivoResolucao" to reason,
+                "resolvidoEm" to now,
+                "canceladoEm" to now,
+                "atualizadoEm" to now,
+                "updatedAt" to now
+            ),
+            SetOptions.merge()
+        )
+    }
+
+    private fun clearKnownActiveMissionDocs(profile: DriverProfile, missionId: String, routeId: String, orderId: String, reason: String) {
+        val ids = listOf(missionId, routeId, orderId).filter { it.isNotBlank() }.distinct()
+        ids.forEach { id ->
+            MISSION_COLLECTIONS.forEach { collectionName -> clearMissionDocument(collectionName, id, profile, reason) }
+        }
+    }
+
+
     private fun syncGadmMissionStatus(
         doc: DocumentSnapshot,
         ride: DriverRide?,
@@ -1786,6 +1852,7 @@ object DriverRepository {
         val corridaId = doc.anyString("corridaId", "rideId", "idCorrida").ifBlank {
             if (collectionName == "corridas") doc.id else ""
         }
+        val isNegativeDriverAction = appStatus.upperOrTrim() in DRIVER_REJECTED_OR_EXPIRED_STATUSES
         val statusPayload = linkedMapOf<String, Any?>(
             "statusEntrega" to pedidoStatusEntrega,
             "statusEntregador" to appStatus,
@@ -1793,26 +1860,49 @@ object DriverRepository {
             "statusOfertaEntregador" to corridaStatus,
             "statusOferta" to corridaStatus,
             "statusCorrida" to corridaStatus,
-            "entregadorId" to profile.id,
-            "entregadorUid" to profile.id,
-            "uidEntregador" to profile.id,
-            "driverId" to profile.id,
-            "entregadorNome" to profile.name,
-            "driverName" to profile.name,
             "atualizadoEm" to now,
             "updatedAt" to now,
             "statusAtualizadoEm" to now
         )
+        if (isNegativeDriverAction) {
+            statusPayload["entregadorAtualOferta"] = null
+            statusPayload["motoboyAtualOferta"] = null
+            statusPayload["targetDriverId"] = null
+            statusPayload["ofertaAtiva"] = false
+            statusPayload["ativa"] = false
+            statusPayload["active"] = false
+            statusPayload["corridaAtiva"] = false
+            statusPayload["ocorrenciaAtiva"] = false
+            statusPayload["bloqueadoPorOcorrencia"] = false
+            statusPayload["pendenteGestor"] = false
+        } else {
+            statusPayload["entregadorId"] = profile.id
+            statusPayload["entregadorUid"] = profile.id
+            statusPayload["uidEntregador"] = profile.id
+            statusPayload["driverId"] = profile.id
+            statusPayload["entregadorNome"] = profile.name
+            statusPayload["driverName"] = profile.name
+        }
         statusPayload.putAll(extra)
 
         if (pedidoId.isNotBlank()) {
-            db.collection("pedidos").document(pedidoId).set(
-                statusPayload + mapOf(
+            val pedidoExtra = if (isNegativeDriverAction) {
+                mapOf(
+                    "corridaAtualId" to null,
+                    "entrega.entregadorId" to null,
+                    "entrega.entregadorNome" to null,
+                    "entrega.status" to pedidoStatusEntrega
+                )
+            } else {
+                mapOf(
                     "corridaAtualId" to (corridaId.ifBlank { doc.anyString("corridaAtualId", "ofertaAtualId") }),
                     "entrega.entregadorId" to profile.id,
                     "entrega.entregadorNome" to profile.name,
                     "entrega.status" to pedidoStatusEntrega
-                ),
+                )
+            }
+            db.collection("pedidos").document(pedidoId).set(
+                statusPayload + pedidoExtra,
                 SetOptions.merge()
             )
             db.collection("rides").document(pedidoId).set(
@@ -2820,7 +2910,10 @@ private val PICKUP_STATUSES = setOf("NA_COLETA", "CHEGUEI_NA_COLETA", "COLETANDO
 private val ARRIVED_CLIENT_STATUSES = setOf("ENTREGADOR_NO_LOCAL", "CHEGOU_CLIENTE", "CHEGOU_ENTREGA", "NO_CLIENTE", "ARRIVED_CLIENT", "ARRIVED_AT_CLIENT")
 private val DELIVERING_STATUSES = setOf("EM_ENTREGA", "INICIAR_ENTREGA", "COM_ENTREGADOR", "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "RETIRADO_PELO_ENTREGADOR", "DELIVERING", "EM_ENTREGA")
 private val FINAL_HISTORY_STATUSES = setOf("FINALIZADA", "FINALIZADO", "CONCLUIDA", "ENTREGUE", "FINALIZADA", "FINISHED", "DELIVERED", "finished", "delivered")
+private val DRIVER_REJECTED_OR_EXPIRED_STATUSES = setOf("REJEITADA", "REJEITADO", "RECUSADA", "RECUSADO", "EXPIRADA", "EXPIRADO", "CANCELADA", "CANCELADO")
 private val OCCURRENCE_STATUSES = setOf("OCORRENCIA", "OCORRÊNCIA", "PROBLEMA", "SUPORTE", "AGUARDANDO_GESTOR", "PENDENTE_GESTOR")
+private val ACTIVE_OCCURRENCE_STATUSES = setOf("ABERTA", "ABERTO", "EM_ANALISE", "EM_ANÁLISE", "PENDENTE", "AGUARDANDO_GESTOR", "PENDENTE_GESTOR")
+private val RESOLVED_OCCURRENCE_STATUSES = setOf("RESOLVIDA", "RESOLVIDO", "FECHADA", "FECHADO", "CANCELADA", "CANCELADO", "ENCERRADA", "ENCERRADO", "FINALIZADA", "FINALIZADO")
 private val APPROVED_STATUSES = setOf("APROVADO", "APPROVED", "LIBERADO", "ATIVO", "ACTIVE")
 private val BLOCKED_STATUSES = setOf("REPROVADO", "BLOQUEADO", "BLOCKED", "SUSPENSO", "SUSPENDED", "CANCELADO")
 
@@ -2869,7 +2962,11 @@ private fun DocumentSnapshot.hasTerminalMissionStatus(): Boolean {
         "cancelado", "cancelada", "pedidoCancelado", "rotaCancelada", "despachoCancelado",
         "canceladoPeloGestor", "canceladaPeloGestor", "cancelled", "canceled", "arquivado"
     ) == true
-    return statuses.any { it in TERMINAL_MISSION_STATUSES } || cancelFlag || hasCancelTimestamp
+    val occurrenceStatus = anyString("statusOcorrencia", "ocorrencia.status", "ocorrenciaStatus", "situacaoOcorrencia", "situaçãoOcorrencia").upperOrTrim()
+    val occurrenceClosed = occurrenceStatus in RESOLVED_OCCURRENCE_STATUSES || anyBoolean(
+        "ocorrenciaResolvida", "ocorrenciaFechada", "ocorrenciaCancelada", "problemaResolvido"
+    ) == true || anyTimestamp("ocorrenciaResolvidaEm", "resolvidoEm", "ocorrenciaFechadaEm") != null
+    return statuses.any { it in TERMINAL_MISSION_STATUSES } || cancelFlag || hasCancelTimestamp || occurrenceClosed
 }
 
 private fun DocumentSnapshot.storeAcceptedForDelivery(): Boolean {
@@ -2947,6 +3044,8 @@ private fun DocumentSnapshot.deliveryReleasedToDriver(collectionName: String): B
         "possuiRota",
         "dispatchReleased"
     ) == true
+
+    if (deliveryStatus in DRIVER_REJECTED_OR_EXPIRED_STATUSES || mainStatus in DRIVER_REJECTED_OR_EXPIRED_STATUSES) return false
 
     val deliveryIsOffering = deliveryStatus in PEDIDO_OFFER_STATUSES
     val mainStatusIsDispatch = mainStatus in PEDIDO_OFFER_STATUSES
@@ -3068,25 +3167,39 @@ private fun DocumentSnapshot.toDriverRide(collectionName: String): DriverRide? {
     if (!deliveryReleasedToDriver(collectionName)) return null
 
     val rawStatus = if (collectionName == "pedidos") {
-        val main = anyString("status").upperOrTrim()
-        if (main in ACCEPTED_STATUSES || main in PICKUP_STATUSES || main in ARRIVED_CLIENT_STATUSES || main in OCCURRENCE_STATUSES || main in DELIVERING_STATUSES || main in FINAL_HISTORY_STATUSES) {
-            anyString("status")
-        } else {
-            anyString(
-                "statusOfertaEntregador",
-                "statusEntregador",
-                "statusMotoboy",
-                "statusEntrega",
-                "statusRota",
-                "logistica.status",
-                "deliveryStatus",
-                "ofertaStatus",
-                "status"
-            )
+        val mainText = anyString("status")
+        val main = mainText.upperOrTrim()
+        val flowText = anyString(
+            "statusOfertaEntregador",
+            "statusEntregador",
+            "statusMotoboy",
+            "statusEntrega",
+            "statusRota",
+            "logistica.status",
+            "deliveryStatus",
+            "ofertaStatus"
+        )
+        val flow = flowText.upperOrTrim()
+        when {
+            flow in DRIVER_REJECTED_OR_EXPIRED_STATUSES -> flowText
+            flow in PEDIDO_OFFER_STATUSES || flow in ROUTE_OFFER_STATUSES -> flowText
+            main in OCCURRENCE_STATUSES && flow.isNotBlank() && flow != main -> flowText
+            main in ACCEPTED_STATUSES || main in PICKUP_STATUSES || main in ARRIVED_CLIENT_STATUSES || main in OCCURRENCE_STATUSES || main in DELIVERING_STATUSES || main in FINAL_HISTORY_STATUSES -> mainText
+            else -> flowText.ifBlank { mainText }
         }
     } else {
         anyString("status", "statusEntregador", "statusMotoboy", "statusOfertaEntregador")
     }.ifBlank { "" }
+    val rawStatusUpper = rawStatus.upperOrTrim()
+    val occurrenceStatus = anyString("statusOcorrencia", "ocorrencia.status", "ocorrenciaStatus", "situacaoOcorrencia", "situaçãoOcorrencia").upperOrTrim()
+    val occurrenceFlag = anyBoolean(
+        "ocorrenciaAtiva", "bloqueadoPorOcorrencia", "pendenteGestor", "ocorrenciaAberta", "problemaAtivo"
+    ) == true
+    val occurrenceResolved = occurrenceStatus in RESOLVED_OCCURRENCE_STATUSES || anyBoolean(
+        "ocorrenciaResolvida", "ocorrenciaFechada", "ocorrenciaCancelada", "problemaResolvido"
+    ) == true || anyTimestamp("ocorrenciaResolvidaEm", "resolvidoEm", "ocorrenciaFechadaEm") != null
+    val looksLikeOccurrence = rawStatusUpper in OCCURRENCE_STATUSES || occurrenceStatus in ACTIVE_OCCURRENCE_STATUSES || occurrenceFlag
+    if (looksLikeOccurrence && (!occurrenceFlag || occurrenceResolved)) return null
     val number = driverPayoutValue()
     val clientTotal = clientTotalValue()
     val machineFee = machineFeeValue()
