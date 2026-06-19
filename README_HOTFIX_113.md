@@ -1,3 +1,5 @@
+> Arquivo histórico de versão anterior. A versão atual do pacote é UP Entregas v2.0.0.
+
 # UP Entregas v1.1.3 — Hotfix ocorrência presa
 
 Correções:

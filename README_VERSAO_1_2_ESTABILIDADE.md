@@ -1,3 +1,5 @@
+> Arquivo histórico de versão anterior. A versão atual do pacote é UP Entregas v2.0.0.
+
 # UP Entregas v1.2.0 — Estabilidade Operacional
 
 Esta versão parte da v1.1.3 e consolida o app para operação real com GADM.

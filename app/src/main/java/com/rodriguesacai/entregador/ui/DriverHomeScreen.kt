@@ -137,6 +137,7 @@ import com.rodriguesacai.entregador.service.NotificationHelper
 import kotlinx.coroutines.delay
 
 private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, Notificacoes }
+private const val UP_APP_VERSION = "2.0.0"
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
@@ -533,7 +534,7 @@ private fun UpStartupSplash() {
                 contentScale = ContentScale.Fit
             )
             LoadingDots()
-            Text("UP Entregas v1.2.0", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("UP Entregas v$UP_APP_VERSION", color = Color.White.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -586,7 +587,7 @@ private fun WelcomeEntryScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                if (page == 0) "A plataforma completa para entregadores que move Campo Grande." else "Entre com CPF e senha ou envie seu cadastro para análise.",
+                if (page == 0) "App completo para operar entregas com segurança, repasse claro e comando do GADM." else "Entre com CPF e senha ou envie seu cadastro completo para aprovação.",
                 color = Color.White.copy(alpha = .86f),
                 fontFamily = AppFont,
                 fontSize = 15.sp,
@@ -1020,7 +1021,7 @@ private fun LoginScreen(
                 }
             }
             SecondaryButton("Novo por aqui? Criar cadastro", icon = Icons.Filled.Person, color = Navy) { mode = "cadastro" }
-            Text("UP Entregas v1.2.0", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text("UP Entregas v$UP_APP_VERSION", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -1123,7 +1124,7 @@ private fun RegisterStepperScreen(
                     Field("CNH", cnh, { cnh = it.filter { ch -> ch.isLetterOrDigit() }.take(20) }, "Número da CNH", keyboardType = KeyboardType.Text)
                 }
                 8 -> {
-                    StepTitle("Selfie", "Na v1.1 a selfie fica marcada para conferência da operação.")
+                    StepTitle("Selfie", "Na v2.0 a selfie fica marcada para conferência da operação.")
                     InlineNoticeCard("Seu cadastro será enviado com selfie pendente para análise do GADM.", Navy)
                 }
                 9 -> {
@@ -2204,9 +2205,9 @@ private fun WaitingRideScreen(online: Boolean) {
                 textAlign = TextAlign.Center
             )
             PremiumCard {
-                RoutePointLine(Icons.Filled.MyLocation, "Região", "Mantenha o GPS ativo para receber chamadas próximas.", Blue)
-                RoutePointLine(Icons.Filled.NotificationsActive, "Alertas", "Notificações liberadas aumentam a chance de atender rápido.", Orange)
-                RoutePointLine(Icons.Filled.Bolt, "Horário de pico", "Fique atento principalmente no almoço e à noite.", Green)
+                RoutePointLine(Icons.Filled.MyLocation, "GPS ativo", "Sua localização em tempo real ajuda a operação a enviar a corrida certa.", Blue)
+                RoutePointLine(Icons.Filled.NotificationsActive, "Alertas", "Notificações e tela cheia precisam estar liberadas para novas corridas.", Orange)
+                RoutePointLine(Icons.Filled.Shield, "Contrato operacional", "Recusada, expirada, cancelada e resolvida não voltam como corrida ativa.", Green)
             }
         }
     }
@@ -2648,6 +2649,10 @@ private fun MoreContent(
     var screen by remember { mutableStateOf("menu") }
     when (screen) {
         "perfil" -> ProfileScreen(profile, online, onBack = { screen = "menu" })
+        "veiculo" -> VehicleScreen(profile, onBack = { screen = "menu" })
+        "documentos" -> DocumentsScreen(profile, onBack = { screen = "menu" })
+        "gadm" -> GadmControlScreen(onBack = { screen = "menu" })
+        "pronto" -> AppReadinessScreen(onBack = { screen = "menu" })
         "pix" -> PixBankScreen(profile, onBack = { screen = "menu" }, onSaved = onProfileChanged)
         "operacao" -> OperationPreferencesScreen(onBack = { screen = "menu" })
         "permissoes" -> PermissionsSettingsScreen(
@@ -2679,9 +2684,13 @@ private fun MoreContent(
                 }
             }
             MenuTile("Perfil", "Dados principais da conta", Icons.Filled.Person) { screen = "perfil" }
+            MenuTile("Veículo", "Tipo, placa e modelo", Icons.Filled.TwoWheeler) { screen = "veiculo" }
+            MenuTile("Documentos", "CNH, selfie e comprovante", Icons.Filled.ReceiptLong) { screen = "documentos" }
             MenuTile("Pix/Banco", "Pix, banco e repasse", Icons.Filled.Payments) { screen = "pix" }
-            MenuTile("Preferências de operação", "Pagamento e disponibilidade", Icons.Filled.TwoWheeler) { screen = "operacao" }
+            MenuTile("Preferências de operação", "Maquininha, troco e disponibilidade", Icons.Filled.CreditCard) { screen = "operacao" }
             MenuTile("Permissões", "Alertas, GPS e bateria", Icons.Filled.Shield) { screen = "permissoes" }
+            MenuTile("Comando GADM", "O que o gestor controla no app", Icons.Filled.Storefront) { screen = "gadm" }
+            MenuTile("Pronto para operar", "Checklist da versão 2.0", Icons.Filled.CheckCircle) { screen = "pronto" }
             MenuTile("Suporte e destravar", "Destravar rota e suporte", Icons.Filled.SupportAgent) { screen = "suporte" }
             PremiumCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -2691,7 +2700,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão 1.1.3 • GADM Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão $UP_APP_VERSION • UP Entregas", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -2756,6 +2765,75 @@ private fun ProfileScreen(profile: DriverProfile, online: Boolean, onBack: () ->
             RoutePointLine(Icons.Filled.TwoWheeler, "Veículo", profile.vehicle.ifBlank { "Moto" }, Green)
             RoutePointLine(Icons.Filled.ChatBubbleOutline, "Telefone", profile.phone.ifBlank { "Não informado" }, Blue)
             RoutePointLine(Icons.Filled.Place, "Cidade", profile.city.ifBlank { "Campo Grande - MS" }, Orange)
+        }
+    }
+}
+
+
+@Composable
+private fun VehicleScreen(profile: DriverProfile, onBack: () -> Unit) {
+    ScreenScroll {
+        ScreenHeader("Veículo", "Dados que o GADM usa para liberar corridas.", Icons.Filled.TwoWheeler, onBack)
+        PremiumCard {
+            RoutePointLine(Icons.Filled.TwoWheeler, "Tipo de veículo", profile.vehicle.ifBlank { "Não informado" }, Green)
+            RoutePointLine(Icons.Filled.ReceiptLong, "Placa", "Conferida no cadastro pelo GADM", Blue)
+            RoutePointLine(Icons.Filled.Shield, "Status operacional", if (profile.approved && !profile.blocked) "Aprovado para operação" else "Aguardando validação", if (profile.approved && !profile.blocked) Green else Orange)
+        }
+        PremiumCard {
+            Text("Regra v2.0", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("O app mostra o veículo para o entregador, mas quem aprova, bloqueia ou solicita correção é o GADM.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun DocumentsScreen(profile: DriverProfile, onBack: () -> Unit) {
+    ScreenScroll {
+        ScreenHeader("Documentos", "CNH, selfie e comprovante ficam sob análise do GADM.", Icons.Filled.ReceiptLong, onBack)
+        PremiumCard {
+            RoutePointLine(Icons.Filled.Person, "Selfie", if (profile.approved) "Aprovada ou conferida" else "Pendente de análise", if (profile.approved) Green else Orange)
+            RoutePointLine(Icons.Filled.ReceiptLong, "CNH", if (profile.approved) "Aprovada ou conferida" else "Pendente de análise", if (profile.approved) Green else Orange)
+            RoutePointLine(Icons.Filled.Place, "Comprovante", if (profile.approved) "Aprovado ou conferido" else "Pendente de análise", if (profile.approved) Green else Orange)
+        }
+        PremiumCard {
+            Text("Correção de documento", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Na v2.0 o app está preparado para o GADM pedir correção sem apagar o cadastro inteiro: o entregador corrige só o item reprovado.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun GadmControlScreen(onBack: () -> Unit) {
+    ScreenScroll {
+        ScreenHeader("Comando GADM", "O painel manda, o app executa e o Firebase registra.", Icons.Filled.Storefront, onBack)
+        PremiumCard {
+            RoutePointLine(Icons.Filled.CheckCircle, "Cadastro", "Aprovar, reprovar, bloquear e solicitar correção", Green)
+            RoutePointLine(Icons.Filled.Route, "Corridas", "Enviar oferta, liberar saída, cancelar e destravar", Blue)
+            RoutePointLine(Icons.Filled.ErrorOutline, "Ocorrências", "Resolver, cancelar, liberar entregador ou manter análise", Orange)
+            RoutePointLine(Icons.Filled.NotificationsActive, "Comunicação", "Carrossel, modal, comunicado, promoção e ação", Green)
+            RoutePointLine(Icons.Filled.AccountBalanceWallet, "Financeiro", "Repasse separado da taxa de entrega do cliente", Blue)
+        }
+        PremiumCard {
+            Text("Proteção contra corrida presa", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Status recusado, expirado, cancelado, concluído e ocorrência resolvida não entram mais como missão ativa.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun AppReadinessScreen(onBack: () -> Unit) {
+    ScreenScroll {
+        ScreenHeader("Pronto para operar", "Checklist interno da versão 2.0.", Icons.Filled.CheckCircle, onBack)
+        PremiumCard {
+            RoutePointLine(Icons.Filled.Home, "Visual único", "Home, corridas, carteira, histórico e mais no mesmo padrão", Green)
+            RoutePointLine(Icons.Filled.Shield, "Status protegido", "Sem corrida falsa e sem ocorrência antiga voltando", Green)
+            RoutePointLine(Icons.Filled.Payments, "Repasse claro", "Taxa do cliente não vira ganho do entregador", Green)
+            RoutePointLine(Icons.Filled.NotificationsActive, "Modal com ação", "Aviso do GADM abre a área correta do app", Green)
+            RoutePointLine(Icons.Filled.SupportAgent, "Destravar", "Limpa vínculo preso nas coleções operacionais", Green)
+        }
+        PremiumCard {
+            Text("UP Entregas v$UP_APP_VERSION", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Esta versão foi organizada como produto: fluxo de entrada, operação, financeiro, suporte e comando do GADM trabalhando juntos.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
         }
     }
 }
@@ -2857,7 +2935,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("1.1.3 — GADM Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("$UP_APP_VERSION — UP Entregas", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

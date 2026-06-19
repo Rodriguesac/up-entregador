@@ -1,4 +1,4 @@
-# Ponte GADM ↔ UP Entregas v1.1
+# Ponte GADM ↔ UP Entregas v2.0
 
 Este app usa o Firebase do ecossistema Rodrigues/UP para conversar com o GADM.
 
@@ -65,7 +65,7 @@ Campos de repasse aceitos:
 Taxa de entrega do cliente não é usada como repasse do entregador.
 
 
-## v1.1
+## v2.0
 - Cadastro sem máscara durante digitação para CPF, telefone e data de nascimento.
 - CPF validado por cálculo real antes de avançar.
 - Telefone digitado livre e formatado como prévia abaixo do campo.
