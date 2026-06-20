@@ -1,4 +1,4 @@
-# UP Entregas v2.0.0 — Produto Completo do Entregador
+# UP Entregas v2.0.1 — Produto Completo do Entregador
 
 Esta versão muda a direção do projeto: deixa de ser pacote de hotfix e passa a organizar o app como produto operacional completo.
 
@@ -16,7 +16,7 @@ O entregador precisa baixar, entrar, entender a situação e trabalhar sem depen
 
 ## Evoluções da v2.0
 
-- Versão Android atualizada para 2.0.0.
+- Versão Android atualizada para 2.0.1.
 - Mais telas no menu Mais: Veículo, Documentos, Comando GADM e Pronto para operar.
 - Textos do app atualizados para a lógica de produto, não apenas tela isolada.
 - Tela de aguardando corrida removendo termos fracos como região/demanda e reforçando GPS, alertas e contrato operacional.

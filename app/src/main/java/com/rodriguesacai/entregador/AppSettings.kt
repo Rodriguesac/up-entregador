@@ -8,6 +8,7 @@ object AppSettings {
     private const val KEY_THEME = "theme_mode"
     private const val KEY_HIDE_VALUES = "hide_values"
     private const val KEY_WELCOME_DONE = "welcome_done"
+    private const val KEY_PRE_LOGIN_PERMISSIONS_DONE = "pre_login_permissions_done"
 
     const val NAV_AUTO = "auto"
     const val NAV_GOOGLE = "google_maps"
@@ -84,6 +85,18 @@ object AppSettings {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_WELCOME_DONE, value)
+            .apply()
+    }
+
+    fun isPreLoginPermissionsDone(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_PRE_LOGIN_PERMISSIONS_DONE, false)
+    }
+
+    fun setPreLoginPermissionsDone(context: Context, value: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_PRE_LOGIN_PERMISSIONS_DONE, value)
             .apply()
     }
 }

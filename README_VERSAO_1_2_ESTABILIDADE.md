@@ -1,4 +1,4 @@
-> Arquivo histórico de versão anterior. A versão atual do pacote é UP Entregas v2.0.0.
+> Arquivo histórico de versão anterior. A versão atual do pacote é UP Entregas v2.0.1.
 
 # UP Entregas v1.2.0 — Estabilidade Operacional
 
