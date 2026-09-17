@@ -1,0 +1,40 @@
+name: Atualizar Gestor UP completo
+
+on:
+  push:
+    paths:
+      - '.github/workflows/enhance-gestor-netlify.yml'
+      - '.github/scripts/enhance_gestor_netlify.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Aplicar análise completa
+        run: python3 .github/scripts/enhance_gestor_netlify.py
+
+      - name: Validar arquivo publicado
+        run: |
+          grep -q 'Analisar cadastro completo' gestor-up/index.html
+          grep -q 'UID Firebase' gestor-up/index.html
+          grep -q 'appDecisionNote' gestor-up/index.html
+          test -f netlify.toml
+
+      - name: Salvar versão
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add gestor-up/index.html
+          if git diff --cached --quiet; then
+            echo 'Gestor já está atualizado.'
+          else
+            git commit -m 'Melhora análise completa de cadastros no Gestor UP'
+            git push origin main
+          fi
