@@ -1,0 +1,47 @@
+name: Configurar Gestor UP no Netlify
+
+on:
+  push:
+    paths:
+      - '.github/workflows/setup-gestor-netlify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Gestor UP
+        run: |
+          set -e
+          mkdir -p gestor-up
+          curl -fsSL https://raw.githubusercontent.com/Rodriguesac/UpEntregas/main/web-gestor/index.html -o gestor-up/index.html
+          cat > gestor-up/README.md <<'EOF'
+          # UP Gestor
+
+          Painel web administrativo do UP Entregas.
+
+          Esta pasta é publicada no Netlify como o site `rodrigues-logistica.netlify.app`.
+          O aplicativo Android permanece separado na pasta `app/`.
+          EOF
+          cat > netlify.toml <<'EOF'
+          [build]
+            publish = "gestor-up"
+          EOF
+
+      - name: Salvar configuração
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add gestor-up netlify.toml
+          if git diff --cached --quiet; then
+            echo 'Nenhuma alteração necessária.'
+          else
+            git commit -m 'Adiciona Gestor UP separado para Netlify'
+            git push origin main
+          fi
