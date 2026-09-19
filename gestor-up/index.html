@@ -55,12 +55,12 @@
 
   <div class="sectionHead"><div><h2>Escolha rápido</h2><p>Acesso direto ao que o cliente mais procura.</p></div><button onclick="go('menu')">VER CARDÁPIO</button></div>
   <div class="quick">
-    <button class="q" onclick="openAcai('origem')"><img src="https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789938/rodrigues/38up/xyqzkoneu0lhfzs5p5ps.png"><span>Açaí Origem</span></button>
-    <button class="q" onclick="openAcai('polpanorte')"><img src="https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789939/rodrigues/38up/gbnj7oenxmzczqdakaty.png"><span>Polpanorte</span></button>
-    <button class="q" onclick="openAcai('misto')"><img src="https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789940/rodrigues/38up/ccyzrzhunn7wnbcycbaq.png"><span>Casadinho</span></button>
-    <button class="q" onclick="openCategory('Caldo de Cana')"><img src="https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789942/rodrigues/38up/ygaediwrsajahz9io4gk.png"><span>Caldo de Cana</span></button>
-    <button class="q" onclick="openCategory('Bebidas')"><img src="https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789943/rodrigues/38up/xufms6awabfaz2ixtlsm.png"><span>Bebidas</span></button>
-    <button class="q" onclick="openCategory('Salgadinhos')"><img src="https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789945/rodrigues/38up/wooobc5julco2jyvzssl.png"><span>Salgadinhos</span></button>
+    <button class="q" data-q="origem" onclick="openAcai('origem')"><img src="https://i.ibb.co/gM3c8z4C/Sorbet-Acai-Com-Guaranajpg-1-scaled.jpg"><span>Açaí Origem</span></button>
+    <button class="q" data-q="polpanorte" onclick="openAcai('polpanorte')"><img src="https://i.ibb.co/HLFrbT5Y/Gemini-Generated-Image-ndgbplndgbplndgb.png"><span>Polpanorte</span></button>
+    <button class="q" data-q="misto" onclick="openAcai('misto')"><img src="https://i.ibb.co/CKJLB64y/Gemini-Generated-Image-te96ipte96ipte96.png"><span>Casadinho</span></button>
+    <button class="q" data-q="cat:Caldo de Cana" onclick="openCategory('Caldo de Cana')"><img src="https://res.cloudinary.com/dbd9x1o02/image/upload/v1787252979/rodrigues/catalogo-produtos/zwu0od7z3radjonnrvcu.jpg"><span>Caldo de Cana</span></button>
+    <button class="q" data-q="cat:Bebidas" onclick="openCategory('Bebidas')"><img src="https://assets.ibecom.com.br/ib.item.image.large/l-f3aff374caf7407e9dc2d7cdf431bc06.png"><span>Bebidas</span></button>
+    <button class="q" data-q="cat:Salgadinhos" onclick="openCategory('Salgadinhos')"><img src="https://assets.ibecom.com.br/ib.item.image.large/l-71b4ee96eafb4050ae2ca691c24c0d74.jpeg"><span>Salgadinhos</span></button>
   </div>
 
   <div class="sectionHead"><div><h2>Pra facilitar</h2><p>Funções que já dá para testar aqui.</p></div></div>
@@ -135,8 +135,17 @@ function toast(t){const e=document.getElementById('toast');e.textContent=t;e.cla
 function go(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===id));document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('on',x.dataset.nav===id));if(id==='menu')renderMenu();if(id==='cart')renderCart();if(id==='checkout')renderCheckout();if(id==='track')loadTrack();scrollTo({top:0,behavior:'smooth'})}
 function openCategory(c){activeCat=c;go('menu')}
 function api(url,opt={}){return fetch(url,{...opt,headers:{apikey:ANON,'Content-Type':'application/json',...(opt.headers||{})},cache:'no-store'}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok||d.error)throw new Error(d.message||d.detail||d.error||'Falha na conexão');return d})}
-async function loadCatalog(){try{const d=await api(CAT);catalog=d;renderStore();renderMenu()}catch(e){document.getElementById('menuList').innerHTML='<div class="err">Não foi possível carregar o cardápio agora. '+esc(e.message)+'</div>'}}
+async function loadCatalog(){try{const d=await api(CAT);catalog=d;renderStore();refreshQuickImages();renderMenu()}catch(e){document.getElementById('menuList').innerHTML='<div class="err">Não foi possível carregar o cardápio agora. '+esc(e.message)+'</div>'}}
 function renderStore(){const s=catalog.store_operation||{},open=s.lojaAberta!==false&&s.aceitarPedidos!==false;document.getElementById('storeText').textContent=open?'Aberto para pedidos':'Loja temporariamente fechada';document.getElementById('etaText').textContent=s.tempoEstimadoMin?('~ '+s.tempoEstimadoMin+' min'):'35–45 min'}
+function refreshQuickImages(){
+  const set=(key,url)=>{const img=document.querySelector('[data-q="'+key+'"] img');if(img&&url){img.src=url;img.onerror=()=>{img.onerror=null}}};
+  const bases=availableBases();
+  for(const key of ['origem','polpanorte','misto']){const b=bases.find(x=>baseKey(x)===key);if(b?.imagem_url)set(key,b.imagem_url)}
+  for(const cat of ['Caldo de Cana','Bebidas','Salgadinhos']){
+    const p=(catalog.products||[]).find(x=>x.category_name===cat&&x.image_url&&Number(x.price||0)>0);
+    if(p)set('cat:'+cat,p.image_url)
+  }
+}
 function availableBases(){return (catalog.builder?.bases||[]).filter(x=>x.disponivel!==false&&x.pausado!==true)}
 function sizes(){return (catalog.builder?.cardapio_acai||[]).filter(x=>x.disponivel!==false&&x.pausado!==true)}
 function freeItems(){return (catalog.builder?.acompanhamentos_gratis||[]).filter(x=>x.disponivel!==false&&x.pausado!==true)}
