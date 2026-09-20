@@ -11,7 +11,7 @@
 *{box-sizing:border-box}html{background:#eee}body{margin:0;background:#eee;color:var(--ink)}button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
 .app{max-width:600px;min-height:100vh;margin:auto;background:var(--bg);padding-bottom:86px;box-shadow:0 0 70px #0001}
 .top{position:sticky;top:0;z-index:30;padding:12px 14px 11px;color:#fff;background:linear-gradient(180deg,#4b0870,#5b087e);border-radius:0 0 25px 25px;box-shadow:0 10px 25px #33004635}
-.head{display:flex;align-items:center;gap:10px}.logo{width:62px;height:48px;object-fit:contain;filter:drop-shadow(0 5px 8px #0005)}.brand{flex:1;min-width:0}.brand b{display:block;font-size:16px}.brand small{display:block;font-size:9px;color:#eadced;margin-top:2px}.topIco{width:40px;height:40px;border:0;border-radius:14px;color:#fff;background:#ffffff18}
+.head{display:flex;align-items:center;gap:10px}.logo{width:62px;height:48px;object-fit:contain;filter:drop-shadow(0 5px 8px #0005)}.brand{flex:1;min-width:0}.brand b{display:block;font-size:16px}.brand small{display:block;font-size:9px;color:#eadced;margin-top:2px}.onlinePill{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #ffffff2b;border-radius:999px;background:#ffffff12;color:#fff;font-size:10px;font-weight:900;white-space:nowrap}.onlinePill i{width:8px;height:8px;border-radius:50%;background:#9bea2c;box-shadow:0 0 0 3px #9bea2c24}.onlinePill.off i{background:#aaa;box-shadow:none}.topIco{width:40px;height:40px;border:0;border-radius:14px;color:#fff;background:#ffffff18}
 .addr{margin-top:9px;width:100%;display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;border:0;border-radius:17px;padding:9px 10px;background:#fff;text-align:left;color:var(--ink)}.addr .pin{width:32px;height:32px;border-radius:11px;background:#edf8df;display:grid;place-items:center}.addr small{display:block;font-size:7px;color:var(--muted);font-weight:950;text-transform:uppercase}.addr strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.addr .right{text-align:right}.addr .right b{display:block;font-size:10px;color:#629817}.addr .right span{display:block;font-size:8px;color:var(--muted)}
 .main{padding:12px}.preview{display:inline-flex;align-items:center;gap:5px;margin-bottom:9px;padding:6px 9px;border-radius:999px;background:#eaf8d5;color:#4d771c;font-size:8px;font-weight:950;letter-spacing:.05em;text-transform:uppercase}
 .hero{position:relative;overflow:hidden;min-height:218px;border-radius:28px;background:linear-gradient(140deg,#2c003c,#65088b);color:#fff;box-shadow:var(--shadow)}.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(155,234,44,.26),transparent 31%)}.hero img{position:absolute;right:-4%;bottom:-2%;width:61%;height:100%;object-fit:cover;mask-image:linear-gradient(90deg,transparent,#000 29%)}.heroCopy{position:relative;z-index:2;width:59%;padding:26px 0 20px 20px}.hero h1{margin:0;font-size:34px;line-height:.91;font-style:italic;letter-spacing:-.05em}.hero h1 span{display:block;color:var(--lime)}.hero p{margin:11px 0 0;font-size:10px;line-height:1.4;color:#eee1f1}.primary,.secondary,.dangerBtn{border:0;border-radius:15px;min-height:48px;padding:11px 14px;font-size:10px;font-weight:950}.primary{background:linear-gradient(135deg,#a5ef39,#79ca15);color:#32103f;box-shadow:0 8px 18px #1b00254a}.secondary{background:#efe7f3;color:var(--p)}.dangerBtn{background:#fff0f0;color:#b92f39}.hero .primary{margin-top:16px;min-width:145px}
@@ -90,6 +90,7 @@
   <div class="head">
     <img class="logo" src="https://res.cloudinary.com/dbd9x1o02/image/upload/q_auto:good,w_512/v1789045061/rodrigues/site-assets/logo-rodrigues-acai-v25-12-1.png" alt="Rodrigues Açaí e Cia">
     <div class="brand"><b>Rodrigues Açaí e Cia</b><small id="storeText">Carregando situação da loja…</small></div>
+    <div id="onlineNow" class="onlinePill off" title="Pessoas com este pedido rápido aberto agora"><i></i><span>— online</span></div>
     <button class="topIco" onclick="toast('Prévia: notificações serão testadas na etapa seguinte')">🔔</button>
   </div>
   <button class="addr" onclick="go('checkout')"><span class="pin">📍</span><span><small>Entregar em</small><strong id="addrText">Informe seu endereço no checkout</strong></span><span class="right"><b id="etaText">—</b><span>taxa no resumo</span></span></button>
@@ -170,6 +171,7 @@
 </div></div>
 <div id="toast" class="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SB='https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/';
 const ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnam1udGV6Zmp1eXV4aGNudmhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MzgyOTksImV4cCI6MjEwMzExNDI5OX0.n3yg9IdC6j8OB-vwi-yuXRKJZE3jdlL_wj3qVr-JBBc';
@@ -182,6 +184,45 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function read(k,d){try{return JSON.parse(localStorage.getItem(k)||'null')??d}catch{return d}}
 function write(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1900)}
+let presenceChannel=null;
+function setOnlineCount(n,ok=true){
+  const el=document.getElementById('onlineNow');if(!el)return;
+  el.classList.toggle('off',!ok);
+  const span=el.querySelector('span');
+  if(!ok){span.textContent='online indisponível';return}
+  const count=Math.max(0,Number(n||0));
+  span.textContent=count+' '+(count===1?'online':'online');
+}
+function startOnlinePresence(){
+  try{
+    if(!window.supabase?.createClient){setOnlineCount(0,false);return}
+    const projectUrl='https://jgjmntezfjuyuxhcnvhd.supabase.co';
+    const client=window.supabase.createClient(projectUrl,ANON,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},realtime:{params:{eventsPerSecond:2}}});
+    const tabKey=(sessionStorage.getItem('rodPresenceKey')||('web_'+crypto.randomUUID()));
+    sessionStorage.setItem('rodPresenceKey',tabKey);
+    presenceChannel=client.channel('rod-pedido-rapido-online',{config:{presence:{key:tabKey}}});
+    const sync=()=>{
+      try{
+        const state=presenceChannel.presenceState();
+        const count=Object.values(state||{}).reduce((sum,list)=>sum+(Array.isArray(list)?list.length:0),0);
+        setOnlineCount(count,true);
+      }catch{setOnlineCount(0,false)}
+    };
+    presenceChannel
+      .on('presence',{event:'sync'},sync)
+      .on('presence',{event:'join'},sync)
+      .on('presence',{event:'leave'},sync)
+      .subscribe(async status=>{
+        if(status==='SUBSCRIBED'){
+          await presenceChannel.track({page:'pedido-rapido',joined_at:new Date().toISOString()});
+          sync();
+        }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
+          setOnlineCount(0,false);
+        }
+      });
+    window.addEventListener('pagehide',()=>{try{presenceChannel?.untrack()}catch{}},{once:true});
+  }catch{setOnlineCount(0,false)}
+}
 function go(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===id));document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('on',x.dataset.nav===id));if(id==='menu')renderMenu();if(id==='cart')renderCart();if(id==='checkout')renderCheckout();if(id==='track')loadTrack();scrollTo({top:0,behavior:'smooth'})}
 function openCategory(c){activeCat=c;go('menu')}
 function api(url,opt={}){return fetch(url,{...opt,headers:{apikey:ANON,'Content-Type':'application/json',...(opt.headers||{})},cache:'no-store'}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok||d.error)throw new Error(d.message||d.detail||d.error||'Falha na conexão');return d})}
@@ -293,7 +334,7 @@ function renderTrack(o){const box=document.getElementById('trackBox');if(!o){box
 function groupOpts(ops){const g={};ops.forEach(o=>(g[o.group||'Opções']??=[]).push(o));return Object.entries(g).map(([k,a])=>'<div class="detailGroup"><h4>'+esc(k)+'</h4>'+a.map(o=>'<div class="detailLine">• '+esc(o.name)+'</div>').join('')+'</div>').join('')}
 async function loadTrack(){clearInterval(poll);const x=read('rodPreviewLast',null);if(!x){renderTrack(null);return}try{const o=await orderApi('get_order');renderTrack(o);poll=setInterval(async()=>{if(!document.getElementById('track').classList.contains('on'))return;try{renderTrack(await orderApi('get_order'))}catch{}},5000)}catch(e){document.getElementById('trackBox').innerHTML='<div class="err">'+esc(e.message)+'</div>'}}
 async function advance(){try{renderTrack(await orderApi('advance_status'));toast('Status avançado')}catch(e){toast(e.message)}}async function resetStatus(){try{renderTrack(await orderApi('reset_status'));toast('Status reiniciado')}catch(e){toast(e.message)}}
-loadCatalog();updateBag();renderCart();
+startOnlinePresence();loadCatalog();updateBag();renderCart();
 </script>
 </body>
 </html>
