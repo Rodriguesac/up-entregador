@@ -11,7 +11,7 @@
 *{box-sizing:border-box}html{background:#eee}body{margin:0;background:#eee;color:var(--ink)}button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
 .app{max-width:600px;min-height:100vh;margin:auto;background:var(--bg);padding-bottom:86px;box-shadow:0 0 70px #0001}
 .top{position:sticky;top:0;z-index:30;padding:12px 14px 11px;color:#fff;background:linear-gradient(180deg,#4b0870,#5b087e);border-radius:0 0 25px 25px;box-shadow:0 10px 25px #33004635}
-.head{display:flex;align-items:center;gap:10px}.logo{width:62px;height:48px;object-fit:contain;filter:drop-shadow(0 5px 8px #0005)}.brand{flex:1;min-width:0}.brand b{display:block;font-size:16px}.brand small{display:block;font-size:9px;color:#eadced;margin-top:2px}.onlinePill{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #ffffff2b;border-radius:999px;background:#ffffff12;color:#fff;font-size:10px;font-weight:900;white-space:nowrap}.onlinePill i{width:8px;height:8px;border-radius:50%;background:#9bea2c;box-shadow:0 0 0 3px #9bea2c24}.onlinePill.off i{background:#aaa;box-shadow:none}.topIco{width:40px;height:40px;border:0;border-radius:14px;color:#fff;background:#ffffff18}
+.head{display:flex;align-items:center;gap:10px}.logo{width:62px;height:48px;object-fit:contain;filter:drop-shadow(0 5px 8px #0005)}.brand{flex:1;min-width:0}.brand b{display:block;font-size:16px}.brand small{display:block;font-size:9px;color:#eadced;margin-top:2px}.topIco{width:40px;height:40px;border:0;border-radius:14px;color:#fff;background:#ffffff18}
 .addr{margin-top:9px;width:100%;display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;border:0;border-radius:17px;padding:9px 10px;background:#fff;text-align:left;color:var(--ink)}.addr .pin{width:32px;height:32px;border-radius:11px;background:#edf8df;display:grid;place-items:center}.addr small{display:block;font-size:7px;color:var(--muted);font-weight:950;text-transform:uppercase}.addr strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.addr .right{text-align:right}.addr .right b{display:block;font-size:10px;color:#629817}.addr .right span{display:block;font-size:8px;color:var(--muted)}
 .main{padding:12px}.preview{display:inline-flex;align-items:center;gap:5px;margin-bottom:9px;padding:6px 9px;border-radius:999px;background:#eaf8d5;color:#4d771c;font-size:8px;font-weight:950;letter-spacing:.05em;text-transform:uppercase}
 .hero{position:relative;overflow:hidden;min-height:218px;border-radius:28px;background:linear-gradient(140deg,#2c003c,#65088b);color:#fff;box-shadow:var(--shadow)}.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(155,234,44,.26),transparent 31%)}.hero img{position:absolute;right:-4%;bottom:-2%;width:61%;height:100%;object-fit:cover;mask-image:linear-gradient(90deg,transparent,#000 29%)}.heroCopy{position:relative;z-index:2;width:59%;padding:26px 0 20px 20px}.hero h1{margin:0;font-size:34px;line-height:.91;font-style:italic;letter-spacing:-.05em}.hero h1 span{display:block;color:var(--lime)}.hero p{margin:11px 0 0;font-size:10px;line-height:1.4;color:#eee1f1}.primary,.secondary,.dangerBtn{border:0;border-radius:15px;min-height:48px;padding:11px 14px;font-size:10px;font-weight:950}.primary{background:linear-gradient(135deg,#a5ef39,#79ca15);color:#32103f;box-shadow:0 8px 18px #1b00254a}.secondary{background:#efe7f3;color:var(--p)}.dangerBtn{background:#fff0f0;color:#b92f39}.hero .primary{margin-top:16px;min-width:145px}
@@ -36,51 +36,51 @@
 /* Rodrigues Logística — Mix Studio V2 */
 .sheet.acaiFlow{height:min(94dvh,920px);max-height:94dvh;display:flex;flex-direction:column;overflow:hidden;padding:0;border-radius:30px 30px 0 0;background:linear-gradient(180deg,#fff 0%,#fff 82%,#fbf8fc 100%)}
 .sheet.acaiFlow>.handle{margin:10px auto 0;flex:0 0 auto}
-.sheet.acaiFlow>#sheetTitle{margin:10px 16px 0;font-size:27px;line-height:1;letter-spacing:-.045em;color:#31113e}
-.sheet.acaiFlow>#sheetSub{margin:7px 16px 12px;font-size:14px;line-height:1.35;color:#8c8191}
+.sheet.acaiFlow>#sheetTitle{margin:8px 16px 0;font-size:24px;line-height:1;letter-spacing:-.045em;color:#31113e}
+.sheet.acaiFlow>#sheetSub{margin:6px 16px 10px;font-size:10px;line-height:1.35;color:#8c8191}
 .sheet.acaiFlow>#sheetBody{flex:1;min-height:0;overflow:auto;padding:0 14px 18px;overscroll-behavior:contain}
 .mixHero{position:relative;overflow:hidden;margin:2px 0 13px;padding:15px;border-radius:23px;background:radial-gradient(circle at 88% 10%,rgba(158,236,48,.28),transparent 26%),linear-gradient(145deg,#35034c,#5b0879 56%,#78199a);color:#fff;box-shadow:0 12px 28px rgba(57,7,76,.16)}
 .mixHero:after{content:"";position:absolute;right:-50px;bottom:-76px;width:160px;height:160px;border-radius:999px;border:25px solid rgba(255,255,255,.055)}
-.mixHero small{position:relative;z-index:1;display:block;color:#c6fa78;font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.13em}
-.mixHero b{position:relative;z-index:1;display:block;margin-top:6px;font-size:24px;line-height:1.02;letter-spacing:-.035em}
-.mixHero p{position:relative;z-index:1;margin:7px 0 0;color:#eadff0;font-size:13px;line-height:1.35;max-width:78%}
+.mixHero small{position:relative;z-index:1;display:block;color:#c6fa78;font-size:8px;font-weight:950;text-transform:uppercase;letter-spacing:.13em}
+.mixHero b{position:relative;z-index:1;display:block;margin-top:5px;font-size:19px;line-height:1.02;letter-spacing:-.035em}
+.mixHero p{position:relative;z-index:1;margin:6px 0 0;color:#eadff0;font-size:9px;line-height:1.35;max-width:78%}
 .mixProgress{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:13px}
 .mixProgress i{display:block;height:5px;border-radius:999px;background:#ffffff2d}
-.mixProgress span{display:block;margin-top:5px;font-size:10px;font-weight:900;color:#ffffff69}
+.mixProgress span{display:block;margin-top:5px;font-size:7px;font-weight:900;color:#ffffff69}
 .mixProgress .done i,.mixProgress .on i{background:var(--lime)}
 .mixProgress .done span,.mixProgress .on span{color:#fff}
 .mixSelected{display:flex;gap:6px;overflow:auto;margin:0 0 11px;padding:1px 0 2px;scrollbar-width:none}
 .mixSelected::-webkit-scrollbar{display:none}
-.mixSelected span{flex:0 0 auto;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 10px;border-radius:999px;background:#f4edf7;color:#5d176f;font-size:11px;font-weight:900}
+.mixSelected span{flex:0 0 auto;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 9px;border-radius:999px;background:#f4edf7;color:#5d176f;font-size:8px;font-weight:900}
 .mixSection{margin:0 0 12px;padding:13px;border:1px solid #ece5ef;border-radius:22px;background:#fff;box-shadow:0 7px 22px rgba(53,27,62,.05)}
 .mixSectionHead{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;margin-bottom:9px}
-.mixSectionHead h3{margin:0;font-size:18px;color:#392e3e}
-.mixSectionHead p{margin:5px 0 0;font-size:13px;line-height:1.3;color:#9a8fa0}
-.mixBadge{flex:0 0 auto;padding:7px 9px;border-radius:999px;background:#effbdd;color:#5d851d;font-size:10px;font-weight:950;text-transform:uppercase}
+.mixSectionHead h3{margin:0;font-size:13px;color:#392e3e}
+.mixSectionHead p{margin:4px 0 0;font-size:8px;line-height:1.3;color:#9a8fa0}
+.mixBadge{flex:0 0 auto;padding:6px 8px;border-radius:999px;background:#effbdd;color:#5d851d;font-size:7px;font-weight:950;text-transform:uppercase}
 .mixOpts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.mixOpt{position:relative;min-height:64px;border:1.5px solid #e6dfe9;background:linear-gradient(180deg,#fff,#fffdfd);border-radius:16px;padding:11px 36px 11px 12px;text-align:left;font-size:14px;font-weight:900;color:#413547}
-.mixOpt small{display:block;color:#908596;font-size:11px;margin-top:4px}
-.mixOpt:after{content:"✓";position:absolute;right:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:999px;border:1.5px solid #d8cfdd;color:transparent;display:grid;place-items:center;font-size:10px;background:#fff}
+.mixOpt{position:relative;min-height:56px;border:1.5px solid #e6dfe9;background:linear-gradient(180deg,#fff,#fffdfd);border-radius:16px;padding:9px 31px 9px 10px;text-align:left;font-size:8.5px;font-weight:900;color:#413547}
+.mixOpt small{display:block;color:#908596;font-size:7px;margin-top:4px}
+.mixOpt:after{content:"✓";position:absolute;right:9px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:999px;border:1.5px solid #d8cfdd;color:transparent;display:grid;place-items:center;font-size:10px;background:#fff}
 .mixOpt.on{border-color:#68158a;background:linear-gradient(145deg,#faf2fd,#fbfff4);color:#511167;box-shadow:0 7px 18px rgba(83,15,108,.08)}
 .mixOpt.on:after{background:#54106e;border-color:#54106e;color:#fff}
 .mixOpt.paid{padding-top:17px}
 .mixOpt.paid:before{content:"EXTRA";position:absolute;left:9px;top:6px;padding:3px 5px;border-radius:999px;background:#fff2d7;color:#99630f;font-size:6px;font-weight:950;letter-spacing:.05em}
 .mixReview{padding:14px;border:1px solid #e5d9ea;border-radius:22px;background:linear-gradient(145deg,#f8f1fb,#fbfff3);box-shadow:0 10px 24px rgba(72,18,90,.06)}
-.mixReview h3{margin:0 0 10px;font-size:20px;color:#4b0b60}
+.mixReview h3{margin:0 0 9px;font-size:15px;color:#4b0b60}
 .mixReview .r{display:grid;grid-template-columns:86px 1fr;gap:8px;padding:7px 0;border-top:1px solid #6b17720e}
 .mixReview .r:first-of-type{border-top:0}
-.mixReview .r small{font-size:10px;font-weight:950;color:#95889a;text-transform:uppercase}
-.mixReview .r div{font-size:13px;font-weight:850;line-height:1.35;color:#473b4b}
+.mixReview .r small{font-size:7px;font-weight:950;color:#95889a;text-transform:uppercase}
+.mixReview .r div{font-size:8.5px;font-weight:850;line-height:1.35;color:#473b4b}
 .mixReview .emptyR{color:#aaa0ad!important;font-weight:700!important}
 .mixNote{margin-top:11px}
-.mixNote label{display:block;margin-bottom:7px;font-size:11px;font-weight:950;color:#55485a;text-transform:uppercase}
+.mixNote label{display:block;margin-bottom:6px;font-size:8px;font-weight:950;color:#55485a;text-transform:uppercase}
 .mixNote input{margin:0}
 .builderTotal{position:relative;bottom:auto;margin:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));grid-template-columns:48px 1fr 1.35fr;flex:0 0 auto;box-shadow:0 -12px 28px rgba(53,20,62,.08);z-index:3}
-.builderTotal .sheetAmount small{font-size:10px;color:var(--muted);font-weight:800}
-.builderTotal .sheetAmount b{display:block;margin-top:2px;font-size:18px;color:var(--p)}
+.builderTotal .sheetAmount small{font-size:7px;color:var(--muted);font-weight:800}
+.builderTotal .sheetAmount b{display:block;margin-top:2px;font-size:15px;color:var(--p)}
 .stepBack{height:48px;border:0;border-radius:15px;background:#f1e8f4;color:var(--p);font-size:21px;font-weight:950}
-.builderTotal .primary{min-height:52px;font-size:13px}
-@media(max-width:370px){.mixOpts{gap:6px}.mixOpt{padding-left:9px;padding-right:32px;font-size:13px}.sheet.acaiFlow>#sheetTitle{font-size:22px}}
+.builderTotal .primary{min-height:48px}
+@media(max-width:370px){.mixOpts{gap:6px}.mixOpt{padding-left:8px;padding-right:29px;font-size:8px}.sheet.acaiFlow>#sheetTitle{font-size:22px}}
 
 </style>
 </head>
@@ -90,7 +90,6 @@
   <div class="head">
     <img class="logo" src="https://res.cloudinary.com/dbd9x1o02/image/upload/q_auto:good,w_512/v1789045061/rodrigues/site-assets/logo-rodrigues-acai-v25-12-1.png" alt="Rodrigues Açaí e Cia">
     <div class="brand"><b>Rodrigues Açaí e Cia</b><small id="storeText">Carregando situação da loja…</small></div>
-    <div id="onlineNow" class="onlinePill off" title="Pessoas com este pedido rápido aberto agora"><i></i><span>— online</span></div>
     <button class="topIco" onclick="toast('Prévia: notificações serão testadas na etapa seguinte')">🔔</button>
   </div>
   <button class="addr" onclick="go('checkout')"><span class="pin">📍</span><span><small>Entregar em</small><strong id="addrText">Informe seu endereço no checkout</strong></span><span class="right"><b id="etaText">—</b><span>taxa no resumo</span></span></button>
@@ -171,7 +170,6 @@
 </div></div>
 <div id="toast" class="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SB='https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/';
 const ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnam1udGV6Zmp1eXV4aGNudmhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MzgyOTksImV4cCI6MjEwMzExNDI5OX0.n3yg9IdC6j8OB-vwi-yuXRKJZE3jdlL_wj3qVr-JBBc';
@@ -184,45 +182,6 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function read(k,d){try{return JSON.parse(localStorage.getItem(k)||'null')??d}catch{return d}}
 function write(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1900)}
-let presenceChannel=null;
-function setOnlineCount(n,ok=true){
-  const el=document.getElementById('onlineNow');if(!el)return;
-  el.classList.toggle('off',!ok);
-  const span=el.querySelector('span');
-  if(!ok){span.textContent='online indisponível';return}
-  const count=Math.max(0,Number(n||0));
-  span.textContent=count+' '+(count===1?'online':'online');
-}
-function startOnlinePresence(){
-  try{
-    if(!window.supabase?.createClient){setOnlineCount(0,false);return}
-    const projectUrl='https://jgjmntezfjuyuxhcnvhd.supabase.co';
-    const client=window.supabase.createClient(projectUrl,ANON,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},realtime:{params:{eventsPerSecond:2}}});
-    const tabKey=(sessionStorage.getItem('rodPresenceKey')||('web_'+crypto.randomUUID()));
-    sessionStorage.setItem('rodPresenceKey',tabKey);
-    presenceChannel=client.channel('rod-pedido-rapido-online',{config:{presence:{key:tabKey}}});
-    const sync=()=>{
-      try{
-        const state=presenceChannel.presenceState();
-        const count=Object.values(state||{}).reduce((sum,list)=>sum+(Array.isArray(list)?list.length:0),0);
-        setOnlineCount(count,true);
-      }catch{setOnlineCount(0,false)}
-    };
-    presenceChannel
-      .on('presence',{event:'sync'},sync)
-      .on('presence',{event:'join'},sync)
-      .on('presence',{event:'leave'},sync)
-      .subscribe(async status=>{
-        if(status==='SUBSCRIBED'){
-          await presenceChannel.track({page:'pedido-rapido',joined_at:new Date().toISOString()});
-          sync();
-        }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
-          setOnlineCount(0,false);
-        }
-      });
-    window.addEventListener('pagehide',()=>{try{presenceChannel?.untrack()}catch{}},{once:true});
-  }catch{setOnlineCount(0,false)}
-}
 function go(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===id));document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('on',x.dataset.nav===id));if(id==='menu')renderMenu();if(id==='cart')renderCart();if(id==='checkout')renderCheckout();if(id==='track')loadTrack();scrollTo({top:0,behavior:'smooth'})}
 function openCategory(c){activeCat=c;go('menu')}
 function api(url,opt={}){return fetch(url,{...opt,headers:{apikey:ANON,'Content-Type':'application/json',...(opt.headers||{})},cache:'no-store'}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok||d.error)throw new Error(d.message||d.detail||d.error||'Falha na conexão');return d})}
@@ -246,7 +205,7 @@ function fruit(i){return FRUITS.includes(norm(i.nome||i.n||i.id))}
 function baseKey(b){const c=norm(b.cat||b.id);if(c.includes('origem'))return'origem';if(c.includes('polpanorte')||c.includes('polpa_acai'))return'polpanorte';if(c.includes('misto')||c.includes('casad'))return'misto';if(c.includes('cupu'))return'cupuacu';return'origem'}
 function sizePrice(s,b){const k=baseKey(b);return Number(s[k]??s.origem??0)||0}
 function catNames(){return [...new Set((catalog.products||[]).map(p=>p.category_name).filter(Boolean))]}
-function renderMenu(){const chips=['Todos','Monte seu açaí',...catNames()];document.getElementById('catChips').innerHTML=chips.map(c=>'<button class="chip '+(activeCat===c?'on':'')+'" onclick="activeCat=\''+String(c).replace(/'/g,"\\'")+'\';renderMenu()">'+esc(c)+'</button>').join('');const q=norm(document.getElementById('search')?.value||'');let html='';if((activeCat==='Todos'||activeCat==='Monte seu açaí')&&(!q||'monte seu acai origem polpanorte casadinho cupuacu'.includes(q))){html+='<div class="sectionHead"><div><h2>Monte seu açaí</h2><p>Base, tamanho, coberturas, acompanhamentos e adicionais.</p></div></div>'+availableBases().map(b=>'<article class="product"><img src="'+esc(b.imagem_url||'https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789938/rodrigues/38up/xyqzkoneu0lhfzs5p5ps.png')+'"><div><h3>'+esc(b.nome||b.id)+'</h3><p>Montagem personalizada com ingredientes do cardápio atual.</p><div class="price">a partir de '+money(Math.min(...sizes().map(s=>sizePrice(s,b)).filter(v=>v>0)))+'</div></div><button class="plus" onclick="openAcai(\''+esc(baseKey(b))+'\')">+</button></article>').join('')}
+function renderMenu(){const chips=['Todos','Monte seu açaí',...catNames()];document.getElementById('catChips').innerHTML=chips.map(c=>'<button class="chip '+(activeCat===c?'on':'')+'" onclick="activeCat=\''+String(c).replace(/'/g,"\\'")+'\';renderMenu()">'+esc(c)+'</button>').join('');const q=norm(document.getElementById('search')?.value||'');let html='';if((activeCat==='Todos'||activeCat==='Monte seu açaí')&&(!q||'monte seu acai origem polpanorte casadinho cupuacu'.includes(q))){html+='<div class="sectionHead"><div><h2>Monte seu açaí</h2><p>Base, tamanho, coberturas, acompanhamentos, adicionais e frutas.</p></div></div>'+availableBases().map(b=>'<article class="product"><img src="'+esc(b.imagem_url||'https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789938/rodrigues/38up/xyqzkoneu0lhfzs5p5ps.png')+'"><div><h3>'+esc(b.nome||b.id)+'</h3><p>Montagem personalizada com ingredientes do cardápio atual.</p><div class="price">a partir de '+money(Math.min(...sizes().map(s=>sizePrice(s,b)).filter(v=>v>0)))+'</div></div><button class="plus" onclick="openAcai(\''+esc(baseKey(b))+'\')">+</button></article>').join('')}
 let products=(catalog.products||[]).filter(p=>(activeCat==='Todos'||p.category_name===activeCat)&&(!q||norm(p.name+' '+p.description+' '+p.category_name).includes(q)));if(products.length){html+='<div class="sectionHead"><div><h2>Produtos</h2><p>'+products.length+' item(ns) disponível(is).</p></div></div>'+products.map(p=>'<article class="product"><img src="'+esc(p.image_url||'https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789950/rodrigues/38up/dlp3fksz227omawclczp.png')+'" onerror="this.src=\'https://res.cloudinary.com/dbd9x1o02/image/upload/v1789789950/rodrigues/38up/dlp3fksz227omawclczp.png\'"><div><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||p.category_name||'')+'</p><div class="price">'+money(p.price)+'</div></div><button class="plus" onclick="openProduct(\''+p.id+'\')">+</button></article>').join('')}document.getElementById('menuList').innerHTML=html||'<div class="empty"><h2>Nada por aqui</h2><p>Tente outra categoria ou busca.</p></div>'}
 function closeSheet(){document.getElementById('sheetBack').classList.remove('on');document.querySelector('.sheet').classList.remove('acaiFlow');document.getElementById('sheetBackBtn')?.classList.add('hidden');currentSheet=null}
 function choose(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id)}
@@ -261,58 +220,57 @@ function openAcai(preferred){
 function acaiNames(ids,source){return source.filter(i=>ids.includes(String(i.id))).map(i=>String(i.nome||i.n||i.id))}
 function renderAcaiSheet(){
   const x=currentSheet,b=availableBases().find(v=>v.id===x.baseId)||availableBases()[0],s=sizes().find(v=>v.id===x.sizeId)||sizes()[0],
-  limit=Number(s.limite||0),coverLimit=Number(s.limite_coberturas||0),acomps=freeItems(),
+  limit=Number(s.limite||0),coverLimit=Number(s.limite_coberturas||0),acomps=freeItems().filter(i=>!fruit(i)),fruits=freeItems().filter(fruit),
   step=Math.max(1,Math.min(4,Number(x.step||1)));
   x.step=step;
   const stage={
-    1:['Escolha o açaí e o tamanho','Primeiro escolha a base e o tamanho do copo.'],
-    2:['Escolha o que vai dentro','Coberturas e acompanhamentos. Frutas ficam junto com os acompanhamentos.'],
-    3:['Quer algum adicional?','Aqui aparecem somente os extras pagos e a observação do pedido.'],
-    4:['Confira antes de adicionar','Veja se está tudo certo. Você pode voltar e corrigir.']
+    1:['Escolha seu copo','Base e tamanho primeiro. Rápido e visual.'],
+    2:['Agora vem a parte boa','Cobertura e acompanhamentos inclusos.'],
+    3:['Quer turbinar?','Frutas e extras separados para ficar claro o que é pago.'],
+    4:['Confere seu Rodrigues','Revise tudo antes de adicionar à sacola.']
   }[step];
-  document.getElementById('sheetTitle').textContent='Monte seu açaí';
+  document.getElementById('sheetTitle').textContent='Monte seu Rodrigues';
   document.getElementById('sheetSub').textContent=stage[0]+' — '+stage[1];
   const opts=(arr,sel,key,paidMode=false)=>arr.map(i=>{
     const id=String(i.id),on=sel.includes(id),pr=paidMode?Number(i.preco||0):0;
-    return '<button class="mixOpt '+(on?'on ':'')+(paidMode?'paid':'')+'" onclick="toggleAcai(\\''+key+'\\',\\''+id.replace(/'/g,"\\\\'")+'\\')">'+esc(i.nome||i.n||id)+(pr?'<small>+'+money(pr)+'</small>':'')+'</button>'
+    return '<button class="mixOpt '+(on?'on ':'')+(paidMode?'paid':'')+'" onclick="toggleAcai(\''+key+'\',\''+id.replace(/'/g,"\\'")+'\')">'+esc(i.nome||i.n||id)+(pr?'<small>+'+money(pr)+'</small>':'')+'</button>'
   }).join('');
-  const labels=['Copo','Acomp.','Extras','Revisar'];
-  const progress='<div class="mixHero"><small>PEDIDO RÁPIDO</small><b>Uma escolha de cada vez.</b><p>Botões grandes e caminho simples até a sacola.</p><div class="mixProgress">'+[1,2,3,4].map(n=>'<div class="'+(n<step?'done':n===step?'on':'')+'"><i></i><span>'+labels[n-1]+'</span></div>').join('')+'</div></div>';
-  const selected=[b.nome||b.id,s.nome||s.id,...acaiNames(x.covers,covers()),...acaiNames(x.free,acomps),...acaiNames(x.paid,paid())];
+  const progress='<div class="mixHero"><small>Rodrigues Mix Studio</small><b>Seu copo, sua receita.</b><p>Você escolhe. A gente monta.</p><div class="mixProgress">'+[1,2,3,4].map(n=>'<div class="'+(n<step?'done':n===step?'on':'')+'"><i></i><span>'+n+'</span></div>').join('')+'</div></div>';
+  const selected=[b.nome||b.id,s.nome||s.id,...acaiNames(x.covers,covers()),...acaiNames(x.free,freeItems()),...acaiNames(x.paid,paid())];
   const chips=selected.length?'<div class="mixSelected">'+selected.slice(0,10).map(v=>'<span>'+esc(v)+'</span>').join('')+'</div>':'';
   let body=progress+chips;
   if(step===1){
-    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Qual a base?</h3><p>Toque em uma opção</p></div><span class="mixBadge">escolha 1</span></div><div class="mixOpts">'+availableBases().map(i=>'<button class="mixOpt '+(i.id===b.id?'on':'')+'" onclick="setBase(\\''+String(i.id).replace(/'/g,"\\\\'")+'\\')">'+esc(i.nome||i.id)+'</button>').join('')+'</div></section>';
-    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Qual o tamanho?</h3><p>O preço aparece em cada opção</p></div><span class="mixBadge">escolha 1</span></div><div class="mixOpts">'+sizes().map(i=>'<button class="mixOpt '+(i.id===s.id?'on':'')+'" onclick="setSize(\\''+String(i.id).replace(/'/g,"\\\\'")+'\\')">'+esc(i.nome||i.id)+'<small>'+money(sizePrice(i,b))+'</small></button>').join('')+'</div></section>';
+    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Base</h3><p>Escolha o sabor principal</p></div><span class="mixBadge">1 opção</span></div><div class="mixOpts">'+availableBases().map(i=>'<button class="mixOpt '+(i.id===b.id?'on':'')+'" onclick="setBase(\''+String(i.id).replace(/'/g,"\\'")+'\')">'+esc(i.nome||i.id)+'</button>').join('')+'</div></section>';
+    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Tamanho</h3><p>O preço muda conforme o tamanho</p></div><span class="mixBadge">1 opção</span></div><div class="mixOpts">'+sizes().map(i=>'<button class="mixOpt '+(i.id===s.id?'on':'')+'" onclick="setSize(\''+String(i.id).replace(/'/g,"\\'")+'\')">'+esc(i.nome||i.id)+'<small>'+money(sizePrice(i,b))+'</small></button>').join('')+'</div></section>';
   }else if(step===2){
-    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Coberturas</h3><p>Escolha as coberturas do seu açaí</p></div><span class="mixBadge">'+(coverLimit?x.covers.length+'/'+coverLimit:'livre')+'</span></div><div class="mixOpts">'+opts(covers(),x.covers,'covers')+'</div></section>';
-    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Acompanhamentos</h3><p>Lista única: frutas e demais acompanhamentos ficam todos aqui</p></div><span class="mixBadge">'+x.free.length+'/'+limit+'</span></div><div class="mixOpts">'+opts(acomps,x.free,'free')+'</div></section>';
+    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Coberturas</h3><p>Comece pelo sabor de cima</p></div><span class="mixBadge">'+(coverLimit?x.covers.length+'/'+coverLimit:'livre')+'</span></div><div class="mixOpts">'+opts(covers(),x.covers,'covers')+'</div></section>';
+    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Acompanhamentos</h3><p>Monte sua combinação favorita</p></div><span class="mixBadge">'+x.free.length+'/'+limit+' grátis</span></div><div class="mixOpts">'+opts(acomps,x.free,'free')+'</div></section>';
   }else if(step===3){
-    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Adicionais pagos</h3><p>Opcional. O valor é somado ao total.</p></div><span class="mixBadge">opcional</span></div><div class="mixOpts">'+opts(paid(),x.paid,'paid',true)+'</div></section>';
-    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Observação</h3><p>Escreva somente se precisar pedir algo diferente</p></div><span class="mixBadge">opcional</span></div><input class="field" id="acaiNote" value="'+esc(x.note||'')+'" oninput="currentSheet.note=this.value" placeholder="Ex.: leite condensado no fundo"></section>';
+    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Frutas</h3><p>Finalize com frutas</p></div><span class="mixBadge">'+x.free.length+'/'+limit+'</span></div><div class="mixOpts">'+opts(fruits,x.free,'free')+'</div></section>';
+    body+='<section class="mixSection"><div class="mixSectionHead"><div><h3>Quer deixar ainda melhor?</h3><p>Estes extras são cobrados à parte</p></div><span class="mixBadge">extras pagos</span></div><div class="mixOpts">'+opts(paid(),x.paid,'paid',true)+'</div></section>';
   }else{
     const row=(label,value)=>'<div class="r"><small>'+label+'</small><div class="'+(value?'':'emptyR')+'">'+esc(value||'Nenhum selecionado')+'</div></div>';
-    body+='<section class="mixReview"><h3>Confira seu pedido</h3>'+
+    body+='<section class="mixReview"><h3>Seu copo ficou assim</h3>'+
       row('Base',b.nome||b.id)+
       row('Tamanho',s.nome||s.id)+
-      row('Coberturas',acaiNames(x.covers,covers()).join(', '))+
+      row('Cobertura',acaiNames(x.covers,covers()).join(', '))+
       row('Acompanhamentos',acaiNames(x.free,acomps).join(', '))+
-      row('Adicionais',acaiNames(x.paid,paid()).join(', '))+
-      row('Observação',x.note||'')+
-      '</section>';
+      row('Frutas',acaiNames(x.free,fruits).join(', '))+
+      row('Extras',acaiNames(x.paid,paid()).join(', '))+
+      '<div class="mixNote"><label>Observação</label><input class="field" id="acaiNote" value="'+esc(x.note||'')+'" oninput="currentSheet.note=this.value" placeholder="Ex.: leite condensado no fundo"></div></section>';
   }
   document.getElementById('sheetBody').innerHTML=body;
   document.getElementById('sheetTotal').textContent=money(acaiTotal());
   const back=document.getElementById('sheetBackBtn'),add=document.getElementById('sheetAdd');
   back.classList.toggle('hidden',step===1);
   back.onclick=()=>{currentSheet.step=Math.max(1,currentSheet.step-1);renderAcaiSheet();document.getElementById('sheetBody').scrollTop=0};
-  add.textContent=step<4?'CONTINUAR →':'ADICIONAR À SACOLA';
+  add.textContent=step<4?'CONTINUAR':'ADICIONAR À SACOLA';
   add.onclick=()=>{if(step<4){currentSheet.step++;renderAcaiSheet();document.getElementById('sheetBody').scrollTop=0}else addAcai()}
 }function setBase(id){currentSheet.baseId=id;renderAcaiSheet()}function setSize(id){currentSheet.sizeId=id;currentSheet.free=[];currentSheet.covers=[];renderAcaiSheet()}
 function toggleAcai(key,id){const x=currentSheet,s=sizes().find(v=>v.id===x.sizeId),limit=Number(s?.limite||0),cl=Number(s?.limite_coberturas||0),arr=x[key];if(!arr.includes(id)){if(key==='free'&&limit&&arr.length>=limit){toast('Limite de '+limit+' acompanhamentos');return}if(key==='covers'&&cl&&arr.length>=cl){toast('Limite de '+cl+' coberturas');return}}choose(arr,id);renderAcaiSheet()}
 function acaiTotal(){const x=currentSheet,b=availableBases().find(v=>v.id===x.baseId),s=sizes().find(v=>v.id===x.sizeId);return sizePrice(s,b)+x.paid.reduce((sum,id)=>sum+Number(paid().find(i=>String(i.id)===id)?.preco||0),0)}
 function ordered(ids,source){return source.filter(i=>ids.includes(String(i.id)))}
-function addAcai(){const x=currentSheet,b=availableBases().find(v=>v.id===x.baseId),s=sizes().find(v=>v.id===x.sizeId);if(!b||!s)return;const groups=[['Coberturas',ordered(x.covers,covers())],['Acompanhamentos',ordered(x.free,freeItems())],['Adicionais',ordered(x.paid,paid())]];const options=groups.flatMap(([g,a])=>a.map(i=>({id:String(i.id),name:String(i.nome||i.n||i.id),group:g,price:g==='Adicionais'?Number(i.preco||0):0})));cart.push({kind:'acai',product_id:'acai:'+b.id+':'+s.id,name:(s.nome||s.id)+' — '+(b.nome||b.id),qty:1,unit_price:sizePrice(s,b),image_url:b.imagem_url||s.imagem_url||'',options,note:x.note||'',groups});saveCart();closeSheet();go('cart');toast('Adicionado à sacola')}
+function addAcai(){const x=currentSheet,b=availableBases().find(v=>v.id===x.baseId),s=sizes().find(v=>v.id===x.sizeId);if(!b||!s)return;const groups=[['Coberturas',ordered(x.covers,covers())],['Acompanhamentos',ordered(x.free,freeItems()).filter(i=>!fruit(i))],['Adicionais',ordered(x.paid,paid())],['Frutas',ordered(x.free,freeItems()).filter(fruit)]];const options=groups.flatMap(([g,a])=>a.map(i=>({id:String(i.id),name:String(i.nome||i.n||i.id),group:g,price:g==='Adicionais'?Number(i.preco||0):0})));cart.push({kind:'acai',product_id:'acai:'+b.id+':'+s.id,name:(s.nome||s.id)+' — '+(b.nome||b.id),qty:1,unit_price:sizePrice(s,b),image_url:b.imagem_url||s.imagem_url||'',options,note:x.note||'',groups});saveCart();closeSheet();go('cart');toast('Adicionado à sacola')}
 function openProduct(id){const p=(catalog.products||[]).find(x=>x.id===id);if(!p)return;currentSheet={type:'product',id:p.id,selected:[],note:''};renderProductSheet();document.getElementById('sheetBack').classList.add('on')}
 function renderProductSheet(){document.querySelector('.sheet').classList.remove('acaiFlow');document.getElementById('sheetBackBtn')?.classList.add('hidden');document.getElementById('sheetAdd').textContent='ADICIONAR';const x=currentSheet,p=(catalog.products||[]).find(v=>v.id===x.id),options=(p.options||[]).filter(o=>o.ativo!==false&&o.active!==false&&o.disponivel!==false),max=Number(p.metadata?.maxOpcoes||0),min=Number(p.metadata?.minOpcoes||0);document.getElementById('sheetTitle').textContent=p.name;document.getElementById('sheetSub').textContent=p.description||p.category_name||'';document.getElementById('sheetBody').innerHTML=(options.length?'<div class="group"><div class="groupHead"><h3>Opções</h3><span>'+(max?x.selected.length+'/'+max:'opcional')+'</span></div><div class="opts">'+options.map((o,i)=>'<button class="opt '+(x.selected.includes(i)?'on':'')+'" onclick="toggleProductOpt('+i+')">'+esc(o.nome||o.name||o.label||('Opção '+(i+1)))+(Number(o.acrescimo||o.price||0)?'<small>+'+money(o.acrescimo||o.price)+'</small>':'')+'</button>').join('')+'</div></div>':'')+'<div class="group"><div class="groupHead"><h3>Observação</h3></div><input id="prodNote" class="field" oninput="currentSheet.note=this.value" placeholder="Observação opcional"></div>';document.getElementById('sheetTotal').textContent=money(productTotal());document.getElementById('sheetAdd').onclick=()=>addProduct(min)}
 function toggleProductOpt(i){const p=(catalog.products||[]).find(v=>v.id===currentSheet.id),max=Number(p.metadata?.maxOpcoes||0);if(!currentSheet.selected.includes(i)&&max&&currentSheet.selected.length>=max){toast('Limite de '+max+' opções');return}choose(currentSheet.selected,i);renderProductSheet()}
@@ -334,7 +292,7 @@ function renderTrack(o){const box=document.getElementById('trackBox');if(!o){box
 function groupOpts(ops){const g={};ops.forEach(o=>(g[o.group||'Opções']??=[]).push(o));return Object.entries(g).map(([k,a])=>'<div class="detailGroup"><h4>'+esc(k)+'</h4>'+a.map(o=>'<div class="detailLine">• '+esc(o.name)+'</div>').join('')+'</div>').join('')}
 async function loadTrack(){clearInterval(poll);const x=read('rodPreviewLast',null);if(!x){renderTrack(null);return}try{const o=await orderApi('get_order');renderTrack(o);poll=setInterval(async()=>{if(!document.getElementById('track').classList.contains('on'))return;try{renderTrack(await orderApi('get_order'))}catch{}},5000)}catch(e){document.getElementById('trackBox').innerHTML='<div class="err">'+esc(e.message)+'</div>'}}
 async function advance(){try{renderTrack(await orderApi('advance_status'));toast('Status avançado')}catch(e){toast(e.message)}}async function resetStatus(){try{renderTrack(await orderApi('reset_status'));toast('Status reiniciado')}catch(e){toast(e.message)}}
-startOnlinePresence();loadCatalog();updateBag();renderCart();
+loadCatalog();updateBag();renderCart();
 </script>
 </body>
 </html>
