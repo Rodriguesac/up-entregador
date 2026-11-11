@@ -3307,7 +3307,7 @@ private fun DriverRide.isDeliveringStage(): Boolean {
         "EM_ENTREGA", "INICIAR_ENTREGA", "DELIVERING", "COM_ENTREGADOR",
         "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE",
         "RETIRADO_PELO_ENTREGADOR", "ENTREGADOR_NO_LOCAL"
-    ).any(statusCodes::contains)
+    ).any { statusCodes.contains(it) }
 }
 private fun DriverRide.isAtPickup(): Boolean = stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
 private fun DriverRide.hasPickupRelease(): Boolean = pickupReleaseAllowed || pickupReleaseStatus.uppercase(Locale.ROOT).let { it.contains("LIBER") || it.contains("COM_ENTREGADOR") || it.contains("SAIU") }
