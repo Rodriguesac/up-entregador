@@ -2443,12 +2443,23 @@ private fun CurrentRouteScreen(
     val action = ride.nextAction()
     val payment = ride.paymentUi()
     val isDelivering = ride.isDeliveringStage()
+    val destination = if (isDelivering) ride.dropoff else ride.pickup
+    val targetName = if (isDelivering) "cliente" else "loja"
     val mapMode = if (isDelivering) DeliveryMapMode.DRIVER_TO_DROPOFF else DeliveryMapMode.DRIVER_TO_PICKUP
 
     ScreenScroll {
         RouteTopHeader(ride)
+        PremiumCard {
+            Text("PRÓXIMA PARADA", color = Blue, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            RoutePointLine(
+                if (isDelivering) Icons.Filled.Place else Icons.Filled.Storefront,
+                if (isDelivering) "Entrega ao cliente" else "Retirada na loja",
+                destination.ifBlank { "Endereço pendente da operação" },
+                if (isDelivering) Orange else Green
+            )
+        }
         RealDeliveryMap(
-            title = "Corrida em andamento",
+            title = if (isDelivering) "Caminho para o cliente" else "Caminho para a loja",
             subtitle = ride.stageLabel(),
             pickupAddress = ride.pickup,
             dropoffAddress = ride.dropoff,
@@ -2457,18 +2468,21 @@ private fun CurrentRouteScreen(
             dropoffLat = ride.dropoffLat,
             dropoffLng = ride.dropoffLng,
             mode = mapMode,
-            modifier = Modifier.height(330.dp)
+            modifier = Modifier.height(260.dp)
         )
-        CompactStopsCard(ride, isDelivering)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallMetric("Distância", ride.distance.ifBlank { "—" }, Modifier.weight(1f))
-            SmallMetric("Tempo", ride.duration.ifBlank { "—" }, Modifier.weight(1f))
+        if (destination.isNotBlank()) {
+            PrimaryButton("Navegar até o $targetName", icon = Icons.Filled.Map) {
+                // MainActivity escolhe dropoff quando informado: enviar apenas o destino da etapa atual.
+                onOpenNavigator(destination, "")
+            }
+        } else {
+            InlineNoticeCard("Endereço da próxima parada não informado. Solicite à operação antes de sair.", Orange)
         }
-        PaymentChipsCard(payment)
-        SecondaryButton("Abrir navegação", icon = Icons.Filled.Map, color = Green) { onOpenNavigator(ride.pickup, ride.dropoff) }
         NextActionCard(ride, action, onMainClick = {
             if (action.needsPaymentConfirmation) paymentConfirmOpen = true else onUpdateRide(ride, action.statusToSend)
         })
+        CompactStopsCard(ride, isDelivering)
+        PaymentChipsCard(payment)
         SecondaryButton("Registrar ocorrência", icon = Icons.Filled.ErrorOutline, color = Orange) { occurrenceOpen = true }
     }
     if (occurrenceOpen) OccurrenceDialog(onClose = { occurrenceOpen = false }, onConfirm = { reason, details -> occurrenceOpen = false; onOccurrence(ride, reason, details) })
@@ -2653,7 +2667,7 @@ private fun RouteMapContent(activeRide: DriverRide?, online: Boolean, onBackHome
     if (activeRide == null) {
         ScreenScroll {
             BrandHeader(title = "Mapa", subtitle = if (online) "Você está disponível. O mapa acompanha sua posição e a rota quando houver corrida." else "Fique disponível para usar mapa operacional em rota.", icon = Icons.Filled.Map)
-            RealDeliveryMap("Mapa do entregador", if (online) "Disponível" else "Indisponível", "Rodrigues Açaí e Cia Campo Grande MS", "Campo Grande MS", mode = DeliveryMapMode.DRIVER_TO_PICKUP, modifier = Modifier.height(360.dp))
+            InlineNoticeCard("O mapa da rota aparecerá quando uma corrida for aceita. Nenhum endereço de loja é presumido.", Blue)
             PrimaryButton("Voltar para início", icon = Icons.Filled.Home, onClick = onBackHome)
         }
         return
@@ -2672,7 +2686,14 @@ private fun RouteMapContent(activeRide: DriverRide?, online: Boolean, onBackHome
             mode = if (activeRide.isDeliveringStage()) DeliveryMapMode.DRIVER_TO_DROPOFF else DeliveryMapMode.DRIVER_TO_PICKUP,
             modifier = Modifier.height(380.dp)
         )
-        PrimaryButton("Abrir navegação", icon = Icons.Filled.Map) { onOpenNavigator(activeRide.pickup, activeRide.dropoff) }
+        val destination = if (activeRide.isDeliveringStage()) activeRide.dropoff else activeRide.pickup
+        if (destination.isNotBlank()) {
+            PrimaryButton(if (activeRide.isDeliveringStage()) "Navegar até o cliente" else "Navegar até a loja", icon = Icons.Filled.Map) {
+                onOpenNavigator(destination, "")
+            }
+        } else {
+            InlineNoticeCard("Endereço da próxima parada indisponível. Confirme com a operação.", Orange)
+        }
     }
 }
 
@@ -3279,7 +3300,15 @@ private fun DriverRide.routeCode(): String = routeReleaseCode.ifBlank { orderCod
 private fun DriverRide.releaseCode(): String = routeReleaseCode.ifBlank { orderCode.ifBlank { id.takeLast(4).uppercase(Locale.ROOT) } }
 private fun DriverRide.stageText(): String = listOf(status, rawStatus, pickupReleaseStatus).joinToString(" ").uppercase(Locale.ROOT)
 private fun DriverRide.isOccurrence(): Boolean = stageText().contains("OCORRENCIA") || stageText().contains("OCORRÊNCIA")
-private fun DriverRide.isDeliveringStage(): Boolean = stageText().let { it.contains("ENTREGA") || it.contains("CLIENTE") || it.contains("ROTA") || it.contains("SAIU") || it.contains("COM_ENTREGADOR") }
+private fun DriverRide.isDeliveringStage(): Boolean {
+    // Não tratar qualquer status que contenha "ROTA" como entrega: ROTA_ACEITA ainda vai para a loja.
+    val statusCodes = listOf(status, rawStatus).joinToString(" ").uppercase(Locale.ROOT)
+    return listOf(
+        "EM_ENTREGA", "INICIAR_ENTREGA", "DELIVERING", "COM_ENTREGADOR",
+        "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE",
+        "RETIRADO_PELO_ENTREGADOR", "ENTREGADOR_NO_LOCAL"
+    ).any { statusCodes.contains(it) }
+}
 private fun DriverRide.isAtPickup(): Boolean = stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
 private fun DriverRide.hasPickupRelease(): Boolean = pickupReleaseAllowed || pickupReleaseStatus.uppercase(Locale.ROOT).let { it.contains("LIBER") || it.contains("COM_ENTREGADOR") || it.contains("SAIU") }
 private fun DriverRide.shouldShowReleaseCode(): Boolean = isAtPickup() && !isDeliveringStage()
