@@ -554,7 +554,22 @@ object DriverRepository {
         val profile = currentSession(context) ?: return
         if (profile.collectionName == UpIndependentOperations.COLLECTION) {
             UpIndependentApi.post("presence", JSONObject().put("online", online))
-            if (online) saveMessagingToken(context)
+            if (online) {
+                UpIndependentApi.sendTelemetry(context)
+                val preferences = loadOperationalPreferences(context)
+                val methods = listOfNotNull(
+                    "debit".takeIf { preferences.acceptsDebit },
+                    "credit".takeIf { preferences.acceptsCredit },
+                    "installments".takeIf { preferences.acceptsInstallment },
+                    "ticket".takeIf { preferences.acceptsTicket }
+                ).joinToString(",")
+                UpIndependentApi.post("equipment", JSONObject()
+                    .put("has_cash", preferences.hasCashChange)
+                    .put("cash_available", preferences.changeAvailableNumber)
+                    .put("has_machine", preferences.hasMachine)
+                    .put("machine_types", methods))
+                saveMessagingToken(context)
+            }
             return
         }
         val payload = linkedMapOf<String, Any?>(
