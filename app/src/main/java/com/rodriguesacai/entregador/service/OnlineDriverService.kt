@@ -22,7 +22,6 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.rodriguesacai.entregador.data.DriverRepository
 import com.rodriguesacai.entregador.data.UpIndependentApi
 import com.rodriguesacai.entregador.data.UpIndependentOperations
-import com.rodriguesacai.entregador.data.UpIndependentOperations
 import com.rodriguesacai.entregador.data.DriverRide
 import kotlin.math.max
 
