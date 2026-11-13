@@ -375,6 +375,19 @@ fun DriverHomeScreen(
                     onSuccess = { profile = DriverRepository.currentSession(context); notice = "Cadastro enviado. Seu perfil está em análise."; setLoading(false) },
                     onError = { error = it; setLoading(false) }
                 )
+            },
+            onRegisterIndependent = { request, setLoading ->
+                error = ""; notice = ""; setLoading(true)
+                DriverRepository.registerIndependentDriver(
+                    context = context,
+                    request = request,
+                    onSuccess = {
+                        profile = DriverRepository.currentSession(context)
+                        notice = "Inscricao enviada ao UP. A aprovacao e feita pela operacao."
+                        setLoading(false)
+                    },
+                    onError = { error = it; setLoading(false) }
+                )
             }
         )
         return
@@ -1106,7 +1119,8 @@ private fun LoginScreen(
     error: String,
     notice: String,
     onLogin: (String, String, (Boolean) -> Unit) -> Unit,
-    onRegister: (DriverRegistrationRequest, (Boolean) -> Unit) -> Unit
+    onRegister: (DriverRegistrationRequest, (Boolean) -> Unit) -> Unit,
+    onRegisterIndependent: (DriverRegistrationRequest, (Boolean) -> Unit) -> Unit
 ) {
     var mode by remember { mutableStateOf(initialMode) }
     var loading by remember { mutableStateOf(false) }
@@ -1147,6 +1161,8 @@ private fun LoginScreen(
                             onLogin(emailUp, senhaUp) { loading = it }
                         }
                     }
+                    SecondaryButton("CADASTRAR ENTREGADOR NO UP",
+                        icon = Icons.Filled.Person) { mode = "up_register" }
                     SecondaryButton("Voltar ao acesso por CPF",
                         icon = Icons.Filled.ArrowBack) { mode = "login" }
                 }
@@ -1155,15 +1171,18 @@ private fun LoginScreen(
         return
     }
 
-    if (mode == "cadastro") {
+    if (mode == "cadastro" || mode == "up_register") {
+        val independent = mode == "up_register"
         RegisterStepperScreen(
             loading = loading,
+            independent = independent,
             externalError = error,
             notice = notice,
-            onBackLogin = { mode = "login" },
+            onBackLogin = { mode = if (independent) "up_login" else "login" },
             onSubmit = { request ->
                 localMessage = ""
-                onRegister(request) { loading = it }
+                if (independent) onRegisterIndependent(request) { loading = it }
+                else onRegister(request) { loading = it }
             }
         )
         return
@@ -1213,6 +1232,7 @@ private fun LoginScreen(
 @Composable
 private fun RegisterStepperScreen(
     loading: Boolean,
+    independent: Boolean = false,
     externalError: String,
     notice: String,
     onBackLogin: () -> Unit,
@@ -1231,7 +1251,8 @@ private fun RegisterStepperScreen(
     var cnh by remember { mutableStateOf("") }
     var pix by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val total = 12
+    var email by remember { mutableStateOf("") }
+    val total = if (independent) 13 else 12
 
     fun canAdvance(): Boolean {
         localError = ""
@@ -1248,6 +1269,8 @@ private fun RegisterStepperScreen(
             9 -> true
             10 -> if (pix.trim().length >= 3) true else { localError = "Informe sua chave Pix."; false }
             11 -> if (onlyDigits(password).length >= 7) true else { localError = "Crie uma senha com no mínimo 7 dígitos."; false }
+            12 -> if (email.trim().contains("@") && email.trim().length <= 150) true
+                else { localError = "Informe um e-mail válido para a conta UP."; false }
             else -> true
         }
     }
@@ -1256,7 +1279,7 @@ private fun RegisterStepperScreen(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.ArrowBack, null, tint = Navy, modifier = Modifier.size(26.dp).clickable { if (step > 0) step-- else onBackLogin() })
             Column(Modifier.weight(1f)) {
-                Text("Cadastro UP Entregas", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(if (independent) "Cadastro de entregador UP" else "Cadastro UP Entregas", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text("Passo ${step + 1} de $total", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             RodriguesLogoMark(size = 44)
@@ -1320,6 +1343,11 @@ private fun RegisterStepperScreen(
                     StepTitle("Crie sua senha", "Somente números, mínimo 7 dígitos.")
                     Field("Senha", password, { password = onlyDigits(it).take(12) }, "Mínimo 7 dígitos", password = true, keyboardType = KeyboardType.NumberPassword)
                 }
+                12 -> {
+                    StepTitle("Seu e-mail da conta UP", "Este e-mail sera usado para entrar no aplicativo independente.")
+                    Field("E-mail", email, { email = it.trim().take(150) },
+                        "seuemail@dominio.com", keyboardType = KeyboardType.Email)
+                }
             }
             PrimaryButton(if (step == total - 1) "Finalizar cadastro" else "Continuar", enabled = !loading, icon = Icons.Filled.CheckCircle, color = Yellow) {
                 if (canAdvance()) {
@@ -1334,7 +1362,7 @@ private fun RegisterStepperScreen(
                             plate = plate,
                             pixKey = pix.trim(),
                             bankName = "",
-                            email = "",
+                            email = if (independent) email.trim() else "",
                             city = "Campo Grande - MS",
                             birthDate = maskDateInput(birth),
                             vehicleModel = model.trim(),
