@@ -182,8 +182,11 @@ export function mountUpCustomerTracking({
       const response = await post(UP_TRACKING, {ticket}, aborter.signal);
       if (stopped) return;
       if (TERMINAL.has(response.status)) {
+        mapElement.style.display = "none";
+        fallback.style.display = "none";
         message("Esta entrega foi encerrada.", "finished");
-        return; // Finaliza o acompanhamento, sem posicionamento falso.
+        stopped = true;
+        return; // Sem novos polls nem posicionamento depois da entrega.
       }
       if (validPoint(response.tracking)) {
         await show(response.tracking);
