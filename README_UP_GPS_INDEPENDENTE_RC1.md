@@ -24,6 +24,8 @@ ponta a ponta com motoboy autenticado e pedido real.
 - GPS em primeiro e segundo plano por serviço foreground:
   corrida com ID `supabase:UUID` só envia para Supabase UP.
   Pontos de localização desatualizados não são enviados como atuais.
+- Histórico do entregador e carteira financeira consultados apenas pela
+  API autenticada do UP; valores de pedidos NÃO são exibidos como ganhos.
 - Telemetria de bateria a cada 2 minutos; informa equipamento,
   dinheiro disponível e maquininha, para uso do servidor.
 - Não atribui tarifa automática, não finge recebimento, nem
@@ -68,7 +70,13 @@ ponta a ponta com motoboy autenticado e pedido real.
   ou status não permitir rastreamento.
 - O mapa do cliente continua exigindo ticket assinado, vinculado ao pedido.
 - Sem pedido real, nenhum ponto deve ser mostrado como rastreamento ao vivo.
-- Nenhuma migração, pedido ou alteração em produção foi disparada por esta PR.
+- Nenhum pedido real foi criado e nenhum GPS real foi simulado.
+- A loja recebeu uma migração isolada no Supabase: `up_store_outbox_finish`
+  marca `tracking_enabled=true` apenas depois do ACK de criação da corrida UP.
+- A função `up-status-receiver` da loja foi publicada para marcar
+  `tracking_enabled=false` quando o job ficar `DELIVERED`, `CANCELLED`
+  ou `FAILED`. A autenticação HMAC original foi preservada.
+- Nenhuma alteração retroativa foi feita nos pedidos existentes.
 
 ## Compilação pelo celular
 Abra a aba **Actions** no GitHub, escolha a execução mais recente
