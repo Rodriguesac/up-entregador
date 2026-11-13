@@ -1642,6 +1642,12 @@ object DriverRepository {
         intervaloSeg: Long,
         onError: (String) -> Unit = {}
     ) {
+        // Corridas do Supabase usam exclusivamente o endpoint autenticado
+        // do UP. Nunca grave seus pontos no Firestore antigo.
+        if (UpIndependentApi.isIndependentRide(ride.id)) {
+            UpIndependentApi.sendLocation(ride.id, lat, lng, accuracy, onError)
+            return
+        }
         val profile = currentSession(context) ?: return
         val now = Timestamp.now()
         val statusOperacional = ride.status.toOperationalFirestoreStatus()
