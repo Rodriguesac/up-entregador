@@ -45,13 +45,16 @@ function validPoint(value) {
     !(lat === 0 && lng === 0) ? {lat, lng} : null;
 }
 
-async function post(url, data, signal) {
+async function post(url, data, signal, authorization = "") {
   const response = await fetch(url, {
     method: "POST",
     credentials: "omit",
     mode: "cors",
     cache: "no-store",
-    headers: {"Content-Type": "application/json"},
+    headers: {
+      "Content-Type": "application/json",
+      ...(authorization ? {"Authorization": "Bearer " + authorization} : {})
+    },
     body: JSON.stringify(data),
     signal
   });
@@ -65,21 +68,35 @@ async function post(url, data, signal) {
 }
 
 /**
- * mountUpCustomerTracking({
- *   container: HTMLElement, receiptToken: string, onStatus?: (status) => void
- * })
- * Retorna funcao de limpeza, chamar ao sair da pagina do pedido.
+ * mountUpCustomerTracking({container, onStatus, ...credencial})
+ * Credenciais aceitas (uma por vez):
+ * - receiptToken: recibo secreto do pedido;
+ * - lookupAccessToken: token recebido em public-order-lookup;
+ * - accessToken + orderId: chave do pedido convidado (guest-order);
+ * - authToken + orderId: sessão Supabase do proprietário do pedido.
+ * Retorna função de limpeza, chamar ao sair do histórico.
  */
-export function mountUpCustomerTracking({container, receiptToken, onStatus = () => {}}) {
+export function mountUpCustomerTracking({
+  container, receiptToken = "", lookupAccessToken = "",
+  accessToken = "", orderId = "", authToken = "", onStatus = () => {}
+}) {
   if (!(container instanceof HTMLElement)) throw Error("container_required");
   if (!ALLOWED.has(location.origin)) {
     container.textContent = "Rastreamento disponível apenas no site da loja.";
     return () => {};
   }
-  if (typeof receiptToken !== "string" || receiptToken.length < 20) {
-    container.textContent = "Este pedido não possui acesso ao rastreamento.";
+  const validReceipt = typeof receiptToken === "string" && receiptToken.length >= 20;
+  const validLookup = typeof lookupAccessToken === "string" && lookupAccessToken.length >= 30;
+  const validGuest = typeof accessToken === "string" && accessToken.length >= 30 && orderId;
+  const validAuth = typeof authToken === "string" && authToken.length >= 30 && orderId;
+  if (!validReceipt && !validLookup && !validGuest && !validAuth) {
+    container.textContent = "Este pedido não possui acesso autorizado ao rastreamento.";
     return () => {};
   }
+  const ticketBody = validReceipt ? {receipt_token: receiptToken} :
+    validLookup ? {lookup_access_token: lookupAccessToken} :
+    validGuest ? {access_token: accessToken, order_id: orderId} : {order_id: orderId};
+  const ticketAuth = validReceipt || validLookup || validGuest ? "" : authToken;
 
   const root = document.createElement("section");
   root.setAttribute("aria-label", "Rastreamento do pedido");
@@ -158,7 +175,7 @@ export function mountUpCustomerTracking({container, receiptToken, onStatus = () 
     try {
       if (!ticket || Date.now() > expiresAt - 15_000) {
         const response = await post(STORE_TICKET,
-          {receipt_token: receiptToken}, aborter.signal);
+          ticketBody, aborter.signal, ticketAuth);
         ticket = response.ticket;
         expiresAt = Date.now() + Math.min(75, Number(response.expires_in) || 60) * 1000;
       }
