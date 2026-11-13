@@ -930,10 +930,8 @@ object DriverRepository {
         onHistory: (List<DriverHistory>) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
-        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION) {
-            onHistory(emptyList())
-            return null
-        }
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watchHistory(onHistory, onError)
         val profile = currentSession(context) ?: return null
         return db.collection("historicoEntregador")
             .limit(120)
@@ -987,10 +985,8 @@ object DriverRepository {
         onStats: (DriverStats) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
-        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION) {
-            onStats(DriverStats())
-            return null
-        }
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watchWallet(onStats, onError)
         val profile = currentSession(context) ?: return null
 
         var historyBase = DriverStats()
