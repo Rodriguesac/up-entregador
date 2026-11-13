@@ -1,10 +1,12 @@
 {
-  "name": "Rodrigues Açaí e Cia — Prévia",
-  "short_name": "Rodrigues Prévia",
+  "name": "UP Entregas — Gestor",
+  "short_name": "UP Gestor",
+  "description": "Painel administrativo independente do UP Entregas",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f7f4f8",
-  "theme_color": "#4b0870",
-  "description": "Ambiente de homologação do site cliente Rodrigues Açaí e Cia"
+  "background_color": "#101820",
+  "theme_color": "#101820",
+  "lang": "pt-BR",
+  "id": "/"
 }
