@@ -128,6 +128,8 @@ import com.rodriguesacai.entregador.data.DriverPayout
 import com.rodriguesacai.entregador.data.DriverProfile
 import com.rodriguesacai.entregador.data.DriverRegistrationRequest
 import com.rodriguesacai.entregador.data.DriverRepository
+import com.rodriguesacai.entregador.data.UpIndependentApi
+import org.json.JSONObject
 import com.rodriguesacai.entregador.data.DriverRide
 import com.rodriguesacai.entregador.data.DriverStats
 import com.rodriguesacai.entregador.data.PaymentMachine
@@ -138,7 +140,7 @@ import com.rodriguesacai.entregador.service.NotificationHelper
 import kotlinx.coroutines.delay
 
 private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, Notificacoes }
-private const val UP_APP_VERSION = "2.0.2"
+private const val UP_APP_VERSION = "2.0.3-rc1"
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
@@ -250,7 +252,10 @@ fun DriverHomeScreen(
         } else null
         val activeListener = if (profile != null) {
             DriverRepository.listenMyActiveRide(context, onRide = { ride ->
-                if (ride == null && lastActiveId.isNotBlank()) notice = "Rota encerrada pela operação. Você está livre para nova corrida."
+                if (ride == null && lastActiveId.isNotBlank()) {
+                    notice = "Rota encerrada pela operação. Você está livre para nova corrida."
+                    lastActiveId = ""
+                }
                 activeRide = ride
                 if (ride != null) {
                     lastActiveId = ride.id
@@ -260,14 +265,34 @@ fun DriverHomeScreen(
         } else null
         val historyListener = if (profile != null) DriverRepository.listenMyHistory(context, { history = it }, { error = it }) else null
         val statsListener = if (profile != null) DriverRepository.listenDailyStats(context, { stats = it }, { error = it }) else null
-        val carouselListener = DriverRepository.listenAppCarousel({ appBanners = it }, {})
-        val noticeListener = if (profile != null) DriverRepository.listenAppNotifications(context, { appNotices = it }, {}) else null
-        val profileListener = if (profile != null) DriverRepository.listenDriverProfile(context, { profile = it }, {}) else null
-        val machinesListener = if (profile != null) DriverRepository.listenMachineOptions({ paymentMachines = it }, {}) else null
-        val appConfigListener = if (profile != null) DriverRepository.listenAppRuntimeConfig({ appRuntimeConfig = it }, {}) else null
+        val separateUP = profile?.collectionName == "up_independent"
+        val carouselListener = if (separateUP) null
+            else DriverRepository.listenAppCarousel({ appBanners = it }, {})
+        val noticeListener = if (profile != null && !separateUP)
+            DriverRepository.listenAppNotifications(context, { appNotices = it }, {}) else null
+        val profileListener = if (profile != null && !separateUP)
+            DriverRepository.listenDriverProfile(context, { profile = it }, {}) else null
+        val machinesListener = if (profile != null && !separateUP)
+            DriverRepository.listenMachineOptions({ paymentMachines = it }, {}) else null
+        val appConfigListener = if (!separateUP)
+            DriverRepository.listenAppRuntimeConfig({ appRuntimeConfig = it }, {}) else null
         onDispose {
             pendingListener?.remove(); activeListener?.remove(); historyListener?.remove(); statsListener?.remove()
             carouselListener?.remove(); noticeListener?.remove(); profileListener?.remove(); machinesListener?.remove(); appConfigListener?.remove()
+        }
+    }
+
+    LaunchedEffect(profile?.id, profile?.approved) {
+        if (profile?.collectionName == "up_independent" && profile?.approved == true) {
+            UpIndependentApi.post("session",
+                onSuccess = { response ->
+                    if (response.optBoolean("online", false)) {
+                        online = true
+                        onGoOnline()
+                    } else online = false
+                },
+                onError = { error = it }
+            )
         }
     }
 
@@ -373,6 +398,19 @@ fun DriverHomeScreen(
                     onSuccess = { profile = DriverRepository.currentSession(context); notice = "Cadastro enviado. Seu perfil está em análise."; setLoading(false) },
                     onError = { error = it; setLoading(false) }
                 )
+            },
+            onRegisterIndependent = { request, setLoading ->
+                error = ""; notice = ""; setLoading(true)
+                DriverRepository.registerIndependentDriver(
+                    context = context,
+                    request = request,
+                    onSuccess = {
+                        profile = DriverRepository.currentSession(context)
+                        notice = "Inscricao enviada ao UP. A aprovacao e feita pela operacao."
+                        setLoading(false)
+                    },
+                    onError = { error = it; setLoading(false) }
+                )
             }
         )
         return
@@ -416,6 +454,25 @@ fun DriverHomeScreen(
         return
     }
 
+    fun changeOnlineStatus(checked: Boolean) {
+        AppAlertPlayer.playTap(context)
+        if (profile?.collectionName == "up_independent") {
+            DriverRepository.setOnline(context, checked,
+                onDone = {
+                    online = checked
+                    if (checked) onGoOnline()
+                    else { pendingRide = null; onGoOffline() }
+                },
+                onError = { error = it }
+            )
+        } else {
+            online = checked
+            DriverRepository.setOnline(context, checked)
+            if (checked) onGoOnline()
+            else { pendingRide = null; onGoOffline() }
+        }
+    }
+
     Scaffold(
         containerColor = HomeBgBottom,
         bottomBar = {
@@ -437,12 +494,7 @@ fun DriverHomeScreen(
                         appNotices = appNotices,
                         hideValues = hideValues,
                         onToggleValues = { hideValues = !hideValues; AppSettings.setHideValues(context, hideValues) },
-                        onToggleOnline = { checked ->
-                            AppAlertPlayer.playTap(context)
-                            online = checked
-                            DriverRepository.setOnline(context, checked)
-                            if (checked) onGoOnline() else { pendingRide = null; onGoOffline() }
-                        },
+                        onToggleOnline = { checked -> changeOnlineStatus(checked) },
                         onAccept = { ride -> AppAlertPlayer.playSuccess(context); DriverRepository.acceptRide(context, ride.id, onDone = { pendingRide = null; tab = AppTab.Corridas }, onError = { error = it }) },
                         onReject = { ride, reason -> AppAlertPlayer.playTap(context); DriverRepository.rejectRide(context, ride.id, reason, onDone = { pendingRide = null }, onError = { error = it }) },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
@@ -459,12 +511,7 @@ fun DriverHomeScreen(
                         activeRide = activeRide,
                         paymentMachines = paymentMachines,
                         online = online,
-                        onToggleOnline = { checked ->
-                            AppAlertPlayer.playTap(context)
-                            online = checked
-                            DriverRepository.setOnline(context, checked)
-                            if (checked) onGoOnline() else { pendingRide = null; onGoOffline() }
-                        },
+                        onToggleOnline = { checked -> changeOnlineStatus(checked) },
                         onAccept = { ride -> AppAlertPlayer.playSuccess(context); DriverRepository.acceptRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
                         onReject = { ride, reason -> AppAlertPlayer.playTap(context); DriverRepository.rejectRide(context, ride.id, reason, onDone = { pendingRide = null }, onError = { error = it }) },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
@@ -728,11 +775,13 @@ private fun AnalysisPendingScreen(profile: DriverProfile, onLogout: () -> Unit) 
             Spacer(Modifier.height(28.dp))
             Text("Cadastro em análise", color = HomeText, fontFamily = AppFont, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(Modifier.height(10.dp))
-            Text("Olá, ${profile.firstName()}. Seu cadastro já foi enviado e está aguardando aprovação do GADM.", color = HomeText.copy(alpha = .86f), fontFamily = AppFont, fontSize = 15.sp, lineHeight = 22.sp, textAlign = TextAlign.Center)
+            Text(if (profile.collectionName == "up_independent")
+                "Sua inscrição chegou ao UP Entregas. Você poderá trabalhar quando um gestor UP aprovar seu cadastro."
+                else "Olá, ${profile.firstName()}. Seu cadastro já foi enviado e está aguardando aprovação do GADM.", color = HomeText.copy(alpha = .86f), fontFamily = AppFont, fontSize = 15.sp, lineHeight = 22.sp, textAlign = TextAlign.Center)
             Spacer(Modifier.height(26.dp))
             PremiumCard {
                 StatusChip("Status: ${profile.approvalStatus.ifBlank { "PENDENTE" }}", YellowDark, Icons.Filled.Schedule)
-                Text("Assim que o gestor aprovar, este app libera a Home automaticamente.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
+                Text("Após a aprovação, volte ao login com suas credenciais para entrar em operação.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
             }
             Spacer(Modifier.height(18.dp))
             SecondaryButton("Sair desta conta", icon = Icons.Filled.ArrowBack, color = HomeText, onClick = onLogout)
@@ -1104,7 +1153,8 @@ private fun LoginScreen(
     error: String,
     notice: String,
     onLogin: (String, String, (Boolean) -> Unit) -> Unit,
-    onRegister: (DriverRegistrationRequest, (Boolean) -> Unit) -> Unit
+    onRegister: (DriverRegistrationRequest, (Boolean) -> Unit) -> Unit,
+    onRegisterIndependent: (DriverRegistrationRequest, (Boolean) -> Unit) -> Unit
 ) {
     var mode by remember { mutableStateOf(initialMode) }
     var loading by remember { mutableStateOf(false) }
@@ -1112,15 +1162,61 @@ private fun LoginScreen(
     var cpfLogin by remember { mutableStateOf("") }
     var passwordLogin by remember { mutableStateOf("") }
 
-    if (mode == "cadastro") {
+    if (mode == "up_login") {
+        var emailUp by remember { mutableStateOf("") }
+        var senhaUp by remember { mutableStateOf("") }
+        Box(Modifier.fillMaxSize()) {
+            EntryCarouselBackground(banners)
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Spacer(Modifier.height(16.dp))
+                RodriguesLogoMark(size = 110)
+                Text("UP Entregas independente", color = HomeText, fontFamily = AppFont,
+                    fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text("Entre com sua conta Firebase UP aprovada. O cadastro por CPF antigo permanece separado.",
+                    color = HomeMuted, fontFamily = AppFont, fontSize = 13.sp, textAlign = TextAlign.Center)
+                if (error.isNotBlank()) InlineNoticeCard(error, Red)
+                if (localMessage.isNotBlank()) InlineNoticeCard(localMessage, Red)
+                HomePanel {
+                    Field("E-mail", emailUp, { emailUp = it.trim() },
+                        "E-mail cadastrado", keyboardType = KeyboardType.Email)
+                    Field("Senha", senhaUp, { senhaUp = it },
+                        "Senha da conta UP", password = true, keyboardType = KeyboardType.Password)
+                    PrimaryButton("ENTRAR NO UP", enabled = !loading,
+                        icon = Icons.Filled.CheckCircle) {
+                        if (!emailUp.contains("@") || senhaUp.isBlank())
+                            localMessage = "Informe e-mail e senha validos."
+                        else {
+                            localMessage = ""
+                            onLogin(emailUp, senhaUp) { loading = it }
+                        }
+                    }
+                    SecondaryButton("CADASTRAR ENTREGADOR NO UP",
+                        icon = Icons.Filled.Person) { mode = "up_register" }
+                    SecondaryButton("Voltar ao acesso por CPF",
+                        icon = Icons.Filled.ArrowBack) { mode = "login" }
+                }
+            }
+        }
+        return
+    }
+
+    if (mode == "cadastro" || mode == "up_register") {
+        val independent = mode == "up_register"
         RegisterStepperScreen(
             loading = loading,
+            independent = independent,
             externalError = error,
             notice = notice,
-            onBackLogin = { mode = "login" },
+            onBackLogin = { mode = if (independent) "up_login" else "login" },
             onSubmit = { request ->
                 localMessage = ""
-                onRegister(request) { loading = it }
+                if (independent) onRegisterIndependent(request) { loading = it }
+                else onRegister(request) { loading = it }
             }
         )
         return
@@ -1158,6 +1254,8 @@ private fun LoginScreen(
                         }
                     }
                 }
+                SecondaryButton("ACESSO UP INDEPENDENTE", icon = Icons.Filled.Shield,
+                    color = HomeText) { mode = "up_login"; localMessage = "" }
                 SecondaryButton("CRIAR CADASTRO", icon = Icons.Filled.Person, color = HomeText) { mode = "cadastro" }
             }
             Text("UP Entregas v$UP_APP_VERSION", color = HomeMuted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
@@ -1168,6 +1266,7 @@ private fun LoginScreen(
 @Composable
 private fun RegisterStepperScreen(
     loading: Boolean,
+    independent: Boolean = false,
     externalError: String,
     notice: String,
     onBackLogin: () -> Unit,
@@ -1186,7 +1285,8 @@ private fun RegisterStepperScreen(
     var cnh by remember { mutableStateOf("") }
     var pix by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val total = 12
+    var email by remember { mutableStateOf("") }
+    val total = if (independent) 13 else 12
 
     fun canAdvance(): Boolean {
         localError = ""
@@ -1203,6 +1303,8 @@ private fun RegisterStepperScreen(
             9 -> true
             10 -> if (pix.trim().length >= 3) true else { localError = "Informe sua chave Pix."; false }
             11 -> if (onlyDigits(password).length >= 7) true else { localError = "Crie uma senha com no mínimo 7 dígitos."; false }
+            12 -> if (email.trim().contains("@") && email.trim().length <= 150) true
+                else { localError = "Informe um e-mail válido para a conta UP."; false }
             else -> true
         }
     }
@@ -1211,7 +1313,7 @@ private fun RegisterStepperScreen(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.ArrowBack, null, tint = Navy, modifier = Modifier.size(26.dp).clickable { if (step > 0) step-- else onBackLogin() })
             Column(Modifier.weight(1f)) {
-                Text("Cadastro UP Entregas", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(if (independent) "Cadastro de entregador UP" else "Cadastro UP Entregas", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text("Passo ${step + 1} de $total", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             RodriguesLogoMark(size = 44)
@@ -1275,6 +1377,11 @@ private fun RegisterStepperScreen(
                     StepTitle("Crie sua senha", "Somente números, mínimo 7 dígitos.")
                     Field("Senha", password, { password = onlyDigits(it).take(12) }, "Mínimo 7 dígitos", password = true, keyboardType = KeyboardType.NumberPassword)
                 }
+                12 -> {
+                    StepTitle("Seu e-mail da conta UP", "Este e-mail sera usado para entrar no aplicativo independente.")
+                    Field("E-mail", email, { email = it.trim().take(150) },
+                        "seuemail@dominio.com", keyboardType = KeyboardType.Email)
+                }
             }
             PrimaryButton(if (step == total - 1) "Finalizar cadastro" else "Continuar", enabled = !loading, icon = Icons.Filled.CheckCircle, color = Yellow) {
                 if (canAdvance()) {
@@ -1289,7 +1396,7 @@ private fun RegisterStepperScreen(
                             plate = plate,
                             pixKey = pix.trim(),
                             bankName = "",
-                            email = "",
+                            email = if (independent) email.trim() else "",
                             city = "Campo Grande - MS",
                             birthDate = maskDateInput(birth),
                             vehicleModel = model.trim(),
@@ -2440,6 +2547,7 @@ private fun CurrentRouteScreen(
 ) {
     var occurrenceOpen by remember(ride.id) { mutableStateOf(false) }
     var paymentConfirmOpen by remember(ride.id) { mutableStateOf(false) }
+    var independentConfirmOpen by remember(ride.id) { mutableStateOf(false) }
     val action = ride.nextAction()
     val payment = ride.paymentUi()
     val isDelivering = ride.isDeliveringStage()
@@ -2467,12 +2575,107 @@ private fun CurrentRouteScreen(
         PaymentChipsCard(payment)
         SecondaryButton("Abrir navegação", icon = Icons.Filled.Map, color = Green) { onOpenNavigator(ride.pickup, ride.dropoff) }
         NextActionCard(ride, action, onMainClick = {
-            if (action.needsPaymentConfirmation) paymentConfirmOpen = true else onUpdateRide(ride, action.statusToSend)
+            if (UpIndependentApi.isIndependentRide(ride.id) &&
+                ride.rawStatus in setOf("AT_STORE", "AT_CUSTOMER")) {
+                independentConfirmOpen = true
+            } else if (action.needsPaymentConfirmation) paymentConfirmOpen = true
+            else onUpdateRide(ride, action.statusToSend)
         })
         SecondaryButton("Registrar ocorrência", icon = Icons.Filled.ErrorOutline, color = Orange) { occurrenceOpen = true }
     }
     if (occurrenceOpen) OccurrenceDialog(onClose = { occurrenceOpen = false }, onConfirm = { reason, details -> occurrenceOpen = false; onOccurrence(ride, reason, details) })
     if (paymentConfirmOpen) PaymentConfirmDialog(ride, paymentMachines, onClose = { paymentConfirmOpen = false }, onConfirm = { input -> paymentConfirmOpen = false; onSettleAndFinish(ride, input) })
+    if (independentConfirmOpen) UpIndependentDeliveryConfirmDialog(
+        ride = ride,
+        onClose = { independentConfirmOpen = false },
+        onSuccess = { independentConfirmOpen = false }
+    )
+}
+
+@Composable
+private fun UpIndependentDeliveryConfirmDialog(
+    ride: DriverRide,
+    onClose: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    val isPickup = ride.rawStatus == "AT_STORE"
+    val amountDue = ride.amountToCollectNumber
+    var confirmationCode by remember(ride.id, isPickup) { mutableStateOf("") }
+    var receivedText by remember(ride.id, isPickup) { mutableStateOf("") }
+    var receivedConfirmed by remember(ride.id, isPickup) { mutableStateOf(false) }
+    var errorText by remember(ride.id, isPickup) { mutableStateOf("") }
+    var submitting by remember(ride.id, isPickup) { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!submitting) onClose() },
+        title = {
+            Text(if (isPickup) "Confirmar retirada no UP" else "Confirmar entrega no UP",
+                color = HomeText, fontFamily = AppFont, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    if (isPickup) "Confirme que recebeu o pedido na loja. Se o gestor forneceu um código de retirada, informe-o aqui."
+                    else "Confirme a entrega ao cliente. Digite o código fornecido, quando exigido, e registre apenas o valor realmente recebido.",
+                    color = HomeMuted, fontFamily = AppFont
+                )
+                OutlinedTextField(
+                    value = confirmationCode,
+                    onValueChange = { confirmationCode = it.trim().take(32) },
+                    label = { Text("Código de confirmação (se fornecido)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (!isPickup && amountDue > 0.0) {
+                    Text("Cobrança informada: " + DriverRepository.formatCurrency(amountDue),
+                        color = HomeText, fontFamily = AppFont)
+                    OutlinedTextField(
+                        value = receivedText,
+                        onValueChange = { receivedText = it.filter { ch -> ch.isDigit() || ch == ',' || ch == '.' }.take(12) },
+                        label = { Text("Valor recebido de verdade (R$)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Switch(checked = receivedConfirmed, onCheckedChange = { receivedConfirmed = it })
+                        Spacer(Modifier.width(10.dp))
+                        Text("Confirmo que recebi este valor", color = HomeText,
+                            fontFamily = AppFont, fontSize = 13.sp)
+                    }
+                }
+                if (errorText.isNotBlank()) Text(errorText, color = Red, fontFamily = AppFont, fontSize = 13.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !submitting,
+                onClick = {
+                    val amount = if (isPickup || amountDue <= 0.0) 0.0
+                        else receivedText.replace(",", ".").toDoubleOrNull()
+                    if (!isPickup && amountDue > 0.0 &&
+                        (amount == null || !amount.isFinite() || amount < amountDue ||
+                            amount > 100000.0 || !receivedConfirmed)) {
+                        errorText = "Confirme o valor real recebido antes de encerrar a entrega."
+                    } else {
+                        errorText = ""
+                        submitting = true
+                        val payload = JSONObject().put("mission_id", ride.id)
+                            .put("code", confirmationCode)
+                        if (!isPickup) payload.put("received_amount", amount ?: 0.0)
+                        UpIndependentApi.post(if (isPickup) "pickup" else "finish", payload,
+                            onSuccess = { submitting = false; onSuccess() },
+                            onError = { submitting = false; errorText = it })
+                    }
+                }
+            ) { Text(if (submitting) "Enviando..." else "Confirmar no UP", color = HomeLime) }
+        },
+        dismissButton = {
+            TextButton(enabled = !submitting, onClick = onClose) { Text("Voltar", color = HomeMuted) }
+        },
+        containerColor = HomeCard,
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable
@@ -3258,12 +3461,13 @@ private fun Avatar(name: String, photoUrl: String = "", size: Int) {
 }
 
 private fun operationalStatus(online: Boolean, activeRide: DriverRide?, permissions: PermissionStatus, context: Context): OperationalStatus {
-    val batteryLow = currentBattery(context) in 1..9
+    val batteryLimit = if (DriverRepository.currentSession(context)?.collectionName == "up_independent") 15 else 10
+    val batteryLow = currentBattery(context) in 1 until batteryLimit
     val netOk = hasInternet(context)
     val gpsOk = isGpsEnabled(context)
     return when {
         activeRide != null -> OperationalStatus(AvailabilityKind.EmEntrega, activeRide.stageShort(), "Rota ativa #${activeRide.routeCode()}", Blue, Color.White, false)
-        batteryLow -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Bateria abaixo de 10%. Carregue o aparelho.", Red, Color.White, false)
+        batteryLow -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Bateria abaixo do mínimo de operação. Carregue o aparelho.", Red, Color.White, false)
         !permissions.notifications -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative notificações para receber corridas.", Red, Color.White, false)
         !permissions.location || !gpsOk -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative localização/GPS para ficar disponível.", Red, Color.White, false)
         !permissions.fullScreenIntent -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative o alerta urgente em tela cheia.", Red, Color.White, false)
@@ -3279,11 +3483,19 @@ private fun DriverRide.routeCode(): String = routeReleaseCode.ifBlank { orderCod
 private fun DriverRide.releaseCode(): String = routeReleaseCode.ifBlank { orderCode.ifBlank { id.takeLast(4).uppercase(Locale.ROOT) } }
 private fun DriverRide.stageText(): String = listOf(status, rawStatus, pickupReleaseStatus).joinToString(" ").uppercase(Locale.ROOT)
 private fun DriverRide.isOccurrence(): Boolean = stageText().contains("OCORRENCIA") || stageText().contains("OCORRÊNCIA")
-private fun DriverRide.isDeliveringStage(): Boolean = stageText().let { it.contains("ENTREGA") || it.contains("CLIENTE") || it.contains("ROTA") || it.contains("SAIU") || it.contains("COM_ENTREGADOR") }
-private fun DriverRide.isAtPickup(): Boolean = stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
+private fun DriverRide.isDeliveringStage(): Boolean =
+    status == "delivering" || (rawStatus == "TO_CUSTOMER") ||
+        stageText().let { it.contains("ENTREGA") || it.contains("CLIENTE") || it.contains("ROTA") || it.contains("SAIU") || it.contains("COM_ENTREGADOR") }
+private fun DriverRide.isAtPickup(): Boolean =
+    status == "pickup" || rawStatus == "AT_STORE" ||
+        stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
 private fun DriverRide.hasPickupRelease(): Boolean = pickupReleaseAllowed || pickupReleaseStatus.uppercase(Locale.ROOT).let { it.contains("LIBER") || it.contains("COM_ENTREGADOR") || it.contains("SAIU") }
-private fun DriverRide.shouldShowReleaseCode(): Boolean = isAtPickup() && !isDeliveringStage()
+private fun DriverRide.shouldShowReleaseCode(): Boolean = !UpIndependentApi.isIndependentRide(id) && isAtPickup() && !isDeliveringStage()
 private fun DriverRide.stageLabel(): String = when {
+    rawStatus == "AT_CUSTOMER" -> "No cliente"
+    rawStatus == "TO_CUSTOMER" -> "Em entrega"
+    rawStatus == "AT_STORE" -> "Na coleta"
+    rawStatus == "TO_STORE" -> "A caminho da loja"
     isOccurrence() -> "Ocorrência"
     stageText().contains("ENTREGADOR_NO_LOCAL") -> "No cliente"
     isDeliveringStage() -> "Em entrega"
@@ -3293,6 +3505,10 @@ private fun DriverRide.stageLabel(): String = when {
     else -> "Indo para coleta"
 }
 private fun DriverRide.stageShort(): String = when {
+    rawStatus == "AT_CUSTOMER" -> "No cliente"
+    rawStatus == "TO_CUSTOMER" -> "Em entrega"
+    rawStatus == "AT_STORE" -> "Na coleta"
+    rawStatus == "TO_STORE" -> "Indo à loja"
     isOccurrence() -> "Aguardando gestor"
     stageText().contains("ENTREGADOR_NO_LOCAL") -> "No local"
     isDeliveringStage() -> "Em entrega"
@@ -3311,7 +3527,18 @@ private fun DriverRide.displayOrders(): List<RouteOrder> = routeOrders.takeIf { 
 
 private fun DriverRide.nextAction(): RouteAction {
     return when {
+        rawStatus == "ACCEPTED" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Indo para coleta", "Inicie o deslocamento até a loja.", "Ir para coleta", true, "INDO_LOJA", Blue)
+        rawStatus == "TO_STORE" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Chegada na coleta", "Confirme sua chegada na loja.", "Cheguei na coleta", true, "NA_COLETA", Green)
+        rawStatus == "AT_STORE" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Confirmar retirada", "Confirme a retirada com o código informado pela loja, se exigido.", "Retirei o pedido", true, "EM_ENTREGA", Green)
+        rawStatus == "AT_CUSTOMER" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Confirmar entrega", "Confirme o código e o valor efetivamente recebido.", "Finalizar entrega", true, "FINALIZADA", Green)
         isOccurrence() -> RouteAction("Ocorrência enviada", "Aguarde o gestor resolver antes de continuar.", "Aguardando gestor", false, "OCORRENCIA", Orange)
+        rawStatus == "AT_CUSTOMER" -> RouteAction("Finalizar entrega",
+            "Necessita confirmar codigo/comprovante e pagamento com o UP.",
+            "Finalizacao pendente", false, "FINALIZADA", Orange)
         stageText().contains("ENTREGADOR_NO_LOCAL") -> RouteAction("Finalizar entrega", "Confirme o recebimento/código antes de encerrar.", "Finalizar entrega", true, "FINALIZADA", Green, needsPaymentConfirmation = true)
         isDeliveringStage() -> RouteAction("Próxima ação", "Siga até o cliente e confirme quando chegar.", "Cheguei no cliente", true, "ENTREGADOR_NO_LOCAL", Blue)
         isAtPickup() && !hasPickupRelease() -> RouteAction("Retirada na loja", "Mostre o código e aguarde a saída do gestor.", "Aguardando saída", false, "AGUARDANDO_SAIDA_GESTOR", Orange)

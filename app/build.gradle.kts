@@ -13,8 +13,8 @@ android {
         applicationId = "com.rodriguesacai.entregador"
         minSdk = 26
         targetSdk = 36
-        versionCode = 202
-        versionName = "2.0.2"
+        versionCode = 203
+        versionName = "2.0.3-rc1"
     }
 
     buildFeatures { compose = true }
@@ -47,6 +47,7 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-database")
 
