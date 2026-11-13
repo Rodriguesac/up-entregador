@@ -8,6 +8,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.auth.FirebaseAuth
+import org.json.JSONObject
 import java.security.MessageDigest
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -50,6 +52,9 @@ object DriverRepository {
     fun currentSession(context: Context): DriverProfile? {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val id = prefs.getString(KEY_ID, null)?.takeIf { it.isNotBlank() } ?: return null
+        // A sessao independente exige o mesmo UID autenticado no Firebase.
+        if (prefs.getString(KEY_COLLECTION, "") == UpIndependentOperations.COLLECTION &&
+            FirebaseAuth.getInstance().currentUser?.uid != id) return null
         return DriverProfile(
             id = id,
             name = prefs.getString(KEY_NAME, null).orEmpty().ifBlank { "Entregador" },
@@ -70,6 +75,16 @@ object DriverRepository {
 
     fun logout(context: Context, onDone: () -> Unit = {}) {
         val session = currentSession(context)
+        if (session?.collectionName == UpIndependentOperations.COLLECTION) {
+            fun finishLogout() {
+                FirebaseAuth.getInstance().signOut()
+                context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+                onDone()
+            }
+            UpIndependentApi.post("presence", JSONObject().put("online", false),
+                onSuccess = { finishLogout() }, onError = { finishLogout() })
+            return
+        }
         if (session != null) {
             db.collection(session.collectionName).document(session.id).set(
                 mapOf(
@@ -94,6 +109,39 @@ object DriverRepository {
         onError: (String) -> Unit
     ) {
         val raw = documentOrPhone.trim()
+        if (raw.contains("@")) {
+            if (password.isBlank()) {
+                onError("Informe a senha da conta UP independente.")
+                return
+            }
+            FirebaseAuth.getInstance().signInWithEmailAndPassword(raw, password)
+                .addOnSuccessListener {
+                    UpIndependentApi.post("session",
+                        onSuccess = { response ->
+                            if (response.optString("state") != "APPROVED") {
+                                FirebaseAuth.getInstance().signOut()
+                                onError("Seu acesso UP ainda nao esta aprovado.")
+                            } else {
+                                val user = FirebaseAuth.getInstance().currentUser
+                                if (user == null) onError("Sessao Firebase nao encontrada.")
+                                else saveSession(context, DriverProfile(
+                                    id = user.uid,
+                                    name = user.displayName?.takeIf { it.isNotBlank() } ?: "Entregador UP",
+                                    collectionName = UpIndependentOperations.COLLECTION,
+                                    verified = true, approved = true,
+                                    needsPasswordSetup = false
+                                ), onSuccess)
+                            }
+                        },
+                        onError = { reason ->
+                            FirebaseAuth.getInstance().signOut()
+                            onError(reason)
+                        }
+                    )
+                }
+                .addOnFailureListener { onError("Login UP nao autorizado. Confira email e senha.") }
+            return
+        }
         val normalized = raw.onlyDigits()
         if (raw.length < 4 && normalized.length < 4) {
             onError("Informe o CPF ou telefone cadastrado do entregador.")
@@ -413,6 +461,11 @@ object DriverRepository {
             .putString(KEY_APPROVAL_STATUS, profile.approvalStatus)
             .apply()
 
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            saveMessagingToken(context)
+            onSuccess(profile)
+            return
+        }
         db.collection(profile.collectionName).document(profile.id).set(
             mapOf(
                 "ultimoLoginEm" to Timestamp.now(),
@@ -428,6 +481,11 @@ object DriverRepository {
 
     fun setOnline(context: Context, online: Boolean) {
         val profile = currentSession(context) ?: return
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            UpIndependentApi.post("presence", JSONObject().put("online", online))
+            if (online) saveMessagingToken(context)
+            return
+        }
         val payload = linkedMapOf<String, Any?>(
             "id" to profile.id,
             "uid" to profile.id,
@@ -565,6 +623,10 @@ object DriverRepository {
     fun saveMessagingToken(context: Context) {
         val profile = currentSession(context) ?: return
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+                UpIndependentApi.post("token", JSONObject().put("token", token))
+                return@addOnSuccessListener
+            }
             db.collection(profile.collectionName).document(profile.id).set(
                 mapOf(
                     "fcmToken" to token,
@@ -646,6 +708,8 @@ object DriverRepository {
         onRide: (DriverRide?) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watch(true, onRide, onError)
         val profile = currentSession(context) ?: return null
         val state = mutableMapOf<String, List<DriverRide>>()
         fun emit() {
@@ -711,6 +775,8 @@ object DriverRepository {
         onRide: (DriverRide?) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watch(false, onRide, onError)
         val profile = currentSession(context) ?: return null
         val state = mutableMapOf<String, List<DriverRide>>()
         fun emit() {
@@ -766,6 +832,10 @@ object DriverRepository {
         onHistory: (List<DriverHistory>) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION) {
+            onHistory(emptyList())
+            return null
+        }
         val profile = currentSession(context) ?: return null
         return db.collection("historicoEntregador")
             .limit(120)
@@ -819,6 +889,10 @@ object DriverRepository {
         onStats: (DriverStats) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION) {
+            onStats(DriverStats())
+            return null
+        }
         val profile = currentSession(context) ?: return null
 
         var historyBase = DriverStats()
@@ -949,6 +1023,8 @@ object DriverRepository {
         onProfile: (DriverProfile) -> Unit,
         onError: (String) -> Unit = {}
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return null
         val session = currentSession(context) ?: return null
         return db.collection(session.collectionName).document(session.id).addSnapshotListener { doc, err ->
             if (err != null) {
@@ -1695,6 +1771,10 @@ object DriverRepository {
     }
 
     fun clearDriverTracking(context: Context) {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION) {
+            forgetActiveRide(context)
+            return
+        }
         val profile = currentSession(context) ?: return
         val now = Timestamp.now()
         forgetActiveRide(context)
