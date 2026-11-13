@@ -1,5 +1,7 @@
 package com.rodriguesacai.entregador.data
 
+import android.content.Context
+import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
 import com.google.firebase.auth.FirebaseAuth
@@ -105,6 +107,21 @@ object UpIndependentApi {
             .addOnFailureListener {
                 onError("Nao foi possivel autenticar a sessao UP.")
             }
+    }
+
+    /**
+     * Telemetria da bateria, sem CPF, foto ou localizacao.
+     * O backend so autoriza novo aceite quando a bateria reportada permite.
+     */
+    fun sendTelemetry(context: Context) {
+        val manager = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager ?: return
+        val level = manager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        if (level !in 0..100) return
+        val payload = JSONObject()
+            .put("battery_level", level)
+            .put("charging", manager.isCharging)
+            .put("app_version", "2.0.3-rc1")
+        post("telemetry", payload)
     }
 
     /**
