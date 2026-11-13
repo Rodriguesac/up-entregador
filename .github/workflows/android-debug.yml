@@ -20,6 +20,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify customer GPS component syntax
+        run: node --input-type=module --check < integrations/store/customer-tracking/up-customer-map.js
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
