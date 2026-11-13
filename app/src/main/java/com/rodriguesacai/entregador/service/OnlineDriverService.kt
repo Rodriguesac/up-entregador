@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.IBinder
 import android.os.Looper
+import android.os.Handler
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -19,6 +20,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.rodriguesacai.entregador.data.DriverRepository
+import com.rodriguesacai.entregador.data.UpIndependentApi
+import com.rodriguesacai.entregador.data.UpIndependentOperations
 import com.rodriguesacai.entregador.data.UpIndependentOperations
 import com.rodriguesacai.entregador.data.DriverRide
 import kotlin.math.max
@@ -35,6 +38,16 @@ class OnlineDriverService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var locationCallback: LocationCallback? = null
     private var trackingIntervalMs: Long = 30_000L
+    private val telemetryHandler = Handler(Looper.getMainLooper())
+    private val telemetryTask = object : Runnable {
+        override fun run() {
+            if (DriverRepository.currentSession(this@OnlineDriverService)
+                    ?.collectionName == UpIndependentOperations.COLLECTION) {
+                UpIndependentApi.sendTelemetry(this@OnlineDriverService)
+            }
+            telemetryHandler.postDelayed(this, 120_000L)
+        }
+    }
     private var lastLocation: Location? = null
     private var trackedDistanceKm: Double = 0.0
     private var trackingStartedAtMillis: Long = 0L
@@ -47,6 +60,7 @@ class OnlineDriverService : Service() {
         startConfigListener()
         startRideListener()
         startActiveRideListener()
+        telemetryHandler.post(telemetryTask)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -151,6 +165,8 @@ class OnlineDriverService : Service() {
             override fun onLocationResult(result: LocationResult) {
                 val location = result.lastLocation ?: return
                 val currentRide = activeRide ?: return
+                if (UpIndependentApi.isIndependentRide(currentRide.id) &&
+                    !isFreshLocation(location, 60_000L)) return
 
                 val previous = lastLocation
                 if (previous != null) {
@@ -185,7 +201,8 @@ class OnlineDriverService : Service() {
         fusedLocationClient.requestLocationUpdates(request, locationCallback!!, Looper.getMainLooper())
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
+            if (location != null &&
+                (!UpIndependentApi.isIndependentRide(ride.id) || isFreshLocation(location, 20_000L))) {
                 lastLocation = location
                 DriverRepository.updateDriverLocationForTracking(
                     context = this,
@@ -201,6 +218,11 @@ class OnlineDriverService : Service() {
                 )
             }
         }
+    }
+
+    private fun isFreshLocation(location: Location, maxAgeMs: Long): Boolean {
+        val ageMs = System.currentTimeMillis() - location.time
+        return ageMs in -30_000L..maxAgeMs
     }
 
     private fun stopLocationUpdates(clearFirebase: Boolean = true) {
@@ -233,6 +255,7 @@ class OnlineDriverService : Service() {
     }
 
     override fun onDestroy() {
+        telemetryHandler.removeCallbacks(telemetryTask)
         pendingRideListener?.remove()
         activeRideListener?.remove()
         configListener?.remove()
