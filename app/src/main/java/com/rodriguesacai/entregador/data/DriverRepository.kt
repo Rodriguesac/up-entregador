@@ -1594,6 +1594,7 @@ object DriverRepository {
         if (profile.collectionName == UpIndependentOperations.COLLECTION &&
             UpIndependentApi.isIndependentRide(rideId)) {
             val next = when (status.upperOrTrim()) {
+                "INDO_LOJA", "TO_STORE" -> "TO_STORE"
                 "PICKUP", "NA_COLETA", "COLETANDO", "CHEGOU_LOJA" -> "AT_STORE"
                 "ARRIVED_CLIENT", "ENTREGADOR_NO_LOCAL", "CHEGUEI_CLIENTE" -> "AT_CUSTOMER"
                 else -> ""
@@ -1852,6 +1853,10 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login para destravar o app.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            onError("Corridas UP devem ser liberadas pelo gestor; destravamento local nao cancela corrida.")
             return
         }
         releaseStaleMission(context, profile, reason, onDone, onError)
