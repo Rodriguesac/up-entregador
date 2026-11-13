@@ -1177,6 +1177,11 @@ object DriverRepository {
             onError("Faça login antes de registrar o acerto.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            onError("Entrega independente exige codigo de entrega e conferencia de pagamento. Finalizacao ainda nao habilitada.")
+            return
+        }
         fun persist(machine: PaymentMachine?) {
             findMissionDocument(rideId, onFound = { doc ->
                 val preview = calculateSettlementPreview(input, machine)
@@ -1267,6 +1272,12 @@ object DriverRepository {
             onError("Faça login antes de aceitar corrida.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("accept", JSONObject().put("mission_id", rideId),
+                onSuccess = { onDone() }, onError = onError)
+            return
+        }
         findMissionDocument(rideId, onFound = { doc ->
             val collectionName = doc.reference.parent.id
             val ride = doc.toDriverRide(collectionName)
@@ -1354,6 +1365,12 @@ object DriverRepository {
             onError("Faça login antes de rejeitar corrida.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("reject", JSONObject().put("mission_id", rideId),
+                onSuccess = { onDone() }, onError = onError)
+            return
+        }
         findMissionDocument(rideId, onFound = { doc ->
             val collectionName = doc.reference.parent.id
             val ride = doc.toDriverRide(collectionName)
@@ -1428,6 +1445,12 @@ object DriverRepository {
             onError("Faça login antes de expirar corrida.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("expire", JSONObject().put("mission_id", rideId),
+                onSuccess = { onDone() }, onError = onError)
+            return
+        }
         findMissionDocument(rideId, onFound = { doc ->
             val collectionName = doc.reference.parent.id
             doc.reference.set(
@@ -1480,6 +1503,14 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login para registrar ocorrência.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("occurrence",
+                JSONObject().put("mission_id", rideId)
+                    .put("reason", (reason + ": " + details).take(500)),
+                onSuccess = { onDone() }, onError = onError)
             return
         }
         findMissionDocument(rideId, onFound = { doc ->
@@ -1558,6 +1589,22 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login para atualizar a corrida.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            val next = when (status.upperOrTrim()) {
+                "PICKUP", "NA_COLETA", "COLETANDO", "CHEGOU_LOJA" -> "AT_STORE"
+                "ARRIVED_CLIENT", "ENTREGADOR_NO_LOCAL", "CHEGUEI_CLIENTE" -> "AT_CUSTOMER"
+                else -> ""
+            }
+            if (next.isBlank()) {
+                onError("Esta etapa exige confirmacao segura de retirada ou entrega no UP.")
+                return
+            }
+            UpIndependentApi.post("stage",
+                JSONObject().put("mission_id", rideId).put("status", next),
+                onSuccess = { onDone() }, onError = onError)
             return
         }
         findMissionDocument(rideId, onFound = { doc ->
