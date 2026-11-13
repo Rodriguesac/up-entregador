@@ -19,6 +19,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.rodriguesacai.entregador.data.DriverRepository
+import com.rodriguesacai.entregador.data.UpIndependentOperations
 import com.rodriguesacai.entregador.data.DriverRide
 import kotlin.math.max
 
@@ -93,6 +94,7 @@ class OnlineDriverService : Service() {
     }
 
     private fun startConfigListener() {
+        if (DriverRepository.currentSession(this)?.collectionName == UpIndependentOperations.COLLECTION) return
         configListener?.remove()
         configListener = FirebaseFirestore.getInstance()
             .collection("configuracoes_loja")
