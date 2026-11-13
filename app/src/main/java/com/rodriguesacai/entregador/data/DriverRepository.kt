@@ -160,6 +160,77 @@ object DriverRepository {
         })
     }
 
+    /**
+     * Cadastro independente: identidade Firebase, inscricao no Supabase UP e
+     * autorizacao exclusivamente pelo gestor. Nao grava CPF/senha no Firestore.
+     */
+    fun registerIndependentDriver(
+        context: Context,
+        request: DriverRegistrationRequest,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val email = request.email.trim()
+        val phone = request.phone.onlyDigits()
+        val cpf = request.cpf.onlyDigits()
+        if (!email.contains("@") || email.length > 150) {
+            onError("Informe um e-mail valido para a conta independente.")
+            return
+        }
+        if (!request.name.isValidFullNameLocal() || !cpf.isValidCpfLocal() || phone.length < 10) {
+            onError("Confira nome completo, CPF e telefone.")
+            return
+        }
+        if (request.password.length < 7) {
+            onError("Informe uma senha com pelo menos 7 caracteres.")
+            return
+        }
+        val profile = JSONObject()
+            .put("nomeCompleto", request.name.trim())
+            .put("telefone", phone)
+            .put("cpf", cpf)
+            .put("nascimento", request.birthDate)
+            .put("tipoVeiculo", request.vehicle)
+            .put("placa", request.plate)
+            .put("modelo", request.vehicleModel)
+        fun submitApplication() {
+            UpIndependentApi.registration("submit", JSONObject().put("profile", profile),
+                onSuccess = {
+                    val user = FirebaseAuth.getInstance().currentUser
+                    if (user == null) {
+                        onError("Conta Firebase nao encontrada apos o cadastro.")
+                        return@registration
+                    }
+                    saveSession(context, DriverProfile(
+                        id = user.uid,
+                        name = request.name.trim(),
+                        collectionName = UpIndependentOperations.COLLECTION,
+                        verified = false,
+                        approved = false,
+                        approvalStatus = "PENDING",
+                        needsPasswordSetup = false
+                    )) { onSuccess() }
+                },
+                onError = { onError("Inscricao UP nao concluida: " + it) }
+            )
+        }
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, request.password)
+            .addOnSuccessListener { submitApplication() }
+            .addOnFailureListener { problem ->
+                // Uma conta existente precisa ser autenticada pelo proprio
+                // titular antes de poder enviar uma nova solicitacao.
+                if (problem is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                    FirebaseAuth.getInstance().signInWithEmailAndPassword(email, request.password)
+                        .addOnSuccessListener { submitApplication() }
+                        .addOnFailureListener {
+                            onError("E-mail ja cadastrado. Entre na conta UP existente para continuar.")
+                        }
+                } else {
+                    onError("Nao foi possivel criar a conta UP: confira e-mail, senha e conexao.")
+                }
+            }
+    }
+
     fun registerDriver(
         context: Context? = null,
         request: DriverRegistrationRequest,
@@ -462,7 +533,7 @@ object DriverRepository {
             .apply()
 
         if (profile.collectionName == UpIndependentOperations.COLLECTION) {
-            saveMessagingToken(context)
+            if (profile.approved) saveMessagingToken(context)
             onSuccess(profile)
             return
         }
