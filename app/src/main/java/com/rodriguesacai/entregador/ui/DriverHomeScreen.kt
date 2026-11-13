@@ -128,6 +128,8 @@ import com.rodriguesacai.entregador.data.DriverPayout
 import com.rodriguesacai.entregador.data.DriverProfile
 import com.rodriguesacai.entregador.data.DriverRegistrationRequest
 import com.rodriguesacai.entregador.data.DriverRepository
+import com.rodriguesacai.entregador.data.UpIndependentApi
+import org.json.JSONObject
 import com.rodriguesacai.entregador.data.DriverRide
 import com.rodriguesacai.entregador.data.DriverStats
 import com.rodriguesacai.entregador.data.PaymentMachine
@@ -2483,6 +2485,7 @@ private fun CurrentRouteScreen(
 ) {
     var occurrenceOpen by remember(ride.id) { mutableStateOf(false) }
     var paymentConfirmOpen by remember(ride.id) { mutableStateOf(false) }
+    var independentConfirmOpen by remember(ride.id) { mutableStateOf(false) }
     val action = ride.nextAction()
     val payment = ride.paymentUi()
     val isDelivering = ride.isDeliveringStage()
@@ -2510,12 +2513,107 @@ private fun CurrentRouteScreen(
         PaymentChipsCard(payment)
         SecondaryButton("Abrir navegação", icon = Icons.Filled.Map, color = Green) { onOpenNavigator(ride.pickup, ride.dropoff) }
         NextActionCard(ride, action, onMainClick = {
-            if (action.needsPaymentConfirmation) paymentConfirmOpen = true else onUpdateRide(ride, action.statusToSend)
+            if (UpIndependentApi.isIndependentRide(ride.id) &&
+                ride.rawStatus in setOf("AT_STORE", "AT_CUSTOMER")) {
+                independentConfirmOpen = true
+            } else if (action.needsPaymentConfirmation) paymentConfirmOpen = true
+            else onUpdateRide(ride, action.statusToSend)
         })
         SecondaryButton("Registrar ocorrência", icon = Icons.Filled.ErrorOutline, color = Orange) { occurrenceOpen = true }
     }
     if (occurrenceOpen) OccurrenceDialog(onClose = { occurrenceOpen = false }, onConfirm = { reason, details -> occurrenceOpen = false; onOccurrence(ride, reason, details) })
     if (paymentConfirmOpen) PaymentConfirmDialog(ride, paymentMachines, onClose = { paymentConfirmOpen = false }, onConfirm = { input -> paymentConfirmOpen = false; onSettleAndFinish(ride, input) })
+    if (independentConfirmOpen) UpIndependentDeliveryConfirmDialog(
+        ride = ride,
+        onClose = { independentConfirmOpen = false },
+        onSuccess = { independentConfirmOpen = false }
+    )
+}
+
+@Composable
+private fun UpIndependentDeliveryConfirmDialog(
+    ride: DriverRide,
+    onClose: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    val isPickup = ride.rawStatus == "AT_STORE"
+    val amountDue = ride.amountToCollectNumber
+    var confirmationCode by remember(ride.id, isPickup) { mutableStateOf("") }
+    var receivedText by remember(ride.id, isPickup) { mutableStateOf("") }
+    var receivedConfirmed by remember(ride.id, isPickup) { mutableStateOf(false) }
+    var errorText by remember(ride.id, isPickup) { mutableStateOf("") }
+    var submitting by remember(ride.id, isPickup) { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!submitting) onClose() },
+        title = {
+            Text(if (isPickup) "Confirmar retirada no UP" else "Confirmar entrega no UP",
+                color = HomeText, fontFamily = AppFont, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    if (isPickup) "Confirme que recebeu o pedido na loja. Se o gestor forneceu um código de retirada, informe-o aqui."
+                    else "Confirme a entrega ao cliente. Digite o código fornecido, quando exigido, e registre apenas o valor realmente recebido.",
+                    color = HomeMuted, fontFamily = AppFont
+                )
+                OutlinedTextField(
+                    value = confirmationCode,
+                    onValueChange = { confirmationCode = it.trim().take(32) },
+                    label = { Text("Código de confirmação (se fornecido)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (!isPickup && amountDue > 0.0) {
+                    Text("Cobrança informada: " + DriverRepository.formatCurrency(amountDue),
+                        color = HomeText, fontFamily = AppFont)
+                    OutlinedTextField(
+                        value = receivedText,
+                        onValueChange = { receivedText = it.filter { ch -> ch.isDigit() || ch == ',' || ch == '.' }.take(12) },
+                        label = { Text("Valor recebido de verdade (R$)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Switch(checked = receivedConfirmed, onCheckedChange = { receivedConfirmed = it })
+                        Spacer(Modifier.width(10.dp))
+                        Text("Confirmo que recebi este valor", color = HomeText,
+                            fontFamily = AppFont, fontSize = 13.sp)
+                    }
+                }
+                if (errorText.isNotBlank()) Text(errorText, color = Red, fontFamily = AppFont, fontSize = 13.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !submitting,
+                onClick = {
+                    val amount = if (isPickup || amountDue <= 0.0) 0.0
+                        else receivedText.replace(",", ".").toDoubleOrNull()
+                    if (!isPickup && amountDue > 0.0 &&
+                        (amount == null || !amount.isFinite() || amount < amountDue ||
+                            amount > 100000.0 || !receivedConfirmed)) {
+                        errorText = "Confirme o valor real recebido antes de encerrar a entrega."
+                    } else {
+                        errorText = ""
+                        submitting = true
+                        val payload = JSONObject().put("mission_id", ride.id)
+                            .put("code", confirmationCode)
+                        if (!isPickup) payload.put("received_amount", amount ?: 0.0)
+                        UpIndependentApi.post(if (isPickup) "pickup" else "finish", payload,
+                            onSuccess = { submitting = false; onSuccess() },
+                            onError = { submitting = false; errorText = it })
+                    }
+                }
+            ) { Text(if (submitting) "Enviando..." else "Confirmar no UP", color = HomeLime) }
+        },
+        dismissButton = {
+            TextButton(enabled = !submitting, onClick = onClose) { Text("Voltar", color = HomeMuted) }
+        },
+        containerColor = HomeCard,
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable
@@ -3301,12 +3399,13 @@ private fun Avatar(name: String, photoUrl: String = "", size: Int) {
 }
 
 private fun operationalStatus(online: Boolean, activeRide: DriverRide?, permissions: PermissionStatus, context: Context): OperationalStatus {
-    val batteryLow = currentBattery(context) in 1..9
+    val batteryLimit = if (DriverRepository.currentSession(context)?.collectionName == "up_independent") 15 else 10
+    val batteryLow = currentBattery(context) in 1 until batteryLimit
     val netOk = hasInternet(context)
     val gpsOk = isGpsEnabled(context)
     return when {
         activeRide != null -> OperationalStatus(AvailabilityKind.EmEntrega, activeRide.stageShort(), "Rota ativa #${activeRide.routeCode()}", Blue, Color.White, false)
-        batteryLow -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Bateria abaixo de 10%. Carregue o aparelho.", Red, Color.White, false)
+        batteryLow -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Bateria abaixo do mínimo de operação. Carregue o aparelho.", Red, Color.White, false)
         !permissions.notifications -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative notificações para receber corridas.", Red, Color.White, false)
         !permissions.location || !gpsOk -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative localização/GPS para ficar disponível.", Red, Color.White, false)
         !permissions.fullScreenIntent -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative o alerta urgente em tela cheia.", Red, Color.White, false)
@@ -3329,8 +3428,12 @@ private fun DriverRide.isAtPickup(): Boolean =
     status == "pickup" || rawStatus == "AT_STORE" ||
         stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
 private fun DriverRide.hasPickupRelease(): Boolean = pickupReleaseAllowed || pickupReleaseStatus.uppercase(Locale.ROOT).let { it.contains("LIBER") || it.contains("COM_ENTREGADOR") || it.contains("SAIU") }
-private fun DriverRide.shouldShowReleaseCode(): Boolean = isAtPickup() && !isDeliveringStage()
+private fun DriverRide.shouldShowReleaseCode(): Boolean = !UpIndependentApi.isIndependentRide(id) && isAtPickup() && !isDeliveringStage()
 private fun DriverRide.stageLabel(): String = when {
+    rawStatus == "AT_CUSTOMER" -> "No cliente"
+    rawStatus == "TO_CUSTOMER" -> "Em entrega"
+    rawStatus == "AT_STORE" -> "Na coleta"
+    rawStatus == "TO_STORE" -> "A caminho da loja"
     isOccurrence() -> "Ocorrência"
     stageText().contains("ENTREGADOR_NO_LOCAL") -> "No cliente"
     isDeliveringStage() -> "Em entrega"
@@ -3340,6 +3443,10 @@ private fun DriverRide.stageLabel(): String = when {
     else -> "Indo para coleta"
 }
 private fun DriverRide.stageShort(): String = when {
+    rawStatus == "AT_CUSTOMER" -> "No cliente"
+    rawStatus == "TO_CUSTOMER" -> "Em entrega"
+    rawStatus == "AT_STORE" -> "Na coleta"
+    rawStatus == "TO_STORE" -> "Indo à loja"
     isOccurrence() -> "Aguardando gestor"
     stageText().contains("ENTREGADOR_NO_LOCAL") -> "No local"
     isDeliveringStage() -> "Em entrega"
@@ -3358,6 +3465,14 @@ private fun DriverRide.displayOrders(): List<RouteOrder> = routeOrders.takeIf { 
 
 private fun DriverRide.nextAction(): RouteAction {
     return when {
+        rawStatus == "ACCEPTED" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Indo para coleta", "Inicie o deslocamento até a loja.", "Ir para coleta", true, "INDO_LOJA", Blue)
+        rawStatus == "TO_STORE" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Chegada na coleta", "Confirme sua chegada na loja.", "Cheguei na coleta", true, "NA_COLETA", Green)
+        rawStatus == "AT_STORE" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Confirmar retirada", "Confirme a retirada com o código informado pela loja, se exigido.", "Retirei o pedido", true, "EM_ENTREGA", Green)
+        rawStatus == "AT_CUSTOMER" && UpIndependentApi.isIndependentRide(id) ->
+            RouteAction("Confirmar entrega", "Confirme o código e o valor efetivamente recebido.", "Finalizar entrega", true, "FINALIZADA", Green)
         isOccurrence() -> RouteAction("Ocorrência enviada", "Aguarde o gestor resolver antes de continuar.", "Aguardando gestor", false, "OCORRENCIA", Orange)
         rawStatus == "AT_CUSTOMER" -> RouteAction("Finalizar entrega",
             "Necessita confirmar codigo/comprovante e pagamento com o UP.",
