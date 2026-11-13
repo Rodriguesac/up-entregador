@@ -135,6 +135,8 @@ export function mountUpCustomerTracking({container, receiptToken, onStatus = () 
         mapElement.style.display = "block";
         map.invalidateSize();
       } else {
+        mapElement.style.display = "block";
+        map.invalidateSize();
         marker.setLatLng([gps.lat, gps.lng]);
         map.panTo([gps.lat, gps.lng], {animate: true, duration: .5});
       }
