@@ -252,7 +252,10 @@ fun DriverHomeScreen(
         } else null
         val activeListener = if (profile != null) {
             DriverRepository.listenMyActiveRide(context, onRide = { ride ->
-                if (ride == null && lastActiveId.isNotBlank()) notice = "Rota encerrada pela operação. Você está livre para nova corrida."
+                if (ride == null && lastActiveId.isNotBlank()) {
+                    notice = "Rota encerrada pela operação. Você está livre para nova corrida."
+                    lastActiveId = ""
+                }
                 activeRide = ride
                 if (ride != null) {
                     lastActiveId = ride.id
@@ -262,11 +265,17 @@ fun DriverHomeScreen(
         } else null
         val historyListener = if (profile != null) DriverRepository.listenMyHistory(context, { history = it }, { error = it }) else null
         val statsListener = if (profile != null) DriverRepository.listenDailyStats(context, { stats = it }, { error = it }) else null
-        val carouselListener = DriverRepository.listenAppCarousel({ appBanners = it }, {})
-        val noticeListener = if (profile != null) DriverRepository.listenAppNotifications(context, { appNotices = it }, {}) else null
-        val profileListener = if (profile != null) DriverRepository.listenDriverProfile(context, { profile = it }, {}) else null
-        val machinesListener = if (profile != null) DriverRepository.listenMachineOptions({ paymentMachines = it }, {}) else null
-        val appConfigListener = if (profile != null) DriverRepository.listenAppRuntimeConfig({ appRuntimeConfig = it }, {}) else null
+        val separateUP = profile?.collectionName == "up_independent"
+        val carouselListener = if (separateUP) null
+            else DriverRepository.listenAppCarousel({ appBanners = it }, {})
+        val noticeListener = if (profile != null && !separateUP)
+            DriverRepository.listenAppNotifications(context, { appNotices = it }, {}) else null
+        val profileListener = if (profile != null && !separateUP)
+            DriverRepository.listenDriverProfile(context, { profile = it }, {}) else null
+        val machinesListener = if (profile != null && !separateUP)
+            DriverRepository.listenMachineOptions({ paymentMachines = it }, {}) else null
+        val appConfigListener = if (!separateUP)
+            DriverRepository.listenAppRuntimeConfig({ appRuntimeConfig = it }, {}) else null
         onDispose {
             pendingListener?.remove(); activeListener?.remove(); historyListener?.remove(); statsListener?.remove()
             carouselListener?.remove(); noticeListener?.remove(); profileListener?.remove(); machinesListener?.remove(); appConfigListener?.remove()
@@ -743,11 +752,13 @@ private fun AnalysisPendingScreen(profile: DriverProfile, onLogout: () -> Unit) 
             Spacer(Modifier.height(28.dp))
             Text("Cadastro em análise", color = HomeText, fontFamily = AppFont, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(Modifier.height(10.dp))
-            Text("Olá, ${profile.firstName()}. Seu cadastro já foi enviado e está aguardando aprovação do GADM.", color = HomeText.copy(alpha = .86f), fontFamily = AppFont, fontSize = 15.sp, lineHeight = 22.sp, textAlign = TextAlign.Center)
+            Text(if (profile.collectionName == "up_independent")
+                "Sua inscrição chegou ao UP Entregas. Você poderá trabalhar quando um gestor UP aprovar seu cadastro."
+                else "Olá, ${profile.firstName()}. Seu cadastro já foi enviado e está aguardando aprovação do GADM.", color = HomeText.copy(alpha = .86f), fontFamily = AppFont, fontSize = 15.sp, lineHeight = 22.sp, textAlign = TextAlign.Center)
             Spacer(Modifier.height(26.dp))
             PremiumCard {
                 StatusChip("Status: ${profile.approvalStatus.ifBlank { "PENDENTE" }}", YellowDark, Icons.Filled.Schedule)
-                Text("Assim que o gestor aprovar, este app libera a Home automaticamente.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
+                Text("Após a aprovação, volte ao login com suas credenciais para entrar em operação.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
             }
             Spacer(Modifier.height(18.dp))
             SecondaryButton("Sair desta conta", icon = Icons.Filled.ArrowBack, color = HomeText, onClick = onLogout)
