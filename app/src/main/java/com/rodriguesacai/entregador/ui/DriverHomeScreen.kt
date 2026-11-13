@@ -138,7 +138,7 @@ import com.rodriguesacai.entregador.service.NotificationHelper
 import kotlinx.coroutines.delay
 
 private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, Notificacoes }
-private const val UP_APP_VERSION = "2.0.2"
+private const val UP_APP_VERSION = "2.0.3-rc1"
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
@@ -1112,6 +1112,47 @@ private fun LoginScreen(
     var cpfLogin by remember { mutableStateOf("") }
     var passwordLogin by remember { mutableStateOf("") }
 
+    if (mode == "up_login") {
+        var emailUp by remember { mutableStateOf("") }
+        var senhaUp by remember { mutableStateOf("") }
+        Box(Modifier.fillMaxSize()) {
+            EntryCarouselBackground(banners)
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Spacer(Modifier.height(16.dp))
+                RodriguesLogoMark(size = 110)
+                Text("UP Entregas independente", color = HomeText, fontFamily = AppFont,
+                    fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text("Entre com sua conta Firebase UP aprovada. O cadastro por CPF antigo permanece separado.",
+                    color = HomeMuted, fontFamily = AppFont, fontSize = 13.sp, textAlign = TextAlign.Center)
+                if (error.isNotBlank()) InlineNoticeCard(error, Red)
+                if (localMessage.isNotBlank()) InlineNoticeCard(localMessage, Red)
+                HomePanel {
+                    Field("E-mail", emailUp, { emailUp = it.trim() },
+                        "E-mail cadastrado", keyboardType = KeyboardType.Email)
+                    Field("Senha", senhaUp, { senhaUp = it },
+                        "Senha da conta UP", password = true, keyboardType = KeyboardType.Password)
+                    PrimaryButton("ENTRAR NO UP", enabled = !loading,
+                        icon = Icons.Filled.CheckCircle) {
+                        if (!emailUp.contains("@") || senhaUp.isBlank())
+                            localMessage = "Informe e-mail e senha validos."
+                        else {
+                            localMessage = ""
+                            onLogin(emailUp, senhaUp) { loading = it }
+                        }
+                    }
+                    SecondaryButton("Voltar ao acesso por CPF",
+                        icon = Icons.Filled.ArrowBack) { mode = "login" }
+                }
+            }
+        }
+        return
+    }
+
     if (mode == "cadastro") {
         RegisterStepperScreen(
             loading = loading,
@@ -1158,6 +1199,8 @@ private fun LoginScreen(
                         }
                     }
                 }
+                SecondaryButton("ACESSO UP INDEPENDENTE", icon = Icons.Filled.Shield,
+                    color = HomeText) { mode = "up_login"; localMessage = "" }
                 SecondaryButton("CRIAR CADASTRO", icon = Icons.Filled.Person, color = HomeText) { mode = "cadastro" }
             }
             Text("UP Entregas v$UP_APP_VERSION", color = HomeMuted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
@@ -3279,8 +3322,12 @@ private fun DriverRide.routeCode(): String = routeReleaseCode.ifBlank { orderCod
 private fun DriverRide.releaseCode(): String = routeReleaseCode.ifBlank { orderCode.ifBlank { id.takeLast(4).uppercase(Locale.ROOT) } }
 private fun DriverRide.stageText(): String = listOf(status, rawStatus, pickupReleaseStatus).joinToString(" ").uppercase(Locale.ROOT)
 private fun DriverRide.isOccurrence(): Boolean = stageText().contains("OCORRENCIA") || stageText().contains("OCORRÊNCIA")
-private fun DriverRide.isDeliveringStage(): Boolean = stageText().let { it.contains("ENTREGA") || it.contains("CLIENTE") || it.contains("ROTA") || it.contains("SAIU") || it.contains("COM_ENTREGADOR") }
-private fun DriverRide.isAtPickup(): Boolean = stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
+private fun DriverRide.isDeliveringStage(): Boolean =
+    status == "delivering" || (rawStatus == "TO_CUSTOMER") ||
+        stageText().let { it.contains("ENTREGA") || it.contains("CLIENTE") || it.contains("ROTA") || it.contains("SAIU") || it.contains("COM_ENTREGADOR") }
+private fun DriverRide.isAtPickup(): Boolean =
+    status == "pickup" || rawStatus == "AT_STORE" ||
+        stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
 private fun DriverRide.hasPickupRelease(): Boolean = pickupReleaseAllowed || pickupReleaseStatus.uppercase(Locale.ROOT).let { it.contains("LIBER") || it.contains("COM_ENTREGADOR") || it.contains("SAIU") }
 private fun DriverRide.shouldShowReleaseCode(): Boolean = isAtPickup() && !isDeliveringStage()
 private fun DriverRide.stageLabel(): String = when {
@@ -3312,6 +3359,9 @@ private fun DriverRide.displayOrders(): List<RouteOrder> = routeOrders.takeIf { 
 private fun DriverRide.nextAction(): RouteAction {
     return when {
         isOccurrence() -> RouteAction("Ocorrência enviada", "Aguarde o gestor resolver antes de continuar.", "Aguardando gestor", false, "OCORRENCIA", Orange)
+        rawStatus == "AT_CUSTOMER" -> RouteAction("Finalizar entrega",
+            "Necessita confirmar codigo/comprovante e pagamento com o UP.",
+            "Finalizacao pendente", false, "FINALIZADA", Orange)
         stageText().contains("ENTREGADOR_NO_LOCAL") -> RouteAction("Finalizar entrega", "Confirme o recebimento/código antes de encerrar.", "Finalizar entrega", true, "FINALIZADA", Green, needsPaymentConfirmation = true)
         isDeliveringStage() -> RouteAction("Próxima ação", "Siga até o cliente e confirme quando chegar.", "Cheguei no cliente", true, "ENTREGADOR_NO_LOCAL", Blue)
         isAtPickup() && !hasPickupRelease() -> RouteAction("Retirada na loja", "Mostre o código e aguarde a saída do gestor.", "Aguardando saída", false, "AGUARDANDO_SAIDA_GESTOR", Orange)
