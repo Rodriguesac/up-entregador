@@ -338,6 +338,23 @@ object DriverRepository {
             onError("Faça login antes de alterar a senha.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            if (newPassword.length < 7) {
+                onError("Use uma senha com pelo menos sete caracteres.")
+                return
+            }
+            val firebaseUser = FirebaseAuth.getInstance().currentUser
+            if (firebaseUser == null || firebaseUser.uid != profile.id) {
+                onError("Faca login novamente na conta UP para alterar a senha.")
+                return
+            }
+            firebaseUser.updatePassword(newPassword)
+                .addOnSuccessListener { onSuccess() }
+                .addOnFailureListener {
+                    onError("Por seguranca, entre novamente no UP antes de trocar a senha.")
+                }
+            return
+        }
         if (newPassword.onlyDigitsLocal().length < 7) {
             onError("A senha precisa ter pelo menos 7 dígitos numéricos.")
             return
@@ -376,6 +393,10 @@ object DriverRepository {
             onError("Faça login antes de salvar recebimento.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            onError("Chave Pix do UP independente: alteracao deve ser aprovada no painel financeiro UP.")
+            return
+        }
         if (pixKey.trim().length < 3) {
             onError("Informe uma chave Pix valida.")
             return
@@ -412,6 +433,10 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login antes de solicitar alteracao.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            onError("Solicitacoes cadastrais do UP independente exigem revisao no painel gestor UP.")
             return
         }
         val text = requestText.trim()
@@ -648,6 +673,21 @@ object DriverRepository {
 
         if (profile == null) {
             onDone()
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            val methods = listOfNotNull(
+                "debit".takeIf { preferences.acceptsDebit },
+                "credit".takeIf { preferences.acceptsCredit },
+                "installments".takeIf { preferences.acceptsInstallment },
+                "ticket".takeIf { preferences.acceptsTicket }
+            ).joinToString(",")
+            UpIndependentApi.post("equipment", JSONObject()
+                .put("has_cash", preferences.hasCashChange)
+                .put("cash_available", preferences.changeAvailableNumber)
+                .put("has_machine", preferences.hasMachine)
+                .put("machine_types", methods),
+                onSuccess = { onDone() }, onError = onError)
             return
         }
         val payload = mapOf(
