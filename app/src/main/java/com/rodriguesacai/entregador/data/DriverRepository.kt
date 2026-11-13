@@ -550,10 +550,20 @@ object DriverRepository {
         onSuccess(profile)
     }
 
-    fun setOnline(context: Context, online: Boolean) {
-        val profile = currentSession(context) ?: return
+    fun setOnline(
+        context: Context,
+        online: Boolean,
+        onDone: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        val profile = currentSession(context)
+        if (profile == null) {
+            onError("Sessao do entregador invalida.")
+            return
+        }
         if (profile.collectionName == UpIndependentOperations.COLLECTION) {
-            UpIndependentApi.post("presence", JSONObject().put("online", online))
+            UpIndependentApi.post("presence", JSONObject().put("online", online),
+                onSuccess = { onDone() }, onError = onError)
             if (online) {
                 UpIndependentApi.sendTelemetry(context)
                 val preferences = loadOperationalPreferences(context)
@@ -589,6 +599,8 @@ object DriverRepository {
             "appVersion" to APP_VERSION
         )
         db.collection(profile.collectionName).document(profile.id).set(payload, SetOptions.merge())
+            .addOnSuccessListener { onDone() }
+            .addOnFailureListener { onError(it.message ?: "Nao foi possivel mudar disponibilidade.") }
         if (online) saveMessagingToken(context)
     }
 
