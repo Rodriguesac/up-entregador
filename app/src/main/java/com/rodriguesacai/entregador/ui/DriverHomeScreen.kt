@@ -282,6 +282,20 @@ fun DriverHomeScreen(
         }
     }
 
+    LaunchedEffect(profile?.id, profile?.approved) {
+        if (profile?.collectionName == "up_independent" && profile?.approved == true) {
+            UpIndependentApi.post("session",
+                onSuccess = { response ->
+                    if (response.optBoolean("online", false)) {
+                        online = true
+                        onGoOnline()
+                    } else online = false
+                },
+                onError = { error = it }
+            )
+        }
+    }
+
     LaunchedEffect(profile?.id) {
         if (profile != null) {
             bootingSession = true
@@ -440,6 +454,25 @@ fun DriverHomeScreen(
         return
     }
 
+    fun changeOnlineStatus(checked: Boolean) {
+        AppAlertPlayer.playTap(context)
+        if (profile?.collectionName == "up_independent") {
+            DriverRepository.setOnline(context, checked,
+                onDone = {
+                    online = checked
+                    if (checked) onGoOnline()
+                    else { pendingRide = null; onGoOffline() }
+                },
+                onError = { error = it }
+            )
+        } else {
+            online = checked
+            DriverRepository.setOnline(context, checked)
+            if (checked) onGoOnline()
+            else { pendingRide = null; onGoOffline() }
+        }
+    }
+
     Scaffold(
         containerColor = HomeBgBottom,
         bottomBar = {
@@ -461,12 +494,7 @@ fun DriverHomeScreen(
                         appNotices = appNotices,
                         hideValues = hideValues,
                         onToggleValues = { hideValues = !hideValues; AppSettings.setHideValues(context, hideValues) },
-                        onToggleOnline = { checked ->
-                            AppAlertPlayer.playTap(context)
-                            online = checked
-                            DriverRepository.setOnline(context, checked)
-                            if (checked) onGoOnline() else { pendingRide = null; onGoOffline() }
-                        },
+                        onToggleOnline = { checked -> changeOnlineStatus(checked) },
                         onAccept = { ride -> AppAlertPlayer.playSuccess(context); DriverRepository.acceptRide(context, ride.id, onDone = { pendingRide = null; tab = AppTab.Corridas }, onError = { error = it }) },
                         onReject = { ride, reason -> AppAlertPlayer.playTap(context); DriverRepository.rejectRide(context, ride.id, reason, onDone = { pendingRide = null }, onError = { error = it }) },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
@@ -483,12 +511,7 @@ fun DriverHomeScreen(
                         activeRide = activeRide,
                         paymentMachines = paymentMachines,
                         online = online,
-                        onToggleOnline = { checked ->
-                            AppAlertPlayer.playTap(context)
-                            online = checked
-                            DriverRepository.setOnline(context, checked)
-                            if (checked) onGoOnline() else { pendingRide = null; onGoOffline() }
-                        },
+                        onToggleOnline = { checked -> changeOnlineStatus(checked) },
                         onAccept = { ride -> AppAlertPlayer.playSuccess(context); DriverRepository.acceptRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
                         onReject = { ride, reason -> AppAlertPlayer.playTap(context); DriverRepository.rejectRide(context, ride.id, reason, onDone = { pendingRide = null }, onError = { error = it }) },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
