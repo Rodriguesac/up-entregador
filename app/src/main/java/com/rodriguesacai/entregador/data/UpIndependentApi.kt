@@ -19,6 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 object UpIndependentApi {
     private const val ENDPOINT =
         "https://gkwmqwtktedarodvqqtn.supabase.co/functions/v1/driver-api-independent"
+    private const val REGISTRATION_ENDPOINT =
+        "https://gkwmqwtktedarodvqqtn.supabase.co/functions/v1/driver-registration-independent"
     private val worker = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private val gpsInFlight = AtomicBoolean(false)
@@ -38,6 +40,21 @@ object UpIndependentApi {
         body: JSONObject = JSONObject(),
         onSuccess: (JSONObject) -> Unit = {},
         onError: (String) -> Unit = {}
+    ) = request(ENDPOINT, action, body, onSuccess, onError)
+
+    fun registration(
+        action: String,
+        body: JSONObject = JSONObject(),
+        onSuccess: (JSONObject) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) = request(REGISTRATION_ENDPOINT, action, body, onSuccess, onError)
+
+    private fun request(
+        endpoint: String,
+        action: String,
+        body: JSONObject,
+        onSuccess: (JSONObject) -> Unit,
+        onError: (String) -> Unit
     ) {
         val user = FirebaseAuth.getInstance().currentUser
         if (user == null) {
@@ -55,7 +72,7 @@ object UpIndependentApi {
                     var conn: HttpURLConnection? = null
                     try {
                         val json = JSONObject(body.toString()).put("action", action)
-                        val url = URL(ENDPOINT)
+                        val url = URL(endpoint)
                         conn = url.openConnection() as HttpURLConnection
                         conn.requestMethod = "POST"
                         conn.connectTimeout = 10000
