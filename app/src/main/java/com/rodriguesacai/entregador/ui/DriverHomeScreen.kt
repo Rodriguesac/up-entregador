@@ -204,6 +204,14 @@ private data class RouteAction(
     val needsPaymentConfirmation: Boolean = false
 )
 
+private fun readableUpError(value: String): String = when {
+    value.contains("battery_below_minimum", ignoreCase = true) ->
+        "Bateria abaixo de 15%. Recarregue o celular para aceitar corridas e manter o GPS ativo."
+    value.contains("offer_expired", ignoreCase = true) ->
+        "O prazo para aceitar a corrida acabou. Aguarde uma nova oferta."
+    else -> value
+}
+
 @Composable
 fun DriverHomeScreen(
     permissionRefreshTick: Int = 0,
@@ -425,7 +433,7 @@ fun DriverHomeScreen(
         Box(Modifier.fillMaxSize().padding(padding).background(Brush.verticalGradient(listOf(HomeBgTop, HomeBgBottom))) ) {
             Column(Modifier.fillMaxSize()) {
                 if (notice.isNotBlank()) InlineAppMessage(text = notice, color = Green, onClose = { notice = "" })
-                if (error.isNotBlank()) InlineAppMessage(text = error, color = Red, onClose = { error = "" })
+                if (error.isNotBlank()) InlineAppMessage(text = readableUpError(error), color = Red, onClose = { error = "" })
                 when (tab) {
                     AppTab.Inicio -> HomeContent(
                         profile = profile!!,
@@ -1139,7 +1147,7 @@ private fun LoginScreen(
             Text("Acesse com CPF e senha numérica para entrar em operação.", color = HomeMuted, fontFamily = AppFont, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
             if (notice.isNotBlank()) InlineNoticeCard(notice, Green)
-            if (error.isNotBlank()) InlineNoticeCard(error, Red)
+            if (error.isNotBlank()) InlineNoticeCard(readableUpError(error), Red)
             if (localMessage.isNotBlank()) InlineNoticeCard(localMessage, Red)
             HomePanel {
                 Text("Acesse sua conta", color = HomeText, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
