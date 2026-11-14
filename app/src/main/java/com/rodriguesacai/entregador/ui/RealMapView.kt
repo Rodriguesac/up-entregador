@@ -50,7 +50,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.XYTileSource
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -68,19 +68,10 @@ private val MapGreen = Color(0xFF16A34A)
 private val MapOrange = Color(0xFFF59E0B)
 private val MapBlue = Color(0xFFEA1D2C)
 
-private val PremiumMapTiles = XYTileSource(
-    "RodriguesCourierCleanMap",
-    1,
-    20,
-    256,
-    ".png",
-    arrayOf(
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
-        "https://d.basemaps.cartocdn.com/rastertiles/voyager/"
-    )
-)
+// Fundo de mapa OSM para os testes iniciais sem watermark/credencial CARTO.
+// Para alto volume comercial, migrar a tiles contratados com SLA ou hospedagem própria.
+// O aplicativo identifica as requisições, guarda tiles em cache e exibe atribuição.
+
 
 /**
  * Modo da rota exibida no mapa.
@@ -156,6 +147,8 @@ fun RealDeliveryMap(
             onTapMap = { fullscreen = true }
         )
 
+        MapAttribution(Modifier.align(Alignment.BottomStart).padding(10.dp))
+
         FullscreenMapButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -196,6 +189,8 @@ private fun FullscreenRouteMap(
                 onTapMap = {}
             )
 
+            MapAttribution(Modifier.align(Alignment.BottomStart).padding(10.dp))
+
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -227,7 +222,7 @@ private fun CleanOsmMap(
             Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
             Configuration.getInstance().userAgentValue = ctx.packageName
             MapView(ctx).apply {
-                setTileSource(PremiumMapTiles)
+                setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(!tapOpensFullscreen)
                 minZoomLevel = 4.0
                 maxZoomLevel = 20.0
@@ -251,6 +246,19 @@ private fun CleanOsmMap(
             }
         },
         update = { map -> applyRouteToMap(map, state) }
+    )
+}
+
+@Composable
+private fun MapAttribution(modifier: Modifier = Modifier) {
+    Text(
+        "© OpenStreetMap contributors",
+        modifier = modifier
+            .clip(RoundedCornerShape(7.dp))
+            .background(Color.White.copy(alpha = 0.92f))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+        color = Color(0xFF374151),
+        fontSize = 10.sp
     )
 }
 
