@@ -1,0 +1,44 @@
+name: UP Entregas - publicar APK de teste para baixar direto
+on:
+  push:
+    branches: [feat/up-gps-independente-20261113]
+    paths:
+      - '.github/workflows/publicar-apk-teste.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Baixar artefato da compilacao Android ja aprovada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download 43483879887 \
+            --repo "$GITHUB_REPOSITORY" \
+            --name UP-Entregas-v2.0.3-rc1-debug-apk \
+            --dir /tmp/up-tested-apk
+          mkdir -p dist
+          cp /tmp/up-tested-apk/app-debug.apk dist/UP-Entregas-v2.0.3-rc1-TESTE.apk
+          test -s dist/UP-Entregas-v2.0.3-rc1-TESTE.apk
+          file dist/UP-Entregas-v2.0.3-rc1-TESTE.apk
+          sha256sum dist/UP-Entregas-v2.0.3-rc1-TESTE.apk
+
+      - name: Criar prerelease publica com link de download direto
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create up-entregas-v2.0.3-rc1-teste-20261113 \
+            "dist/UP-Entregas-v2.0.3-rc1-TESTE.apk#UP-Entregas-v2.0.3-rc1-TESTE.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target 5bbf1a069869cbdb77bb57a9f414cd77c9506e0f \
+            --title "UP Entregas 2.0.3-rc1 - APK DE TESTE" \
+            --notes "Somente para teste em celular ou tablet Android. APK debug, nao e release assinado para producao. Nao distribuir a motoboys em operacao. Nenhuma corrida real ou rastreamento completo foi validado." \
+            --prerelease

@@ -8,6 +8,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.auth.FirebaseAuth
+import org.json.JSONObject
 import java.security.MessageDigest
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -17,7 +19,7 @@ import java.util.Locale
 import java.time.Instant
 
 object DriverRepository {
-    private const val APP_VERSION = "2.0.2"
+    private const val APP_VERSION = "2.0.3-rc1"
     private const val PREFS = "driver_session"
     private const val KEY_ID = "driver_id"
     private const val KEY_NAME = "driver_name"
@@ -50,6 +52,9 @@ object DriverRepository {
     fun currentSession(context: Context): DriverProfile? {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val id = prefs.getString(KEY_ID, null)?.takeIf { it.isNotBlank() } ?: return null
+        // A sessao independente exige o mesmo UID autenticado no Firebase.
+        if (prefs.getString(KEY_COLLECTION, "") == UpIndependentOperations.COLLECTION &&
+            FirebaseAuth.getInstance().currentUser?.uid != id) return null
         return DriverProfile(
             id = id,
             name = prefs.getString(KEY_NAME, null).orEmpty().ifBlank { "Entregador" },
@@ -70,6 +75,16 @@ object DriverRepository {
 
     fun logout(context: Context, onDone: () -> Unit = {}) {
         val session = currentSession(context)
+        if (session?.collectionName == UpIndependentOperations.COLLECTION) {
+            fun finishLogout() {
+                FirebaseAuth.getInstance().signOut()
+                context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+                onDone()
+            }
+            UpIndependentApi.post("presence", JSONObject().put("online", false),
+                onSuccess = { finishLogout() }, onError = { finishLogout() })
+            return
+        }
         if (session != null) {
             db.collection(session.collectionName).document(session.id).set(
                 mapOf(
@@ -94,6 +109,39 @@ object DriverRepository {
         onError: (String) -> Unit
     ) {
         val raw = documentOrPhone.trim()
+        if (raw.contains("@")) {
+            if (password.isBlank()) {
+                onError("Informe a senha da conta UP independente.")
+                return
+            }
+            FirebaseAuth.getInstance().signInWithEmailAndPassword(raw, password)
+                .addOnSuccessListener {
+                    UpIndependentApi.post("session",
+                        onSuccess = { response ->
+                            if (response.optString("state") != "APPROVED") {
+                                FirebaseAuth.getInstance().signOut()
+                                onError("Seu acesso UP ainda nao esta aprovado.")
+                            } else {
+                                val user = FirebaseAuth.getInstance().currentUser
+                                if (user == null) onError("Sessao Firebase nao encontrada.")
+                                else saveSession(context, DriverProfile(
+                                    id = user.uid,
+                                    name = user.displayName?.takeIf { it.isNotBlank() } ?: "Entregador UP",
+                                    collectionName = UpIndependentOperations.COLLECTION,
+                                    verified = true, approved = true,
+                                    needsPasswordSetup = false
+                                ), onSuccess)
+                            }
+                        },
+                        onError = { reason ->
+                            FirebaseAuth.getInstance().signOut()
+                            onError(reason)
+                        }
+                    )
+                }
+                .addOnFailureListener { onError("Login UP nao autorizado. Confira email e senha.") }
+            return
+        }
         val normalized = raw.onlyDigits()
         if (raw.length < 4 && normalized.length < 4) {
             onError("Informe o CPF ou telefone cadastrado do entregador.")
@@ -110,6 +158,77 @@ object DriverRepository {
         }, onNotFound = {
             onError("Entregador nao encontrado. Cadastre-se ou aprove o cadastro no painel gestor.")
         })
+    }
+
+    /**
+     * Cadastro independente: identidade Firebase, inscricao no Supabase UP e
+     * autorizacao exclusivamente pelo gestor. Nao grava CPF/senha no Firestore.
+     */
+    fun registerIndependentDriver(
+        context: Context,
+        request: DriverRegistrationRequest,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val email = request.email.trim()
+        val phone = request.phone.onlyDigits()
+        val cpf = request.cpf.onlyDigits()
+        if (!email.contains("@") || email.length > 150) {
+            onError("Informe um e-mail valido para a conta independente.")
+            return
+        }
+        if (!request.name.isValidFullNameLocal() || !cpf.isValidCpfLocal() || phone.length < 10) {
+            onError("Confira nome completo, CPF e telefone.")
+            return
+        }
+        if (request.password.length < 7) {
+            onError("Informe uma senha com pelo menos 7 caracteres.")
+            return
+        }
+        val profile = JSONObject()
+            .put("nomeCompleto", request.name.trim())
+            .put("telefone", phone)
+            .put("cpf", cpf)
+            .put("nascimento", request.birthDate)
+            .put("tipoVeiculo", request.vehicle)
+            .put("placa", request.plate)
+            .put("modelo", request.vehicleModel)
+        fun submitApplication() {
+            UpIndependentApi.registration("submit", JSONObject().put("profile", profile),
+                onSuccess = {
+                    val user = FirebaseAuth.getInstance().currentUser
+                    if (user == null) {
+                        onError("Conta Firebase nao encontrada apos o cadastro.")
+                        return@registration
+                    }
+                    saveSession(context, DriverProfile(
+                        id = user.uid,
+                        name = request.name.trim(),
+                        collectionName = UpIndependentOperations.COLLECTION,
+                        verified = false,
+                        approved = false,
+                        approvalStatus = "PENDING",
+                        needsPasswordSetup = false
+                    )) { onSuccess() }
+                },
+                onError = { onError("Inscricao UP nao concluida: " + it) }
+            )
+        }
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, request.password)
+            .addOnSuccessListener { submitApplication() }
+            .addOnFailureListener { problem ->
+                // Uma conta existente precisa ser autenticada pelo proprio
+                // titular antes de poder enviar uma nova solicitacao.
+                if (problem is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                    FirebaseAuth.getInstance().signInWithEmailAndPassword(email, request.password)
+                        .addOnSuccessListener { submitApplication() }
+                        .addOnFailureListener {
+                            onError("E-mail ja cadastrado. Entre na conta UP existente para continuar.")
+                        }
+                } else {
+                    onError("Nao foi possivel criar a conta UP: confira e-mail, senha e conexao.")
+                }
+            }
     }
 
     fun registerDriver(
@@ -219,6 +338,23 @@ object DriverRepository {
             onError("Faça login antes de alterar a senha.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            if (newPassword.length < 7) {
+                onError("Use uma senha com pelo menos sete caracteres.")
+                return
+            }
+            val firebaseUser = FirebaseAuth.getInstance().currentUser
+            if (firebaseUser == null || firebaseUser.uid != profile.id) {
+                onError("Faca login novamente na conta UP para alterar a senha.")
+                return
+            }
+            firebaseUser.updatePassword(newPassword)
+                .addOnSuccessListener { onSuccess() }
+                .addOnFailureListener {
+                    onError("Por seguranca, entre novamente no UP antes de trocar a senha.")
+                }
+            return
+        }
         if (newPassword.onlyDigitsLocal().length < 7) {
             onError("A senha precisa ter pelo menos 7 dígitos numéricos.")
             return
@@ -257,6 +393,10 @@ object DriverRepository {
             onError("Faça login antes de salvar recebimento.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            onError("Chave Pix do UP independente: alteracao deve ser aprovada no painel financeiro UP.")
+            return
+        }
         if (pixKey.trim().length < 3) {
             onError("Informe uma chave Pix valida.")
             return
@@ -293,6 +433,10 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login antes de solicitar alteracao.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            onError("Solicitacoes cadastrais do UP independente exigem revisao no painel gestor UP.")
             return
         }
         val text = requestText.trim()
@@ -413,6 +557,11 @@ object DriverRepository {
             .putString(KEY_APPROVAL_STATUS, profile.approvalStatus)
             .apply()
 
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            if (profile.approved) saveMessagingToken(context)
+            onSuccess(profile)
+            return
+        }
         db.collection(profile.collectionName).document(profile.id).set(
             mapOf(
                 "ultimoLoginEm" to Timestamp.now(),
@@ -426,8 +575,38 @@ object DriverRepository {
         onSuccess(profile)
     }
 
-    fun setOnline(context: Context, online: Boolean) {
-        val profile = currentSession(context) ?: return
+    fun setOnline(
+        context: Context,
+        online: Boolean,
+        onDone: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        val profile = currentSession(context)
+        if (profile == null) {
+            onError("Sessao do entregador invalida.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            UpIndependentApi.post("presence", JSONObject().put("online", online),
+                onSuccess = { onDone() }, onError = onError)
+            if (online) {
+                UpIndependentApi.sendTelemetry(context)
+                val preferences = loadOperationalPreferences(context)
+                val methods = listOfNotNull(
+                    "debit".takeIf { preferences.acceptsDebit },
+                    "credit".takeIf { preferences.acceptsCredit },
+                    "installments".takeIf { preferences.acceptsInstallment },
+                    "ticket".takeIf { preferences.acceptsTicket }
+                ).joinToString(",")
+                UpIndependentApi.post("equipment", JSONObject()
+                    .put("has_cash", preferences.hasCashChange)
+                    .put("cash_available", preferences.changeAvailableNumber)
+                    .put("has_machine", preferences.hasMachine)
+                    .put("machine_types", methods))
+                saveMessagingToken(context)
+            }
+            return
+        }
         val payload = linkedMapOf<String, Any?>(
             "id" to profile.id,
             "uid" to profile.id,
@@ -445,6 +624,8 @@ object DriverRepository {
             "appVersion" to APP_VERSION
         )
         db.collection(profile.collectionName).document(profile.id).set(payload, SetOptions.merge())
+            .addOnSuccessListener { onDone() }
+            .addOnFailureListener { onError(it.message ?: "Nao foi possivel mudar disponibilidade.") }
         if (online) saveMessagingToken(context)
     }
 
@@ -492,6 +673,21 @@ object DriverRepository {
 
         if (profile == null) {
             onDone()
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            val methods = listOfNotNull(
+                "debit".takeIf { preferences.acceptsDebit },
+                "credit".takeIf { preferences.acceptsCredit },
+                "installments".takeIf { preferences.acceptsInstallment },
+                "ticket".takeIf { preferences.acceptsTicket }
+            ).joinToString(",")
+            UpIndependentApi.post("equipment", JSONObject()
+                .put("has_cash", preferences.hasCashChange)
+                .put("cash_available", preferences.changeAvailableNumber)
+                .put("has_machine", preferences.hasMachine)
+                .put("machine_types", methods),
+                onSuccess = { onDone() }, onError = onError)
             return
         }
         val payload = mapOf(
@@ -565,6 +761,10 @@ object DriverRepository {
     fun saveMessagingToken(context: Context) {
         val profile = currentSession(context) ?: return
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+                UpIndependentApi.post("token", JSONObject().put("token", token))
+                return@addOnSuccessListener
+            }
             db.collection(profile.collectionName).document(profile.id).set(
                 mapOf(
                     "fcmToken" to token,
@@ -646,6 +846,8 @@ object DriverRepository {
         onRide: (DriverRide?) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watch(true, onRide, onError)
         val profile = currentSession(context) ?: return null
         val state = mutableMapOf<String, List<DriverRide>>()
         fun emit() {
@@ -711,6 +913,8 @@ object DriverRepository {
         onRide: (DriverRide?) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watch(false, onRide, onError)
         val profile = currentSession(context) ?: return null
         val state = mutableMapOf<String, List<DriverRide>>()
         fun emit() {
@@ -766,6 +970,8 @@ object DriverRepository {
         onHistory: (List<DriverHistory>) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watchHistory(onHistory, onError)
         val profile = currentSession(context) ?: return null
         return db.collection("historicoEntregador")
             .limit(120)
@@ -819,6 +1025,8 @@ object DriverRepository {
         onStats: (DriverStats) -> Unit,
         onError: (String) -> Unit
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return UpIndependentOperations.watchWallet(onStats, onError)
         val profile = currentSession(context) ?: return null
 
         var historyBase = DriverStats()
@@ -949,6 +1157,8 @@ object DriverRepository {
         onProfile: (DriverProfile) -> Unit,
         onError: (String) -> Unit = {}
     ): ListenerRegistration? {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION)
+            return null
         val session = currentSession(context) ?: return null
         return db.collection(session.collectionName).document(session.id).addSnapshotListener { doc, err ->
             if (err != null) {
@@ -1101,6 +1311,11 @@ object DriverRepository {
             onError("Faça login antes de registrar o acerto.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            onError("Entrega independente exige codigo de entrega e conferencia de pagamento. Finalizacao ainda nao habilitada.")
+            return
+        }
         fun persist(machine: PaymentMachine?) {
             findMissionDocument(rideId, onFound = { doc ->
                 val preview = calculateSettlementPreview(input, machine)
@@ -1191,6 +1406,12 @@ object DriverRepository {
             onError("Faça login antes de aceitar corrida.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("accept", JSONObject().put("mission_id", rideId),
+                onSuccess = { onDone() }, onError = onError)
+            return
+        }
         findMissionDocument(rideId, onFound = { doc ->
             val collectionName = doc.reference.parent.id
             val ride = doc.toDriverRide(collectionName)
@@ -1278,6 +1499,12 @@ object DriverRepository {
             onError("Faça login antes de rejeitar corrida.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("reject", JSONObject().put("mission_id", rideId),
+                onSuccess = { onDone() }, onError = onError)
+            return
+        }
         findMissionDocument(rideId, onFound = { doc ->
             val collectionName = doc.reference.parent.id
             val ride = doc.toDriverRide(collectionName)
@@ -1352,6 +1579,12 @@ object DriverRepository {
             onError("Faça login antes de expirar corrida.")
             return
         }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("expire", JSONObject().put("mission_id", rideId),
+                onSuccess = { onDone() }, onError = onError)
+            return
+        }
         findMissionDocument(rideId, onFound = { doc ->
             val collectionName = doc.reference.parent.id
             doc.reference.set(
@@ -1404,6 +1637,14 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login para registrar ocorrência.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            UpIndependentApi.post("occurrence",
+                JSONObject().put("mission_id", rideId)
+                    .put("reason", (reason + ": " + details).take(500)),
+                onSuccess = { onDone() }, onError = onError)
             return
         }
         findMissionDocument(rideId, onFound = { doc ->
@@ -1482,6 +1723,23 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login para atualizar a corrida.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION &&
+            UpIndependentApi.isIndependentRide(rideId)) {
+            val next = when (status.upperOrTrim()) {
+                "INDO_LOJA", "TO_STORE" -> "TO_STORE"
+                "PICKUP", "NA_COLETA", "COLETANDO", "CHEGOU_LOJA" -> "AT_STORE"
+                "ARRIVED_CLIENT", "ENTREGADOR_NO_LOCAL", "CHEGUEI_CLIENTE" -> "AT_CUSTOMER"
+                else -> ""
+            }
+            if (next.isBlank()) {
+                onError("Esta etapa exige confirmacao segura de retirada ou entrega no UP.")
+                return
+            }
+            UpIndependentApi.post("stage",
+                JSONObject().put("mission_id", rideId).put("status", next),
+                onSuccess = { onDone() }, onError = onError)
             return
         }
         findMissionDocument(rideId, onFound = { doc ->
@@ -1642,6 +1900,12 @@ object DriverRepository {
         intervaloSeg: Long,
         onError: (String) -> Unit = {}
     ) {
+        // Corridas do Supabase usam exclusivamente o endpoint autenticado
+        // do UP. Nunca grave seus pontos no Firestore antigo.
+        if (UpIndependentApi.isIndependentRide(ride.id)) {
+            UpIndependentApi.sendLocation(ride.id, lat, lng, accuracy, onError)
+            return
+        }
         val profile = currentSession(context) ?: return
         val now = Timestamp.now()
         val statusOperacional = ride.status.toOperationalFirestoreStatus()
@@ -1689,6 +1953,10 @@ object DriverRepository {
     }
 
     fun clearDriverTracking(context: Context) {
+        if (currentSession(context)?.collectionName == UpIndependentOperations.COLLECTION) {
+            forgetActiveRide(context)
+            return
+        }
         val profile = currentSession(context) ?: return
         val now = Timestamp.now()
         forgetActiveRide(context)
@@ -1719,6 +1987,10 @@ object DriverRepository {
         val profile = currentSession(context)
         if (profile == null) {
             onError("Faça login para destravar o app.")
+            return
+        }
+        if (profile.collectionName == UpIndependentOperations.COLLECTION) {
+            onError("Corridas UP devem ser liberadas pelo gestor; destravamento local nao cancela corrida.")
             return
         }
         releaseStaleMission(context, profile, reason, onDone, onError)

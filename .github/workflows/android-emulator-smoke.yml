@@ -1,0 +1,52 @@
+name: UP Android - Abrir APK em emulador (sem login)
+on:
+  push:
+    branches: [feat/up-gps-independente-20261113]
+    paths:
+      - 'scripts/smoke-android-launch.sh'
+      - '.github/workflows/android-emulator-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: up-android-emulator-smoke
+  cancel-in-progress: true
+
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Baixar app Android
+        uses: actions/checkout@v4
+      - name: Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Habilitar KVM para emulador
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Instalar e abrir UP Entregas (Android 14)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash scripts/smoke-android-launch.sh
+      - name: Salvar captura e diagnostico, mesmo se falhar
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UP-Android-Emulador-Tela-e-Logs
+          path: smoke-output/
+          if-no-files-found: warn
