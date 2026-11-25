@@ -44,17 +44,20 @@ object AppAlertPlayer {
     private fun playRaw(context: Context, rawId: Int, urgent: Boolean = false) {
         runCatching {
             val appContext = context.applicationContext
-            MediaPlayer.create(appContext, rawId, AudioAttributes.Builder()
+            requireNotNull(MediaPlayer.create(appContext, rawId, AudioAttributes.Builder()
                 .setUsage(if (urgent) AudioAttributes.USAGE_NOTIFICATION else AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build(), 0)?.apply {
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build(), 0)).apply {
                 setOnCompletionListener { player -> runCatching { player.release() } }
                 start()
             }
         }.recoverCatching {
-            MediaPlayer.create(context.applicationContext, R.raw.alerta)?.apply {
+            requireNotNull(MediaPlayer.create(context.applicationContext, R.raw.alerta)).apply {
                 setOnCompletionListener { player -> runCatching { player.release() } }
                 start()
             }
+        }.recoverCatching {
+            val fallback = android.media.RingtoneManager.getRingtone(context.applicationContext, android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION))
+            fallback?.play()
         }
     }
 

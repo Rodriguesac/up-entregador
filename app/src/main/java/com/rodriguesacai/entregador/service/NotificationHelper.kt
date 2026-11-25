@@ -19,6 +19,10 @@ object NotificationHelper {
     const val CHANNEL_ONLINE = "driver_online"
     const val CHANNEL_URGENT = "urgent_ride_v601"
     const val CHANNEL_NOTICE = "driver_app_notices"
+    private var lastRideId = ""
+    private var lastRideAt = 0L
+    private fun rideNotificationId(rideId: String) = 10000 + (rideId.hashCode() and 0x3fffffff)
+    fun dismissRide(context: Context, rideId: String) { context.getSystemService(NotificationManager::class.java).cancel(rideNotificationId(rideId)) }
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT < 26) return
@@ -143,8 +147,17 @@ object NotificationHelper {
         paymentStatus: String = "",
         amountToCollect: String = "",
         changeFor: String = "",
-        requiresMachine: String = ""
+        requiresMachine: String = "",
+        expiresAtMillis: Long = 0L
     ) {
+        if (rideId.isBlank() || rideId == "sem-id" || (expiresAtMillis > 0L && expiresAtMillis <= System.currentTimeMillis())) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        val duplicate = synchronized(this) {
+            val same = lastRideId == rideId && now - lastRideAt < 5000L
+            if (!same) { lastRideId = rideId; lastRideAt = now }
+            same
+        }
+        if (duplicate) return
         createChannels(context)
         val soundUri = Uri.parse("android.resource://${context.packageName}/${R.raw.nova_corrida}")
         AppAlertPlayer.playNewRide(context)
@@ -162,10 +175,11 @@ object NotificationHelper {
             putExtra("amountToCollect", amountToCollect)
             putExtra("changeFor", changeFor)
             putExtra("requiresMachine", requiresMachine)
+            putExtra("expiresAtMillis", expiresAtMillis)
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(
             context,
-            2,
+            rideNotificationId(rideId),
             fullScreenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -180,12 +194,13 @@ object NotificationHelper {
             .setAutoCancel(true)
             .setContentIntent(fullScreenPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setOnlyAlertOnce(true)
             .setSound(soundUri)
             .setVibrate(longArrayOf(0, 500, 200, 500, 200, 700))
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(1001, notification)
+        manager.notify(rideNotificationId(rideId), notification)
         runCatching { context.startActivity(fullScreenIntent) }
     }
 }

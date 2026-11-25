@@ -14,6 +14,7 @@ import com.rodriguesacai.entregador.ui.UrgentRideScreen
 class UrgentRideActivity : ComponentActivity() {
     private var action by mutableStateOf("")
     private var actionError by mutableStateOf("")
+    private var expiryRequested = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +48,7 @@ class UrgentRideActivity : ComponentActivity() {
                     amountToCollect = amountToCollect,
                     changeFor = changeFor,
                     requiresMachine = requiresMachine,
+                    expiresAtMillis = intent.getLongExtra("expiresAtMillis", 0L),
                     action = action,
                     actionError = actionError,
                     onAccept = {
@@ -54,6 +56,7 @@ class UrgentRideActivity : ComponentActivity() {
                             action = "Aceitando..."
                             actionError = ""
                             DriverRepository.acceptRide(this, rideId, onDone = {
+                                com.rodriguesacai.entregador.service.NotificationHelper.dismissRide(this, rideId)
                                 com.rodriguesacai.entregador.service.AppAlertPlayer.playSuccess(this)
                                 startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
                                 finish()
@@ -64,13 +67,14 @@ class UrgentRideActivity : ComponentActivity() {
                         if (action.isBlank()) {
                             action = "Recusando..."
                             actionError = ""
-                            DriverRepository.rejectRide(this, rideId, onDone = { finish() }, onError = { action = ""; actionError = it })
+                            DriverRepository.rejectRide(this, rideId, onDone = { com.rodriguesacai.entregador.service.NotificationHelper.dismissRide(this, rideId); finish() }, onError = { action = ""; actionError = it })
                         }
                     },
                     onExpired = {
-                        if (action.isBlank()) {
+                        if (action.isBlank() && !expiryRequested) {
+                            expiryRequested = true
                             action = "Encerrando..."
-                            DriverRepository.expireRide(this, rideId, onDone = { finish() }, onError = { action = ""; actionError = it })
+                            DriverRepository.expireRide(this, rideId, onDone = { com.rodriguesacai.entregador.service.NotificationHelper.dismissRide(this, rideId); finish() }, onError = { action = ""; actionError = it })
                         }
                     }
                 )

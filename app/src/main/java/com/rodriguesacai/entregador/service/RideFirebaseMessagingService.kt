@@ -10,7 +10,7 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
         val type = (data["type"] ?: data["event"] ?: data["acao"] ?: data["action"] ?: "").lowercase()
         val rideId = data["rideId"] ?: data["rotaId"] ?: data["pedidoId"] ?: data["id"]
 
-        val looksLikeRide = rideId != null || type in setOf("new_ride", "newride", "nova_corrida", "nova_rota", "pedido_novo", "new_order")
+        val looksLikeRide = !rideId.isNullOrBlank() && (type in setOf("new_ride", "newride", "nova_corrida", "nova_rota", "pedido_novo", "new_order") || data.containsKey("rideId") || data.containsKey("rotaId") || data.containsKey("pedidoId"))
         if (!looksLikeRide) {
             NotificationHelper.appNoticeNotification(
                 context = this,
@@ -45,7 +45,8 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
             paymentStatus = data["statusPagamento"] ?: data["paymentStatus"] ?: "",
             amountToCollect = data["valorReceberCliente"] ?: data["amountToCollect"] ?: data["totalPedido"] ?: data["valorPedido"] ?: "",
             changeFor = data["trocoPara"] ?: data["changeFor"] ?: "",
-            requiresMachine = data["precisaMaquininha"] ?: data["requiresMachine"] ?: ""
+            requiresMachine = data["precisaMaquininha"] ?: data["requiresMachine"] ?: "",
+            expiresAtMillis = listOf("offerExpiresAtMillis", "expiresAtMillis", "ofertaExpiraEm").firstNotNullOfOrNull { k -> data[k]?.toLongOrNull()?.takeIf { it > 0 }?.let { if (it < 100000000000L) it * 1000L else it } } ?: 0L
         )
     }
 

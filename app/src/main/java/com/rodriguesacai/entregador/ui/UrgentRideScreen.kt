@@ -65,17 +65,17 @@ import com.rodriguesacai.entregador.RodriguesFonts
 import kotlinx.coroutines.delay
 
 private val Font = RodriguesFonts.App
-private val Bg = Color(0xFFF7F7F7)
-private val Ink = Color(0xFF1F1F1F)
-private val Muted = Color(0xFF667085)
-private val Border = Color(0xFFE6E6E6)
-private val Navy = Color(0xFFEA1D2C)
+private val Bg = Color(0xFF020816)
+private val Ink = Color(0xFFF8FBFF)
+private val Muted = Color(0xFF93A3BD)
+private val Border = Color(0xFF123B77)
+private val Navy = Color(0xFF0A7DFF)
 private val NavyDark = Color(0xFF9B111E)
 private val NavySoft = Color(0xFFFFEBEE)
 private val Green = Color(0xFF16A34A)
 private val Orange = Color(0xFFD97706)
 private val Red = Color(0xFFEA1D2C)
-private val SurfaceSoft = Color(0xFFF2F2F2)
+private val SurfaceSoft = Color(0xFF08224A)
 private val GreenSoft = Color(0xFFE8F7F1)
 private val RedSoft = Color(0xFFFFEBEE)
 
@@ -92,20 +92,25 @@ fun UrgentRideScreen(
     amountToCollect: String = "",
     changeFor: String = "",
     requiresMachine: String = "",
+    expiresAtMillis: Long = 0L,
     action: String = "",
     actionError: String = "",
     onAccept: () -> Unit,
     onReject: () -> Unit,
     onExpired: () -> Unit
 ) {
-    var seconds by remember(rideId) { mutableStateOf(60) }
-    LaunchedEffect(rideId) {
-        seconds = 60
-        while (seconds > 0) {
-            delay(1000)
-            seconds -= 1
+    var seconds by remember(rideId, expiresAtMillis) { mutableStateOf(if (expiresAtMillis > 0L) ((expiresAtMillis - System.currentTimeMillis() + 999) / 1000).coerceAtLeast(0L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt() else -1) }
+    LaunchedEffect(rideId, expiresAtMillis) {
+        if (expiresAtMillis > 0L) {
+            while (true) {
+                seconds = ((expiresAtMillis - System.currentTimeMillis() + 999) / 1000).coerceAtLeast(0L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                if (seconds == 0) break
+                delay(500)
+            }
         }
-        onExpired()
+    }
+    LaunchedEffect(rideId, seconds, action) {
+        if (seconds == 0 && action.isBlank() && expiresAtMillis > 0L) onExpired()
     }
 
     Column(
@@ -117,14 +122,14 @@ fun UrgentRideScreen(
         Card(
             modifier = Modifier.fillMaxWidth().shadow(12.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Navy.copy(alpha = .16f), spotColor = Color(0x11000000)).border(1.dp, Border, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF061B3C)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     UrgentLogoMark()
                     Column(Modifier.weight(1f)) {
-                        Text("Rodrigues Entregador", color = Navy, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("UP Entregas", color = Navy, fontFamily = Font, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         Text("Nova corrida", color = Ink, fontFamily = Font, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -145,7 +150,7 @@ fun UrgentRideScreen(
         Card(
             modifier = Modifier.fillMaxWidth().border(1.dp, Border, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF061B3C)),
             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -157,15 +162,15 @@ fun UrgentRideScreen(
         }
         if (actionError.isNotBlank()) Text(actionError, color = Red, fontWeight = FontWeight.Bold)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = onReject, enabled = action.isBlank() && seconds > 0, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(22.dp)) {
+            OutlinedButton(onClick = onReject, enabled = action.isBlank() && seconds != 0, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(22.dp)) {
                 Text("Recusar", color = Red, fontFamily = Font, fontWeight = FontWeight.Bold)
             }
             Button(
                 onClick = onAccept,
-                enabled = action.isBlank() && seconds > 0,
+                enabled = action.isBlank() && seconds != 0,
                 modifier = Modifier.weight(1.4f).height(54.dp),
                 shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB7FF16), contentColor = Color(0xFF020816))
             ) {
                 if (action.isNotBlank()) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) else Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
@@ -195,10 +200,10 @@ private fun UrgentTop(seconds: Int) {
         }
         Spacer(Modifier.weight(1f))
         Box(Modifier.size(68.dp), contentAlignment = Alignment.Center) {
-            Box(Modifier.size(66.dp).scale(pulse).alpha(.22f).clip(CircleShape).background(if (seconds <= 10) Red else Navy))
-            Box(Modifier.size(62.dp).clip(CircleShape).background(if (seconds <= 10) Red else Navy).border(4.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(66.dp).scale(pulse).alpha(.22f).clip(CircleShape).background(if (seconds in 0..10) Red else Navy))
+            Box(Modifier.size(62.dp).clip(CircleShape).background(if (seconds in 0..10) Red else Navy).border(4.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(seconds.toString(), color = Color.White, fontFamily = Font, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(if (seconds < 0) "—" else seconds.toString(), color = Color.White, fontFamily = Font, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("seg", color = Color.White.copy(alpha = .85f), fontFamily = Font, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
@@ -215,8 +220,8 @@ private fun UrgentLogoMark() {
 
 @Composable
 private fun UrgentMotionRail(seconds: Int) {
-    val fraction = (seconds / 60f).coerceIn(.03f, 1f)
-    val color = if (seconds <= 10) Red else Navy
+    val fraction = if (seconds < 0) 1f else (seconds / 60f).coerceIn(0f, 1f)
+    val color = if (seconds in 0..10) Red else Navy
     Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(999.dp)).background(color.copy(alpha = .14f))) {
         Box(Modifier.fillMaxWidth(fraction).height(8.dp).clip(RoundedCornerShape(999.dp)).background(Brush.horizontalGradient(listOf(color, Color.White.copy(alpha = .45f)))))
     }
@@ -237,7 +242,7 @@ private fun RouteLine(icon: ImageVector, label: String, value: String, color: Co
 private fun UrgentPaymentLine(method: String, status: String, amount: String, changeFor: String, requiresMachine: String) {
     val raw = method.ifBlank { status }.ifBlank { "Pagamento não informado" }
     val machine = requiresMachine.equals("true", ignoreCase = true) || raw.contains("cart", ignoreCase = true) || raw.contains("maquin", ignoreCase = true)
-    val paid = raw.contains("pago", ignoreCase = true) || raw.contains("online", ignoreCase = true)
+    val paid = status.trim().uppercase() in setOf("PAGO", "PAGA", "CONFIRMADO", "CONFIRMADA", "PAID", "APPROVED", "PAGO_ONLINE") || (status.isBlank() && raw.trim().equals("Pago online", true))
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(SurfaceSoft).padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(if (machine) Icons.Filled.CreditCard else Icons.Filled.Payments, null, tint = if (machine) Orange else Navy, modifier = Modifier.size(20.dp))

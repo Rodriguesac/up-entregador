@@ -138,7 +138,7 @@ import com.rodriguesacai.entregador.service.NotificationHelper
 import kotlinx.coroutines.delay
 
 private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, Notificacoes }
-private const val UP_APP_VERSION = "2.0.3"
+private const val UP_APP_VERSION = "2.0.4"
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
@@ -231,6 +231,7 @@ fun DriverHomeScreen(
     var tab by remember { mutableStateOf(AppTab.Inicio) }
     var online by remember { mutableStateOf(false) }
     var offerAction by remember { mutableStateOf(false) }
+    var routeActionBusy by remember { mutableStateOf(false) }
     var pendingRide by remember { mutableStateOf<DriverRide?>(null) }
     var activeRide by remember { mutableStateOf<DriverRide?>(null) }
     var history by remember { mutableStateOf<List<DriverHistory>>(emptyList()) }
@@ -309,7 +310,8 @@ fun DriverHomeScreen(
                 paymentStatus = ride.paymentStatus,
                 amountToCollect = DriverRepository.formatCurrency(ride.amountToCollectNumber).takeIf { ride.amountToCollectNumber > 0.0 } ?: "",
                 changeFor = DriverRepository.formatCurrency(ride.changeForNumber).takeIf { ride.changeForNumber > 0.0 } ?: "",
-                requiresMachine = ride.requiresMachine.toString()
+                requiresMachine = ride.requiresMachine.toString(),
+                expiresAtMillis = ride.offerExpiresAtMillis
             )
         }
     }
@@ -478,15 +480,18 @@ fun DriverHomeScreen(
                         onAccept = { ride -> if (!offerAction) { offerAction = true; error = ""; notice = "Aceitando corrida..."; DriverRepository.acceptRide(context, ride.id, onDone = { offerAction = false; AppAlertPlayer.playSuccess(context); notice = ""; pendingRide = null; tab = AppTab.Corridas }, onError = { offerAction = false; notice = ""; error = it }) } },
                         onReject = { ride, reason -> if (!offerAction) { offerAction = true; notice = "Recusando corrida..."; DriverRepository.rejectRide(context, ride.id, reason, onDone = { offerAction = false; notice = ""; pendingRide = null }, onError = { offerAction = false; notice = ""; error = it }) } },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
-                        onUpdateRide = { ride, status -> DriverRepository.updateRideStatus(context, ride.id, status, onDone = { AppAlertPlayer.playSuccess(context); error = ""; notice = "Rota atualizada." }, onError = { error = it }) },
+                        onUpdateRide = { ride, status -> if (!routeActionBusy) { routeActionBusy = true; error = ""; notice = "Atualizando rota..."; DriverRepository.updateRideStatus(context, ride.id, status, onDone = { routeActionBusy = false; AppAlertPlayer.playSuccess(context); error = ""; notice = "Rota atualizada." }, onError = { routeActionBusy = false; notice = ""; error = it }) } },
                         onOpenNavigator = onOpenNavigator,
                         onOccurrence = { ride, reason, details ->
                             DriverRepository.reportRideOccurrence(context, ride.id, reason, details, onDone = { AppAlertPlayer.playNotice(context); notice = "Ocorrência enviada. Aguarde o gestor." }, onError = { error = it })
                         },
                         onSettleAndFinish = { ride, input ->
-                            DriverRepository.savePaymentSettlementForRide(context, ride.id, input, onDone = {
-                                DriverRepository.updateRideStatus(context, ride.id, "FINALIZADA", onDone = { AppAlertPlayer.playSuccess(context); error = ""; notice = "Entrega finalizada." }, onError = { error = it })
-                            }, onError = { error = it })
+                            if (!routeActionBusy) {
+                                routeActionBusy = true; error = ""; notice = "Finalizando entrega..."
+                                DriverRepository.savePaymentSettlementForRide(context, ride.id, input, onDone = {
+                                    DriverRepository.updateRideStatus(context, ride.id, "FINALIZADA", onDone = { routeActionBusy = false; AppAlertPlayer.playSuccess(context); error = ""; notice = "Entrega finalizada." }, onError = { routeActionBusy = false; notice = ""; error = it })
+                                }, onError = { routeActionBusy = false; notice = ""; error = it })
+                            }
                         }
                     )
                     AppTab.Mapa -> RouteMapContent(
@@ -825,6 +830,7 @@ private fun PremiumBottomBar(tab: AppTab, onTab: (AppTab) -> Unit) {
     ) {
         BottomItem(AppTab.Inicio, tab, "Início", Icons.Filled.Home, onTab)
         BottomItem(AppTab.Corridas, tab, "Corridas", Icons.Filled.Route, onTab)
+        BottomItem(AppTab.Mapa, tab, "Mapa", Icons.Filled.Map, onTab)
         BottomItem(AppTab.Ganhos, tab, "Carteira", Icons.Filled.AccountBalanceWallet, onTab)
         BottomItem(AppTab.Historico, tab, "Histórico", Icons.Filled.History, onTab)
         BottomItem(AppTab.Conta, tab, "Mais", Icons.Filled.MoreHoriz, onTab)
@@ -2478,7 +2484,7 @@ private fun CurrentRouteScreen(
             SmallMetric("Tempo", ride.duration.ifBlank { "—" }, Modifier.weight(1f))
         }
         PaymentChipsCard(payment)
-        SecondaryButton("Abrir navegação", icon = Icons.Filled.Map, color = Green) { onOpenNavigator(ride.pickup, ride.dropoff) }
+        SecondaryButton("Abrir navegação", icon = Icons.Filled.Map, color = Green) { onOpenNavigator(ride.pickup, if (isDelivering) ride.dropoff else "") }
         NextActionCard(ride, action, onMainClick = {
             if (action.needsPaymentConfirmation) paymentConfirmOpen = true else onUpdateRide(ride, action.statusToSend)
         })
@@ -2685,7 +2691,7 @@ private fun RouteMapContent(activeRide: DriverRide?, online: Boolean, onBackHome
             mode = if (activeRide.isDeliveringStage()) DeliveryMapMode.DRIVER_TO_DROPOFF else DeliveryMapMode.DRIVER_TO_PICKUP,
             modifier = Modifier.height(380.dp)
         )
-        PrimaryButton("Abrir navegação", icon = Icons.Filled.Map) { onOpenNavigator(activeRide.pickup, activeRide.dropoff) }
+        PrimaryButton("Abrir navegação", icon = Icons.Filled.Map) { onOpenNavigator(activeRide.pickup, if (activeRide.isDeliveringStage()) activeRide.dropoff else "") }
     }
 }
 
@@ -3291,13 +3297,13 @@ private fun DriverRide.routeCode(): String = routeReleaseCode.ifBlank { orderCod
 private fun DriverRide.releaseCode(): String = routeReleaseCode.ifBlank { orderCode.ifBlank { id.takeLast(4).uppercase(Locale.ROOT) } }
 private fun DriverRide.stageText(): String = listOf(status, rawStatus, pickupReleaseStatus).joinToString(" ").uppercase(Locale.ROOT)
 private fun DriverRide.isOccurrence(): Boolean = stageText().contains("OCORRENCIA") || stageText().contains("OCORRÊNCIA")
-private fun DriverRide.isDeliveringStage(): Boolean = stageText().let { it.contains("ENTREGA") || it.contains("CLIENTE") || it.contains("ROTA") || it.contains("SAIU") || it.contains("COM_ENTREGADOR") }
-private fun DriverRide.isAtPickup(): Boolean = stageText().let { it.contains("NA_COLETA") || it.contains("COLETA") || it.contains("AGUARDANDO_SAIDA") || it.contains("RETIRADA") }
+private fun DriverRide.isDeliveringStage(): Boolean = status.equals("delivering", true) || status.equals("arrived_client", true) || rawStatus.uppercase(Locale.ROOT) in setOf("EM_ENTREGA", "EM_ROTA", "SAIU_ENTREGA", "A_CAMINHO_CLIENTE", "COM_ENTREGADOR", "ENTREGADOR_NO_LOCAL", "NO_CLIENTE", "CHEGOU_CLIENTE")
+private fun DriverRide.isAtPickup(): Boolean = status.equals("pickup", true) || rawStatus.uppercase(Locale.ROOT) in setOf("NA_COLETA", "COLETA", "COLETANDO", "CHEGOU_LOJA", "ENTREGADOR_CHEGOU_LOJA", "AGUARDANDO_SAIDA", "AGUARDANDO_SAIDA_GESTOR", "RETIRADA")
 private fun DriverRide.hasPickupRelease(): Boolean = pickupReleaseAllowed || pickupReleaseStatus.uppercase(Locale.ROOT).let { it.contains("LIBER") || it.contains("COM_ENTREGADOR") || it.contains("SAIU") }
 private fun DriverRide.shouldShowReleaseCode(): Boolean = isAtPickup() && !isDeliveringStage()
 private fun DriverRide.stageLabel(): String = when {
     isOccurrence() -> "Ocorrência"
-    stageText().contains("ENTREGADOR_NO_LOCAL") -> "No cliente"
+    (status.equals("arrived_client", true) || stageText().contains("ENTREGADOR_NO_LOCAL")) -> "No cliente"
     isDeliveringStage() -> "Em entrega"
     isAtPickup() && !hasPickupRelease() -> "Aguardando saída"
     isAtPickup() -> "Na coleta"
@@ -3306,7 +3312,7 @@ private fun DriverRide.stageLabel(): String = when {
 }
 private fun DriverRide.stageShort(): String = when {
     isOccurrence() -> "Aguardando gestor"
-    stageText().contains("ENTREGADOR_NO_LOCAL") -> "No local"
+    (status.equals("arrived_client", true) || stageText().contains("ENTREGADOR_NO_LOCAL")) -> "No local"
     isDeliveringStage() -> "Em entrega"
     isAtPickup() && !hasPickupRelease() -> "Saída pendente"
     isAtPickup() -> "Na coleta"
@@ -3324,7 +3330,7 @@ private fun DriverRide.displayOrders(): List<RouteOrder> = routeOrders.takeIf { 
 private fun DriverRide.nextAction(): RouteAction {
     return when {
         isOccurrence() -> RouteAction("Ocorrência enviada", "Aguarde o gestor resolver antes de continuar.", "Aguardando gestor", false, "OCORRENCIA", Orange)
-        stageText().contains("ENTREGADOR_NO_LOCAL") -> RouteAction("Finalizar entrega", "Confirme o recebimento/código antes de encerrar.", "Finalizar entrega", true, "FINALIZADA", Green, needsPaymentConfirmation = true)
+        (status.equals("arrived_client", true) || stageText().contains("ENTREGADOR_NO_LOCAL")) -> RouteAction("Finalizar entrega", "Confirme o recebimento/código antes de encerrar.", "Finalizar entrega", true, "FINALIZADA", Green, needsPaymentConfirmation = true)
         isDeliveringStage() -> RouteAction("Próxima ação", "Siga até o cliente e confirme quando chegar.", "Cheguei no cliente", true, "ENTREGADOR_NO_LOCAL", Blue)
         isAtPickup() && !hasPickupRelease() -> RouteAction("Retirada na loja", "Mostre o código e aguarde a saída do gestor.", "Aguardando saída", false, "AGUARDANDO_SAIDA_GESTOR", Orange)
         isAtPickup() && hasPickupRelease() -> RouteAction("Saída liberada", "A rota foi liberada. Inicie a entrega.", "Iniciar entrega", true, "EM_ENTREGA", Green)
