@@ -10,6 +10,11 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
         val type = (data["type"] ?: data["event"] ?: data["acao"] ?: data["action"] ?: "").lowercase()
         val rideId = data["rideId"] ?: data["rotaId"] ?: data["pedidoId"] ?: data["id"]
 
+        if (type in setOf("ride_cancelled", "ride_canceled", "offer_expired", "offer_cancelled", "corrida_cancelada", "oferta_expirada", "oferta_cancelada")) {
+            rideId?.let { NotificationHelper.dismissRide(this, it) }
+            return
+        }
+
         val looksLikeRide = !rideId.isNullOrBlank() && (type in setOf("new_ride", "newride", "nova_corrida", "nova_rota", "pedido_novo", "new_order") || data.containsKey("rideId") || data.containsKey("rotaId") || data.containsKey("pedidoId"))
         if (!looksLikeRide) {
             NotificationHelper.appNoticeNotification(
@@ -22,11 +27,8 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
             return
         }
 
-        if (DriverRepository.currentSession(this) == null) return
-        if (type in setOf("ride_cancelled", "ride_canceled", "offer_expired", "offer_cancelled", "corrida_cancelada", "oferta_expirada", "oferta_cancelada")) {
-            rideId?.let { NotificationHelper.dismissRide(this, it) }
-            return
-        }
+        val profile = DriverRepository.currentSession(this) ?: return
+        if (profile.blocked || !profile.approved) return
         if (DriverRepository.shouldSuppressUrgentPush(this, data)) {
             NotificationHelper.appNoticeNotification(
                 context = this,

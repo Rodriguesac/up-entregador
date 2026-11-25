@@ -32,7 +32,13 @@ class UrgentRideActivity : ComponentActivity() {
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
         val rideId = intent.getStringExtra("rideId") ?: "sem-id"
-        if (rideId == "sem-id" || DriverRepository.currentSession(this) == null) { finish(); return }
+        val profile = DriverRepository.currentSession(this)
+        val expiry = intent.getLongExtra("expiresAtMillis", 0L)
+        if (rideId.isBlank() || rideId == "sem-id" || profile == null || profile.blocked || !profile.approved || (expiry > 0L && expiry <= System.currentTimeMillis())) {
+            com.rodriguesacai.entregador.service.NotificationHelper.dismissRide(this, rideId)
+            finish()
+            return
+        }
         val value = intent.getStringExtra("value").orEmpty()
         val distance = intent.getStringExtra("distance").orEmpty()
         val duration = intent.getStringExtra("duration").orEmpty()

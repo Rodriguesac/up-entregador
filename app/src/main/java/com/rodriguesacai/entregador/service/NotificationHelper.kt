@@ -22,7 +22,10 @@ object NotificationHelper {
     const val CHANNEL_NOTICE = "driver_app_notices"
     private val recentRides = linkedMapOf<String, Pair<Long, Long>>()
     private fun rideNotificationId(rideId: String) = 10000 + (rideId.hashCode() and 0x3fffffff)
-    fun dismissRide(context: Context, rideId: String) { context.getSystemService(NotificationManager::class.java).cancel(rideNotificationId(rideId)) }
+    fun dismissRide(context: Context, rideId: String) {
+        synchronized(this) { recentRides.remove(rideId) }
+        context.getSystemService(NotificationManager::class.java).cancel(rideNotificationId(rideId))
+    }
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT < 26) return
@@ -156,6 +159,7 @@ object NotificationHelper {
             recentRides.entries.removeAll { now - it.value.first >= 30_000L }
             val previous = recentRides[rideId]
             val same = previous != null && (expiresAtMillis == 0L || previous.second == expiresAtMillis)
+            // Keep the known expiry when a duplicate push lacks it.
             if (!same) recentRides[rideId] = now to expiresAtMillis
             same
         }

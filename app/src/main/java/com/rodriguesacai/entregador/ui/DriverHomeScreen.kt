@@ -138,7 +138,7 @@ import com.rodriguesacai.entregador.service.NotificationHelper
 import kotlinx.coroutines.delay
 
 private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, Notificacoes }
-private const val UP_APP_VERSION = "2.0.5"
+private const val UP_APP_VERSION = "2.0.6"
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
@@ -294,9 +294,9 @@ fun DriverHomeScreen(
         showStartupSplash = false
     }
 
-    LaunchedEffect(pendingRide?.id, online, activeRide?.id) {
+    LaunchedEffect(pendingRide?.id, pendingRide?.offerExpiresAtMillis, online, activeRide?.id) {
         val ride = pendingRide
-        if (online && ride != null && activeRide == null) {
+        if (online && ride != null && !ride.hasExpired() && (activeRide == null || ride.isRouteAddition)) {
             tab = AppTab.Corridas
             NotificationHelper.urgentRideNotification(
                 context = context,
@@ -393,7 +393,7 @@ fun DriverHomeScreen(
     if (profile?.blocked == true) {
         SystemStateScreen(
             title = "Cadastro bloqueado",
-            message = "Seu acesso foi bloqueado/reprovado pela operação. Fale com o suporte do UP Entregas.",
+            message = "Seu acesso foi bloqueado/reprovado pela operação. Fale com o suporte do UP Entregador.",
             icon = Icons.Filled.Shield,
             color = Red
         )
@@ -569,12 +569,12 @@ private fun UpStartupSplash() {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(32.dp)) {
             Image(
                 painter = painterResource(R.drawable.up_entregas_logo),
-                contentDescription = "UP Entregas",
+                contentDescription = "UP Entregador",
                 modifier = Modifier.fillMaxWidth(.35f).scale(scale),
                 contentScale = ContentScale.Fit
             )
             LoadingDots()
-            Text("UP Entregas v$UP_APP_VERSION", color = HomeText.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("UP Entregador v$UP_APP_VERSION", color = HomeText.copy(alpha = .70f), fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -794,7 +794,7 @@ private fun AppNoticeModal(notice: AppNotice, onClose: () -> Unit, onAction: () 
     val hasCommand = notice.hasAppCommand()
     AlertDialog(
         onDismissRequest = onClose,
-        title = { Text(notice.title.ifBlank { "Comunicado UP Entregas" }, color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Bold) },
+        title = { Text(notice.title.ifBlank { "Comunicado UP Entregador" }, color = Ink, fontFamily = AppFont, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 StatusChip(notice.category.ifBlank { "Aviso" }, YellowDark, Icons.Filled.NotificationsActive)
@@ -1105,7 +1105,7 @@ private fun BrandHeader(title: String, subtitle: String, icon: ImageVector) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RodriguesLogoMark(size = 54, pulse = true)
             Column {
-                Text("UP Entregas", color = HomeLime, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("UP Entregador", color = HomeLime, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(title, color = HomeText, fontFamily = AppFont, fontSize = 23.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -1159,7 +1159,7 @@ private fun LoginScreen(
             if (localMessage.isNotBlank()) InlineNoticeCard(localMessage, Red)
             HomePanel {
                 Text("Acesse sua conta", color = HomeText, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Use os dados cadastrados no UP Entregas.", color = HomeMuted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 17.sp)
+                Text("Use os dados cadastrados no UP Entregador.", color = HomeMuted, fontFamily = AppFont, fontSize = 12.sp, lineHeight = 17.sp)
                 Field("CPF", cpfLogin, { cpfLogin = formatCpfWhenComplete(it) }, "Digite seu CPF", keyboardType = KeyboardType.Number)
                 Field("Senha", passwordLogin, { passwordLogin = onlyDigits(it).take(12) }, "Mínimo 7 dígitos", password = true, keyboardType = KeyboardType.NumberPassword)
                 PrimaryButton("ENTRAR", enabled = !loading, icon = Icons.Filled.CheckCircle, color = HomeLime) {
@@ -1176,7 +1176,7 @@ private fun LoginScreen(
                 }
                 SecondaryButton("CRIAR CADASTRO", icon = Icons.Filled.Person, color = HomeText) { mode = "cadastro" }
             }
-            Text("UP Entregas v$UP_APP_VERSION", color = HomeMuted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text("UP Entregador v$UP_APP_VERSION", color = HomeMuted, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -1227,7 +1227,7 @@ private fun RegisterStepperScreen(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.ArrowBack, null, tint = Navy, modifier = Modifier.size(26.dp).clickable { if (step > 0) step-- else onBackLogin() })
             Column(Modifier.weight(1f)) {
-                Text("Cadastro UP Entregas", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Cadastro UP Entregador", color = Ink, fontFamily = AppFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text("Passo ${step + 1} de $total", color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             RodriguesLogoMark(size = 44)
@@ -1379,7 +1379,7 @@ private fun RodriguesLogoMark(size: Int = 56, pulse: Boolean = false) {
     )
     Image(
         painter = painterResource(R.drawable.up_entregas_logo),
-        contentDescription = "Logo UP Entregas",
+        contentDescription = "Logo UP Entregador",
         modifier = Modifier.size(size.dp).scale(pulseScale),
         contentScale = ContentScale.Fit
     )
@@ -2935,7 +2935,7 @@ private fun MoreContent(
                     }
                     Switch(checked = hideValues, onCheckedChange = { onToggleValues() })
                 }
-                Text("Versão $UP_APP_VERSION • UP Entregas", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Versão $UP_APP_VERSION • UP Entregador", color = Muted2, fontFamily = AppFont, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             SecondaryButton("Sair do app", icon = Icons.Filled.ArrowBack, color = Red, onClick = onLogout)
         }
@@ -3067,7 +3067,7 @@ private fun AppReadinessScreen(onBack: () -> Unit) {
             RoutePointLine(Icons.Filled.SupportAgent, "Destravar", "Limpa vínculo preso nas coleções operacionais", Green)
         }
         PremiumCard {
-            Text("UP Entregas v$UP_APP_VERSION", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("UP Entregador v$UP_APP_VERSION", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text("Esta versão foi organizada como produto: fluxo de entrada, operação, financeiro, suporte e comando do GADM trabalhando juntos.", color = Muted, fontFamily = AppFont, fontSize = 13.sp, lineHeight = 18.sp)
         }
     }
@@ -3170,7 +3170,7 @@ private fun SupportScreen(onBack: () -> Unit, onForceUnlock: () -> Unit) {
         }
         PremiumCard {
             Text("Versão", color = Ink, fontFamily = AppFont, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("$UP_APP_VERSION — UP Entregas", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("$UP_APP_VERSION — UP Entregador", color = Muted, fontFamily = AppFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

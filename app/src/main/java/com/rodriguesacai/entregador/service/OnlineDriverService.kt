@@ -28,6 +28,7 @@ class OnlineDriverService : Service() {
     private var configListener: ListenerRegistration? = null
 
     private var lastNotifiedRideId: String? = null
+    private var lastNotifiedExpiry: Long = 0L
     private var activeRide: DriverRide? = null
     private var activeRideKey: String? = null
 
@@ -61,11 +62,14 @@ class OnlineDriverService : Service() {
         pendingRideListener = DriverRepository.listenPendingRide(
             context = this,
             onRide = { ride ->
-                if (ride == null) {
+                if (ride == null || ride.hasExpired()) {
                     lastNotifiedRideId?.let { NotificationHelper.dismissRide(this, it) }
                     lastNotifiedRideId = null
-                } else if (ride.id != lastNotifiedRideId && !ride.hasExpired()) {
+                    lastNotifiedExpiry = 0L
+                } else if (ride.id != lastNotifiedRideId || ride.offerExpiresAtMillis != lastNotifiedExpiry) {
+                    lastNotifiedRideId?.takeIf { it != ride.id }?.let { NotificationHelper.dismissRide(this, it) }
                     lastNotifiedRideId = ride.id
+                    lastNotifiedExpiry = ride.offerExpiresAtMillis
                     NotificationHelper.urgentRideNotification(
                         context = this,
                         rideId = ride.id,
