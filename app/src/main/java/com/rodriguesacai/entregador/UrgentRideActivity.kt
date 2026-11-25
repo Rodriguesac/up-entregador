@@ -1,6 +1,10 @@
 package com.rodriguesacai.entregador
 
 import android.os.Bundle
+import android.content.Intent
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +12,9 @@ import com.rodriguesacai.entregador.data.DriverRepository
 import com.rodriguesacai.entregador.ui.UrgentRideScreen
 
 class UrgentRideActivity : ComponentActivity() {
+    private var action by mutableStateOf("")
+    private var actionError by mutableStateOf("")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(
@@ -40,9 +47,32 @@ class UrgentRideActivity : ComponentActivity() {
                     amountToCollect = amountToCollect,
                     changeFor = changeFor,
                     requiresMachine = requiresMachine,
-                    onAccept = { DriverRepository.acceptRide(this, rideId, onDone = { finish() }, onError = { finish() }) },
-                    onReject = { DriverRepository.rejectRide(this, rideId, onDone = { finish() }, onError = { finish() }) },
-                    onExpired = { DriverRepository.expireRide(this, rideId, onDone = { finish() }, onError = { finish() }) }
+                    action = action,
+                    actionError = actionError,
+                    onAccept = {
+                        if (action.isBlank()) {
+                            action = "Aceitando..."
+                            actionError = ""
+                            DriverRepository.acceptRide(this, rideId, onDone = {
+                                com.rodriguesacai.entregador.service.AppAlertPlayer.playSuccess(this)
+                                startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+                                finish()
+                            }, onError = { action = ""; actionError = it })
+                        }
+                    },
+                    onReject = {
+                        if (action.isBlank()) {
+                            action = "Recusando..."
+                            actionError = ""
+                            DriverRepository.rejectRide(this, rideId, onDone = { finish() }, onError = { action = ""; actionError = it })
+                        }
+                    },
+                    onExpired = {
+                        if (action.isBlank()) {
+                            action = "Encerrando..."
+                            DriverRepository.expireRide(this, rideId, onDone = { finish() }, onError = { action = ""; actionError = it })
+                        }
+                    }
                 )
             }
         }

@@ -17,7 +17,7 @@ import com.rodriguesacai.entregador.UrgentRideActivity
 
 object NotificationHelper {
     const val CHANNEL_ONLINE = "driver_online"
-    const val CHANNEL_URGENT = "urgent_ride_v600"
+    const val CHANNEL_URGENT = "urgent_ride_v601"
     const val CHANNEL_NOTICE = "driver_app_notices"
 
     fun createChannels(context: Context) {
@@ -44,7 +44,7 @@ object NotificationHelper {
             setSound(
                 Uri.parse("android.resource://${context.packageName}/${R.raw.nova_corrida}"),
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build()
             )
@@ -145,6 +145,7 @@ object NotificationHelper {
         changeFor: String = "",
         requiresMachine: String = ""
     ) {
+        createChannels(context)
         val soundUri = Uri.parse("android.resource://${context.packageName}/${R.raw.nova_corrida}")
         AppAlertPlayer.playNewRide(context)
 
@@ -177,6 +178,7 @@ object NotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
+            .setContentIntent(fullScreenPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true)
             .setSound(soundUri)
             .setVibrate(longArrayOf(0, 500, 200, 500, 200, 700))

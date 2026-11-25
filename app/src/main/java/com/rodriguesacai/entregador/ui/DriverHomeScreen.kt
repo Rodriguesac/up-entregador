@@ -138,7 +138,7 @@ import com.rodriguesacai.entregador.service.NotificationHelper
 import kotlinx.coroutines.delay
 
 private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, Notificacoes }
-private const val UP_APP_VERSION = "2.0.2"
+private const val UP_APP_VERSION = "2.0.3"
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
@@ -230,6 +230,7 @@ fun DriverHomeScreen(
     var profile by remember { mutableStateOf(DriverRepository.currentSession(context)) }
     var tab by remember { mutableStateOf(AppTab.Inicio) }
     var online by remember { mutableStateOf(false) }
+    var offerAction by remember { mutableStateOf(false) }
     var pendingRide by remember { mutableStateOf<DriverRide?>(null) }
     var activeRide by remember { mutableStateOf<DriverRide?>(null) }
     var history by remember { mutableStateOf<List<DriverHistory>>(emptyList()) }
@@ -295,6 +296,7 @@ fun DriverHomeScreen(
     LaunchedEffect(pendingRide?.id, online, activeRide?.id) {
         val ride = pendingRide
         if (online && ride != null && activeRide == null) {
+            tab = AppTab.Corridas
             NotificationHelper.urgentRideNotification(
                 context = context,
                 rideId = ride.id,
@@ -451,8 +453,8 @@ fun DriverHomeScreen(
                             DriverRepository.setOnline(context, checked)
                             if (checked) onGoOnline() else { pendingRide = null; onGoOffline() }
                         },
-                        onAccept = { ride -> AppAlertPlayer.playSuccess(context); DriverRepository.acceptRide(context, ride.id, onDone = { pendingRide = null; tab = AppTab.Corridas }, onError = { error = it }) },
-                        onReject = { ride, reason -> AppAlertPlayer.playTap(context); DriverRepository.rejectRide(context, ride.id, reason, onDone = { pendingRide = null }, onError = { error = it }) },
+                        onAccept = { ride -> if (!offerAction) { offerAction = true; error = ""; notice = "Aceitando corrida..."; DriverRepository.acceptRide(context, ride.id, onDone = { offerAction = false; AppAlertPlayer.playSuccess(context); notice = ""; pendingRide = null; tab = AppTab.Corridas }, onError = { offerAction = false; notice = ""; error = it }) } },
+                        onReject = { ride, reason -> if (!offerAction) { offerAction = true; notice = "Recusando corrida..."; DriverRepository.rejectRide(context, ride.id, reason, onDone = { offerAction = false; notice = ""; pendingRide = null }, onError = { offerAction = false; notice = ""; error = it }) } },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
                         onOpenRides = { tab = AppTab.Corridas },
                         onOpenHistory = { tab = AppTab.Historico },
@@ -473,8 +475,8 @@ fun DriverHomeScreen(
                             DriverRepository.setOnline(context, checked)
                             if (checked) onGoOnline() else { pendingRide = null; onGoOffline() }
                         },
-                        onAccept = { ride -> AppAlertPlayer.playSuccess(context); DriverRepository.acceptRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
-                        onReject = { ride, reason -> AppAlertPlayer.playTap(context); DriverRepository.rejectRide(context, ride.id, reason, onDone = { pendingRide = null }, onError = { error = it }) },
+                        onAccept = { ride -> if (!offerAction) { offerAction = true; error = ""; notice = "Aceitando corrida..."; DriverRepository.acceptRide(context, ride.id, onDone = { offerAction = false; AppAlertPlayer.playSuccess(context); notice = ""; pendingRide = null; tab = AppTab.Corridas }, onError = { offerAction = false; notice = ""; error = it }) } },
+                        onReject = { ride, reason -> if (!offerAction) { offerAction = true; notice = "Recusando corrida..."; DriverRepository.rejectRide(context, ride.id, reason, onDone = { offerAction = false; notice = ""; pendingRide = null }, onError = { offerAction = false; notice = ""; error = it }) } },
                         onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
                         onUpdateRide = { ride, status -> DriverRepository.updateRideStatus(context, ride.id, status, onDone = { AppAlertPlayer.playSuccess(context); error = ""; notice = "Rota atualizada." }, onError = { error = it }) },
                         onOpenNavigator = onOpenNavigator,
@@ -2326,7 +2328,10 @@ private fun IncomingOfferPanel(ride: DriverRide, onAccept: (DriverRide) -> Unit,
                     Text(ride.pickup.ifBlank { "Rodrigues Açaí e Cia." }, color = Ink, fontFamily = AppFont, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (ride.neighborhood.isNotBlank()) Text(ride.neighborhood, color = Muted, fontFamily = AppFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                Text(ride.value.ifBlank { DriverRepository.formatCurrency(ride.valueNumber) }, color = Green, fontFamily = AppFont, fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("Você recebe", color = Muted, fontSize = 11.sp)
+                    Text(ride.value.ifBlank { if (ride.valueNumber > 0) DriverRepository.formatCurrency(ride.valueNumber) else "Não informado" }, color = Green, fontFamily = AppFont, fontSize = 30.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 OfferMetric("Distância", ride.distance.ifBlank { "—" }, Icons.Filled.Route, Modifier.weight(1f))
@@ -3271,13 +3276,12 @@ private fun operationalStatus(online: Boolean, activeRide: DriverRide?, permissi
     val gpsOk = isGpsEnabled(context)
     return when {
         activeRide != null -> OperationalStatus(AvailabilityKind.EmEntrega, activeRide.stageShort(), "Rota ativa #${activeRide.routeCode()}", Blue, Color.White, false)
-        batteryLow -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Bateria abaixo de 10%. Carregue o aparelho.", Red, Color.White, false)
         !permissions.notifications -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative notificações para receber corridas.", Red, Color.White, false)
         !permissions.location || !gpsOk -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative localização/GPS para ficar disponível.", Red, Color.White, false)
         !permissions.fullScreenIntent -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Ative o alerta urgente em tela cheia.", Red, Color.White, false)
         !permissions.batteryUnrestricted -> OperationalStatus(AvailabilityKind.Restricao, "Restrição", "Remova restrição de bateria do app.", Red, Color.White, false)
         !netOk -> OperationalStatus(AvailabilityKind.Restricao, "Sem conexão", "Internet indisponível no momento.", Red, Color.White, false)
-        online -> OperationalStatus(AvailabilityKind.Disponivel, "Disponível", "Aguardando corrida da operação.", Green, Color.White, true)
+        online -> OperationalStatus(AvailabilityKind.Disponivel, "Disponível", if (batteryLow) "Bateria baixa: conecte o carregador. Teste liberado." else "Aguardando corrida da operação.", Green, Color.White, true)
         else -> OperationalStatus(AvailabilityKind.Indisponivel, "Indisponível", "Toque para ficar disponível.", Ink, Color.White, true)
     }
 }

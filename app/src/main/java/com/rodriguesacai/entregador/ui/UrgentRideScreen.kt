@@ -6,6 +6,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -89,6 +92,8 @@ fun UrgentRideScreen(
     amountToCollect: String = "",
     changeFor: String = "",
     requiresMachine: String = "",
+    action: String = "",
+    actionError: String = "",
     onAccept: () -> Unit,
     onReject: () -> Unit,
     onExpired: () -> Unit
@@ -107,6 +112,7 @@ fun UrgentRideScreen(
         modifier = Modifier.fillMaxSize().background(Bg).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         UrgentTop(seconds)
         Card(
             modifier = Modifier.fillMaxWidth().shadow(12.dp, RoundedCornerShape(24.dp), clip = false, ambientColor = Navy.copy(alpha = .16f), spotColor = Color(0x11000000)).border(1.dp, Border, RoundedCornerShape(24.dp)),
@@ -122,7 +128,8 @@ fun UrgentRideScreen(
                         Text("Nova corrida", color = Ink, fontFamily = Font, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                Text(value.ifBlank { "Valor a definir" }, color = Navy, fontFamily = Font, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                Text("Você recebe", color = Muted, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(value.ifBlank { "Valor não informado" }, color = Navy, fontFamily = Font, fontSize = 34.sp, fontWeight = FontWeight.Bold)
                 Text(listOf(distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Dados da rota aguardando sincronização" }, color = Muted, fontFamily = Font, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 UrgentMotionRail(seconds)
             }
@@ -147,20 +154,22 @@ fun UrgentRideScreen(
                 UrgentPaymentLine(paymentMethod, paymentStatus, amountToCollect, changeFor, requiresMachine)
             }
         }
-        Spacer(Modifier.weight(1f))
+        }
+        if (actionError.isNotBlank()) Text(actionError, color = Red, fontWeight = FontWeight.Bold)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(22.dp)) {
+            OutlinedButton(onClick = onReject, enabled = action.isBlank() && seconds > 0, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(22.dp)) {
                 Text("Recusar", color = Red, fontFamily = Font, fontWeight = FontWeight.Bold)
             }
             Button(
                 onClick = onAccept,
+                enabled = action.isBlank() && seconds > 0,
                 modifier = Modifier.weight(1.4f).height(54.dp),
                 shape = RoundedCornerShape(22.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Color.White)
             ) {
-                Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
+                if (action.isNotBlank()) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) else Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Aceitar", fontFamily = Font, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(action.ifBlank { "Aceitar" }, fontFamily = Font, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
         Text("Pedido #${rideId.takeLast(6).uppercase()}", color = Muted, fontFamily = Font, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())

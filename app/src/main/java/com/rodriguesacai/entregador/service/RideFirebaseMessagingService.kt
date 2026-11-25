@@ -36,7 +36,7 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
         NotificationHelper.urgentRideNotification(
             context = this,
             rideId = rideId ?: "sem-id",
-            value = data["value"] ?: data["valor"] ?: data["valorRota"] ?: "",
+            value = listOf("repasseEntregador", "valorRepasseEntregador", "valorRepasseMotoboy", "valorCorrida", "valorRota", "valueNumber", "value", "valor").firstNotNullOfOrNull { key -> data[key]?.takeIf { it.isNotBlank() } }?.let { raw -> raw.replace("R$", "").trim().replace(",", ".").toDoubleOrNull()?.let { DriverRepository.formatCurrency(it) } ?: raw } ?: "",
             distance = data["distance"] ?: data["distancia"] ?: data["distanciaKm"] ?: "",
             duration = data["duration"] ?: data["tempo"] ?: data["tempoMin"] ?: "",
             pickup = data["pickup"] ?: data["pickupAddress"] ?: data["lojaEndereco"] ?: data["nomeLoja"] ?: "",

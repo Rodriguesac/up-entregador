@@ -2,6 +2,7 @@ package com.rodriguesacai.entregador.service
 
 import android.content.Context
 import android.media.MediaPlayer
+import android.media.AudioAttributes
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -16,7 +17,7 @@ object AppAlertPlayer {
         val now = System.currentTimeMillis()
         if (now - lastUrgentPlayedAt < 2500L) return
         lastUrgentPlayedAt = now
-        playRaw(context, R.raw.nova_corrida)
+        playRaw(context, R.raw.nova_corrida, urgent = true)
         vibrate(context, longArrayOf(0, 450, 140, 450, 140, 720))
     }
 
@@ -40,10 +41,12 @@ object AppAlertPlayer {
         vibrate(context, pattern)
     }
 
-    private fun playRaw(context: Context, rawId: Int) {
+    private fun playRaw(context: Context, rawId: Int, urgent: Boolean = false) {
         runCatching {
             val appContext = context.applicationContext
-            MediaPlayer.create(appContext, rawId)?.apply {
+            MediaPlayer.create(appContext, rawId, AudioAttributes.Builder()
+                .setUsage(if (urgent) AudioAttributes.USAGE_NOTIFICATION else AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build(), 0)?.apply {
                 setOnCompletionListener { player -> runCatching { player.release() } }
                 start()
             }
