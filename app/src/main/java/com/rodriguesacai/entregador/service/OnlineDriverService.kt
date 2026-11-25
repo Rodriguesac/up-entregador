@@ -61,7 +61,10 @@ class OnlineDriverService : Service() {
         pendingRideListener = DriverRepository.listenPendingRide(
             context = this,
             onRide = { ride ->
-                if (ride != null && ride.id != lastNotifiedRideId) {
+                if (ride == null) {
+                    lastNotifiedRideId?.let { NotificationHelper.dismissRide(this, it) }
+                    lastNotifiedRideId = null
+                } else if (ride.id != lastNotifiedRideId && !ride.hasExpired()) {
                     lastNotifiedRideId = ride.id
                     NotificationHelper.urgentRideNotification(
                         context = this,
@@ -75,7 +78,8 @@ class OnlineDriverService : Service() {
                         paymentStatus = ride.paymentStatus,
                         amountToCollect = DriverRepository.formatCurrency(ride.amountToCollectNumber),
                         changeFor = if (ride.changeForNumber > 0.0) DriverRepository.formatCurrency(ride.changeForNumber) else "",
-                        requiresMachine = if (ride.requiresMachine) "true" else "false"
+                        requiresMachine = if (ride.requiresMachine) "true" else "false",
+                        expiresAtMillis = ride.offerExpiresAtMillis
                     )
                 }
             },
@@ -129,7 +133,7 @@ class OnlineDriverService : Service() {
     }
 
     private fun restartLocationUpdates() {
-        stopLocationUpdates(clearFirebase = false)
+        stopLocationUpdates(clearFirebase = false, resetTracking = false)
         if (activeRide != null) startLocationUpdates()
     }
 
@@ -183,7 +187,7 @@ class OnlineDriverService : Service() {
         fusedLocationClient.requestLocationUpdates(request, locationCallback!!, Looper.getMainLooper())
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
+            if (location != null && activeRideKey == "${ride.collectionName}:${ride.id}" && lastLocation == null && android.os.SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos <= 60_000_000_000L) {
                 lastLocation = location
                 DriverRepository.updateDriverLocationForTracking(
                     context = this,
@@ -201,14 +205,16 @@ class OnlineDriverService : Service() {
         }
     }
 
-    private fun stopLocationUpdates(clearFirebase: Boolean = true) {
+    private fun stopLocationUpdates(clearFirebase: Boolean = true, resetTracking: Boolean = true) {
         locationCallback?.let { callback ->
             fusedLocationClient.removeLocationUpdates(callback)
         }
         locationCallback = null
-        lastLocation = null
-        trackedDistanceKm = 0.0
-        trackingStartedAtMillis = 0L
+        if (resetTracking) {
+            lastLocation = null
+            trackedDistanceKm = 0.0
+            trackingStartedAtMillis = 0L
+        }
         if (clearFirebase) DriverRepository.clearDriverTracking(this)
     }
 

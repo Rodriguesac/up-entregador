@@ -13,14 +13,14 @@ import kotlin.math.absoluteValue
 import androidx.core.app.NotificationCompat
 import com.rodriguesacai.entregador.MainActivity
 import com.rodriguesacai.entregador.R
+import com.rodriguesacai.entregador.RodriguesApp
 import com.rodriguesacai.entregador.UrgentRideActivity
 
 object NotificationHelper {
     const val CHANNEL_ONLINE = "driver_online"
     const val CHANNEL_URGENT = "urgent_ride_v601"
     const val CHANNEL_NOTICE = "driver_app_notices"
-    private var lastRideId = ""
-    private var lastRideAt = 0L
+    private val recentRides = linkedMapOf<String, Pair<Long, Long>>()
     private fun rideNotificationId(rideId: String) = 10000 + (rideId.hashCode() and 0x3fffffff)
     fun dismissRide(context: Context, rideId: String) { context.getSystemService(NotificationManager::class.java).cancel(rideNotificationId(rideId)) }
 
@@ -76,7 +76,7 @@ object NotificationHelper {
         )
         return NotificationCompat.Builder(context, CHANNEL_ONLINE)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Rodrigues Entregador")
+            .setContentTitle("UP Entregador")
             .setContentText("Online e aguardando novas corridas.")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -153,14 +153,15 @@ object NotificationHelper {
         if (rideId.isBlank() || rideId == "sem-id" || (expiresAtMillis > 0L && expiresAtMillis <= System.currentTimeMillis())) return
         val now = android.os.SystemClock.elapsedRealtime()
         val duplicate = synchronized(this) {
-            val same = lastRideId == rideId && now - lastRideAt < 5000L
-            if (!same) { lastRideId = rideId; lastRideAt = now }
+            recentRides.entries.removeAll { now - it.value.first >= 30_000L }
+            val previous = recentRides[rideId]
+            val same = previous != null && (expiresAtMillis == 0L || previous.second == expiresAtMillis)
+            if (!same) recentRides[rideId] = now to expiresAtMillis
             same
         }
         if (duplicate) return
         createChannels(context)
         val soundUri = Uri.parse("android.resource://${context.packageName}/${R.raw.nova_corrida}")
-        AppAlertPlayer.playNewRide(context)
 
         val fullScreenIntent = Intent(context, UrgentRideActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -189,18 +190,28 @@ object NotificationHelper {
             .setContentTitle("Nova corrida urgente disponível")
             .setContentText(listOf(value, distance, duration).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Toque para abrir a oferta" })
             .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setCategory(NotificationCompat.CATEGORY_EVENT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(fullScreenPendingIntent)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .apply {
+                val manager = context.getSystemService(NotificationManager::class.java)
+                if (Build.VERSION.SDK_INT < 34 || manager.canUseFullScreenIntent()) {
+                    setFullScreenIntent(fullScreenPendingIntent, true)
+                }
+                if (expiresAtMillis > 0L) setTimeoutAfter((expiresAtMillis - System.currentTimeMillis()).coerceAtLeast(1L))
+            }
             .setOnlyAlertOnce(true)
             .setSound(soundUri)
             .setVibrate(longArrayOf(0, 500, 200, 500, 200, 700))
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(rideNotificationId(rideId), notification)
-        runCatching { context.startActivity(fullScreenIntent) }
+        if (androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            runCatching { manager.notify(rideNotificationId(rideId), notification) }
+        }
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            if (RodriguesApp.isVisible()) runCatching { context.startActivity(fullScreenIntent) }
+        }
     }
 }

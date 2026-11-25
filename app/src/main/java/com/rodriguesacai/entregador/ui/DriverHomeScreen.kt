@@ -138,7 +138,7 @@ import com.rodriguesacai.entregador.service.NotificationHelper
 import kotlinx.coroutines.delay
 
 private enum class AppTab { Inicio, Corridas, Mapa, Ganhos, Historico, Conta, Notificacoes }
-private const val UP_APP_VERSION = "2.0.4"
+private const val UP_APP_VERSION = "2.0.5"
 private enum class AvailabilityKind { Disponivel, Indisponivel, Restricao, EmEntrega }
 
 private val AppFont = RodriguesFonts.App
@@ -455,9 +455,9 @@ fun DriverHomeScreen(
                             DriverRepository.setOnline(context, checked)
                             if (checked) onGoOnline() else { pendingRide = null; onGoOffline() }
                         },
-                        onAccept = { ride -> if (!offerAction) { offerAction = true; error = ""; notice = "Aceitando corrida..."; DriverRepository.acceptRide(context, ride.id, onDone = { offerAction = false; AppAlertPlayer.playSuccess(context); notice = ""; pendingRide = null; tab = AppTab.Corridas }, onError = { offerAction = false; notice = ""; error = it }) } },
-                        onReject = { ride, reason -> if (!offerAction) { offerAction = true; notice = "Recusando corrida..."; DriverRepository.rejectRide(context, ride.id, reason, onDone = { offerAction = false; notice = ""; pendingRide = null }, onError = { offerAction = false; notice = ""; error = it }) } },
-                        onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { pendingRide = null }, onError = { error = it }) },
+                        onAccept = { ride -> if (!offerAction) { offerAction = true; error = ""; notice = "Aceitando corrida..."; DriverRepository.acceptRide(context, ride.id, onDone = { offerAction = false; NotificationHelper.dismissRide(context, ride.id); AppAlertPlayer.playSuccess(context); notice = ""; pendingRide = null; tab = AppTab.Corridas }, onError = { offerAction = false; notice = ""; error = it }) } },
+                        onReject = { ride, reason -> if (!offerAction) { offerAction = true; notice = "Recusando corrida..."; DriverRepository.rejectRide(context, ride.id, reason, onDone = { offerAction = false; NotificationHelper.dismissRide(context, ride.id); notice = ""; pendingRide = null }, onError = { offerAction = false; notice = ""; error = it }) } },
+                        onExpire = { ride -> DriverRepository.expireRide(context, ride.id, onDone = { NotificationHelper.dismissRide(context, ride.id); pendingRide = null }, onError = { error = it }) },
                         onOpenRides = { tab = AppTab.Corridas },
                         onOpenHistory = { tab = AppTab.Historico },
                         onOpenWallet = { tab = AppTab.Ganhos },

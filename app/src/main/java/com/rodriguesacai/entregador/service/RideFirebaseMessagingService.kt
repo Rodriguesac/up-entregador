@@ -22,6 +22,11 @@ class RideFirebaseMessagingService : FirebaseMessagingService() {
             return
         }
 
+        if (DriverRepository.currentSession(this) == null) return
+        if (type in setOf("ride_cancelled", "ride_canceled", "offer_expired", "offer_cancelled", "corrida_cancelada", "oferta_expirada", "oferta_cancelada")) {
+            rideId?.let { NotificationHelper.dismissRide(this, it) }
+            return
+        }
         if (DriverRepository.shouldSuppressUrgentPush(this, data)) {
             NotificationHelper.appNoticeNotification(
                 context = this,

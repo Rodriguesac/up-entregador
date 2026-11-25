@@ -16,6 +16,14 @@ class UrgentRideActivity : ComponentActivity() {
     private var actionError by mutableStateOf("")
     private var expiryRequested = false
 
+    override fun onNewIntent(newIntent: Intent) {
+        super.onNewIntent(newIntent)
+        val sameRide = intent.getStringExtra("rideId") == newIntent.getStringExtra("rideId")
+        if (sameRide && (action.isNotBlank() || intent.getLongExtra("expiresAtMillis", 0L) == newIntent.getLongExtra("expiresAtMillis", 0L))) return
+        setIntent(newIntent)
+        recreate()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(
@@ -24,6 +32,7 @@ class UrgentRideActivity : ComponentActivity() {
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
         val rideId = intent.getStringExtra("rideId") ?: "sem-id"
+        if (rideId == "sem-id" || DriverRepository.currentSession(this) == null) { finish(); return }
         val value = intent.getStringExtra("value").orEmpty()
         val distance = intent.getStringExtra("distance").orEmpty()
         val duration = intent.getStringExtra("duration").orEmpty()
